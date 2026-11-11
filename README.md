@@ -1,54 +1,35 @@
-# React + TypeScript + Vite
+# Pathfinder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A clickable prototype of Pathfinder, built from the Figma wireframes
+([file](https://www.figma.com/design/uL2LNYWjWvYM9rPXjwDwAr/Wireframes?node-id=2362-50744), section
+"emily's pass"). Every Figma frame is a screen you can open and click through. There's no backend:
+data is mock and state is local.
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+You need Node 22 (`.nvmrc`).
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- http://localhost:5173: Home, the start of the flow
+- http://localhost:5173/screens: every screen, grouped by chapter (Home → Plan → Run → Stuck → Approve →
+  Rerun & fork). Each one is also at `/s/<frame number>`, e.g. `/s/3.2`.
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+It works from phone width up to large desktop; at 1440×900 it matches the Figma frames.
+
+## Checks
+
+| Command | What it does |
+|---|---|
+| `npm run diff -- 3.2` | Pixel-diffs a screen against its Figma render in `design/ref/` (needs `npm run dev` running) |
+| `npm run responsive -- 3.2` | Renders a screen at 375–1920px and flags horizontal overflow |
+| `node scripts/box-audit.mjs 3.2` | Compares element positions and sizes with Figma's layout data |
+| `node scripts/dead-click-audit.mjs` | Clicks everything on every screen and lists controls that do nothing |
+| `npx tsc -b && npx eslint src` | Typecheck and lint |
+
+`CLAUDE.md` has the build conventions.

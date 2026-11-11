@@ -70,7 +70,7 @@ export function PlanChatPanel({
     return (
       <section
         aria-label="Chat with Pathfinder"
-        className="flex h-full w-[300px] shrink-0 flex-col items-start border-r border-line bg-white max-xl:hidden"
+        className="flex h-full w-[300px] shrink-0 flex-col items-start border-r border-line bg-white pb-[7px] max-xl:hidden"
       >
         <p className="shrink-0 px-4 pt-4 pb-2 text-[12px] leading-[18px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink-2">
           Chat with Pathfinder

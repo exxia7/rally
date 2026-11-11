@@ -170,10 +170,11 @@ export function StepOption({
         </span>
       )}
       <span className="flex min-w-px flex-1 flex-col">
-        <span className="text-[9.9px] leading-[14.85px] font-medium tracking-[-0.066px] whitespace-nowrap text-ink">
+        {/* Figma rounds these text boxes up to whole pixels: 15 and 14 per line. */}
+        <span className="min-h-[15px] text-[9.9px] leading-[14.85px] font-medium tracking-[-0.066px] whitespace-nowrap text-ink">
           {title}
         </span>
-        <span className="text-[9.075px] leading-[13.613px] tracking-[-0.066px] text-muted">
+        <span className="text-[9.075px] leading-[14px] tracking-[-0.066px] text-muted">
           {hint}
         </span>
       </span>
