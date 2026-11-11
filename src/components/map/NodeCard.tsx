@@ -7,6 +7,7 @@ import liveDot from '@/assets/icons/live-dot.svg';
 import lock from '@/assets/icons/lock-amber.svg';
 import { Button } from '@/components/ui/Button';
 
+import { FORK_COLOR, type ForkNumber } from './forks';
 import { type NodeKindName, NodeKindTile } from './NodeKind';
 
 export type NodeState =
@@ -44,6 +45,17 @@ export type NodeCardData = {
   status?: NodeStatus;
   showRerun?: boolean;
   width?: number;
+  /** Muted note above the status ("Adding: how we differ from Penny" on a decision being redone). */
+  note?: string;
+  /** Selected on the map (its inspector is open): 2px accent border at frame scale (2.934px at map scale). */
+  selected?: boolean;
+  /** Vertical padding around the card's content, when an instance adds one (the hand-raised decision: 5.868px). */
+  padY?: number;
+  /** Layer opacity of the whole card (Figma dims the rest of the map while a hand is raised: 0.45, 0.62, 0.9). */
+  opacity?: number;
+  /** The step is on a fork lane: selected takes the fork's colour, working gets a half-strength fork border and
+   *  the others a 1px (frame-scale) border. */
+  fork?: ForkNumber;
 };
 
 const KIND_LABEL: Record<NodeKindName, string> = {
@@ -137,6 +149,11 @@ export function NodeCard({
   status,
   showRerun,
   width = 175.2,
+  note,
+  selected,
+  padY,
+  opacity,
+  fork,
   onClick,
   onRerun,
   className,
@@ -148,7 +165,7 @@ export function NodeCard({
   style?: CSSProperties;
 }) {
   const live = status?.tone === 'live';
-  const compact = !lead && !preview && kind !== 'decision';
+  const compact = !lead && !preview && !note && kind !== 'decision';
   const onKey = (e: KeyboardEvent) => {
     if (onClick && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
@@ -163,23 +180,41 @@ export function NodeCard({
       onKeyDown={onKey}
       className={clsx(
         'flex flex-col justify-center rounded-[9.221px] bg-white drop-shadow-[0px_0.922px_0.922px_rgba(16,18,24,0.04)]',
-        state === 'needs-you'
+        selected
+          ? 'border-[2.934px] border-solid border-accent'
+          : state === 'needs-you'
           ? 'border-[1.4px] border-solid border-ink-2'
           : state === 'will-rerun'
             ? 'border-[0.922px] border-dashed border-accent'
             : state === 'working'
               ? 'border-[0.922px] border-solid border-accent-line'
-              : 'border-[0.922px] border-solid border-line-2',
+              : state === 'done'
+                ? // A finished step (4.4/4.5 after the run): 0.94px at frame scale.
+                  'border-[1.379px] border-solid border-line-2'
+                : 'border-[0.922px] border-solid border-line-2',
         onClick && 'cursor-pointer',
         className
       )}
-      style={{ width, ...style }}
+      style={{
+        width,
+        opacity,
+        // Fork lanes (4.5, 6.5, 6.6): Branch/Fork N for the selected step, 50% of it while a step works.
+        ...(fork &&
+          (selected
+            ? { borderColor: FORK_COLOR[fork] }
+            : state === 'working'
+              ? { borderColor: `${FORK_COLOR[fork]}80` }
+              : // Waiting fork-lane steps: 1px at frame scale.
+                { borderWidth: 1.467 })),
+        ...style,
+      }}
     >
       <div
         className={clsx(
           'flex w-full flex-col',
           state === 'waiting' && 'opacity-50'
         )}
+        style={padY ? { paddingBlock: padY } : undefined}
       >
         <div
           className={clsx(
@@ -216,7 +251,15 @@ export function NodeCard({
           </div>
         </div>
         {compact ? (
-          <div className="flex h-[30.757px] w-full items-center p-[9.221px]">
+          // Will rerun's header flag row is a Badge, not the 14.8px Flags slot; Figma's body grows to 33.198px.
+          <div
+            className={clsx(
+              'flex w-full items-center p-[9.221px]',
+              state === 'will-rerun' || state === 'done'
+                ? 'h-[33.198px]'
+                : 'h-[30.757px]'
+            )}
+          >
             {status && <StatusLine status={status} />}
           </div>
         ) : (
@@ -226,6 +269,11 @@ export function NodeCard({
               live ? 'gap-2 pb-2.5' : 'gap-[5.534px] pb-[9.221px]'
             )}
           >
+            {note && (
+              <p className="w-full text-[10.15px] leading-[normal] text-muted">
+                {note}
+              </p>
+            )}
             {lead && (
               <p className="w-full px-[1.845px] text-[11.068px] leading-[15.218px] font-medium tracking-[-0.0738px] text-ink">
                 {lead}

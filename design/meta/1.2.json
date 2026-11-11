@@ -1,0 +1,1677 @@
+{
+ "id": "1.2",
+ "node": "2362:23330",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:23331",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:23332",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23333",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 68,
+   "y": 8,
+   "w": 1364,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23334",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 1362,
+   "h": 52,
+   "path": "Shell › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23335",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 193,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar"
+  },
+  {
+   "id": "2362:23336",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 120,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar › Text"
+  },
+  {
+   "id": "2362:23337",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 85,
+   "y": 25,
+   "w": 120,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23338",
+   "type": "frame",
+   "name": "Text",
+   "x": 211,
+   "y": 25,
+   "w": 67,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar › Text"
+  },
+  {
+   "id": "2362:23339",
+   "type": "text",
+   "name": "/",
+   "x": 211,
+   "y": 25,
+   "w": 5,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23340",
+   "type": "text",
+   "name": "Settings",
+   "x": 222,
+   "y": 25,
+   "w": 56,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23341",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 278,
+   "y": 21,
+   "w": 1137,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › TopBar"
+  },
+  {
+   "id": "2362:23342",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 1387,
+   "y": 21,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › TopBar › Container:align"
+  },
+  {
+   "id": "2362:23343",
+   "type": "frame",
+   "name": "Container",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23344",
+   "type": "frame",
+   "name": "Sidebar",
+   "x": 69,
+   "y": 61,
+   "w": 240,
+   "h": 830,
+   "path": "Shell › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23345",
+   "type": "frame",
+   "name": "Container",
+   "x": 85,
+   "y": 77,
+   "w": 207,
+   "h": 25,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar"
+  },
+  {
+   "id": "2362:23346",
+   "type": "text",
+   "name": "Workspace",
+   "x": 93,
+   "y": 77,
+   "w": 58,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23347",
+   "type": "frame",
+   "name": "Container",
+   "x": 85,
+   "y": 102,
+   "w": 207,
+   "h": 773.5,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar"
+  },
+  {
+   "id": "2362:23348",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 102,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23349",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 134,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23350",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 166,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23351",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 198,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23352",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 230,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23353",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 262,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23354",
+   "type": "instance",
+   "name": "Settings nav item",
+   "x": 85,
+   "y": 294,
+   "w": 207,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Sidebar › Container"
+  },
+  {
+   "id": "2362:23355",
+   "type": "frame",
+   "name": "Main Content",
+   "x": 309,
+   "y": 61,
+   "w": 1122,
+   "h": 830,
+   "path": "Shell › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23356",
+   "type": "frame",
+   "name": "Container",
+   "x": 309,
+   "y": 61,
+   "w": 920,
+   "h": 952,
+   "path": "Shell › WorkspaceSettings › Container › Main Content"
+  },
+  {
+   "id": "2362:23357",
+   "type": "frame",
+   "name": "Heading 1",
+   "x": 349,
+   "y": 101,
+   "w": 840,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container"
+  },
+  {
+   "id": "2362:23358",
+   "type": "text",
+   "name": "Workspace settings",
+   "x": 349,
+   "y": 101,
+   "w": 242,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Heading 1"
+  },
+  {
+   "id": "2362:23359",
+   "type": "frame",
+   "name": "Paragraph",
+   "x": 349,
+   "y": 133,
+   "w": 840,
+   "h": 26,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container"
+  },
+  {
+   "id": "2362:23360",
+   "type": "text",
+   "name": "These apply to every workflow. A workflow can pick",
+   "x": 349,
+   "y": 139,
+   "w": 769,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Paragraph"
+  },
+  {
+   "id": "2362:23361",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 349,
+   "y": 159,
+   "w": 840,
+   "h": 814,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container"
+  },
+  {
+   "id": "2362:23362",
+   "type": "frame",
+   "name": "Container",
+   "x": 349,
+   "y": 191,
+   "w": 840,
+   "h": 782,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin"
+  },
+  {
+   "id": "2362:23363",
+   "type": "frame",
+   "name": "Container",
+   "x": 349,
+   "y": 191,
+   "w": 410,
+   "h": 801,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23364",
+   "type": "frame",
+   "name": "Card",
+   "x": 349,
+   "y": 191,
+   "w": 410,
+   "h": 427,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23365",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 212,
+   "w": 368,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23366",
+   "type": "text",
+   "name": "Permission presets",
+   "x": 370,
+   "y": 212,
+   "w": 129,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23367",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 233,
+   "w": 368,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23368",
+   "type": "text",
+   "name": "Saved sets of rules any workflow can use",
+   "x": 370,
+   "y": 235,
+   "w": 231,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23369",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 253,
+   "w": 368,
+   "h": 269,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23370",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 269,
+   "w": 368,
+   "h": 79,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23371",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 281,
+   "w": 166,
+   "h": 55,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23372",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 281,
+   "w": 166,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23373",
+   "type": "text",
+   "name": "Careful",
+   "x": 384,
+   "y": 281,
+   "w": 45,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23374",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 301,
+   "w": 166,
+   "h": 35,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23375",
+   "type": "text",
+   "name": "Ask before every choice · posting waits · $0 ads",
+   "x": 384,
+   "y": 303,
+   "w": 166,
+   "h": 33,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23376",
+   "type": "instance",
+   "name": "Button",
+   "x": 562,
+   "y": 294.5,
+   "w": 101,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23377",
+   "type": "instance",
+   "name": "Button",
+   "x": 675,
+   "y": 294.5,
+   "w": 49,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23378",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 356,
+   "w": 368,
+   "h": 79,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23379",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 368,
+   "w": 156,
+   "h": 55,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23380",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 368,
+   "w": 156,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23381",
+   "type": "text",
+   "name": "Balanced",
+   "x": 384,
+   "y": 368,
+   "w": 57,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23382",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 388,
+   "w": 156,
+   "h": 35,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23383",
+   "type": "text",
+   "name": "Ask when unsure · posting waits · $0 ads",
+   "x": 384,
+   "y": 390,
+   "w": 156,
+   "h": 33,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23384",
+   "type": "instance",
+   "name": "Badge",
+   "x": 552,
+   "y": 385.5,
+   "w": 111,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23385",
+   "type": "instance",
+   "name": "Button",
+   "x": 675,
+   "y": 381.5,
+   "w": 49,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23386",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 443,
+   "w": 368,
+   "h": 79,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23387",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 455,
+   "w": 166,
+   "h": 55,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23388",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 455,
+   "w": 166,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23389",
+   "type": "text",
+   "name": "Hands-off",
+   "x": 384,
+   "y": 455,
+   "w": 63,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23390",
+   "type": "frame",
+   "name": "Container",
+   "x": 384,
+   "y": 475,
+   "w": 166,
+   "h": 35,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23391",
+   "type": "text",
+   "name": "Just go · posting still waits · $50 ads",
+   "x": 384,
+   "y": 477,
+   "w": 166,
+   "h": 33,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23392",
+   "type": "instance",
+   "name": "Button",
+   "x": 562,
+   "y": 468.5,
+   "w": 101,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23393",
+   "type": "instance",
+   "name": "Button",
+   "x": 675,
+   "y": 468.5,
+   "w": 49,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23394",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 522,
+   "w": 368,
+   "h": 30,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23395",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 534,
+   "w": 84,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container"
+  },
+  {
+   "id": "2362:23396",
+   "type": "instance",
+   "name": "Icon / Plus",
+   "x": 370,
+   "y": 536,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23397",
+   "type": "text",
+   "name": "New preset",
+   "x": 388,
+   "y": 534,
+   "w": 66,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23398",
+   "type": "frame",
+   "name": "WorkspaceSettings:margin",
+   "x": 370,
+   "y": 552,
+   "w": 368,
+   "h": 45,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23399",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 564,
+   "w": 367.8999938964844,
+   "h": 33,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings:margin"
+  },
+  {
+   "id": "2362:23400",
+   "type": "instance",
+   "name": "Icon / Lock",
+   "x": 370,
+   "y": 575.5500001907349,
+   "w": 9.899999618530273,
+   "h": 9.899999618530273,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings:margin › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23401",
+   "type": "text",
+   "name": "Always on in every preset: anything that posts or ",
+   "x": 387.8999996185303,
+   "y": 564,
+   "w": 350,
+   "h": 33,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings:margin › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23402",
+   "type": "frame",
+   "name": "Card",
+   "x": 349,
+   "y": 638,
+   "w": 410,
+   "h": 354,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23403",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 659,
+   "w": 368,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23404",
+   "type": "text",
+   "name": "Connected tools",
+   "x": 370,
+   "y": 659,
+   "w": 111,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23405",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 680,
+   "w": 368,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23406",
+   "type": "text",
+   "name": "Connect once, use in any workflow",
+   "x": 370,
+   "y": 682,
+   "w": 196,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23407",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 370,
+   "y": 700,
+   "w": 368,
+   "h": 271,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23408",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 716,
+   "w": 368,
+   "h": 64,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23409",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 728,
+   "w": 201,
+   "h": 39,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23410",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 728,
+   "w": 201,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23411",
+   "type": "text",
+   "name": "Discord",
+   "x": 370,
+   "y": 728,
+   "w": 48,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23412",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 748,
+   "w": 201,
+   "h": 19,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23413",
+   "type": "text",
+   "name": "#launches · used in 2 workflows",
+   "x": 370,
+   "y": 750,
+   "w": 201,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23414",
+   "type": "instance",
+   "name": "Badge",
+   "x": 583,
+   "y": 737.5,
+   "w": 70,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23415",
+   "type": "instance",
+   "name": "Button",
+   "x": 665,
+   "y": 733.5,
+   "w": 73,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23416",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 780,
+   "w": 368,
+   "h": 64,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23417",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 792,
+   "w": 201,
+   "h": 39,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23418",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 792,
+   "w": 201,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23419",
+   "type": "text",
+   "name": "Email (Resend)",
+   "x": 370,
+   "y": 792,
+   "w": 92,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23420",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 812,
+   "w": 201,
+   "h": 19,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23421",
+   "type": "text",
+   "name": "hello@lumen.app · used in 3 workflows",
+   "x": 370,
+   "y": 814,
+   "w": 201,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23422",
+   "type": "instance",
+   "name": "Badge",
+   "x": 583,
+   "y": 801.5,
+   "w": 70,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23423",
+   "type": "instance",
+   "name": "Button",
+   "x": 665,
+   "y": 797.5,
+   "w": 73,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23424",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 844,
+   "w": 368,
+   "h": 64,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23425",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 856,
+   "w": 201,
+   "h": 39,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23426",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 856,
+   "w": 201,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23427",
+   "type": "text",
+   "name": "X",
+   "x": 370,
+   "y": 856,
+   "w": 9,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23428",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 876,
+   "w": 201,
+   "h": 19,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23429",
+   "type": "text",
+   "name": "@lumenapp · used in 3 workflows",
+   "x": 370,
+   "y": 878,
+   "w": 201,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23430",
+   "type": "instance",
+   "name": "Badge",
+   "x": 583,
+   "y": 865.5,
+   "w": 70,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23431",
+   "type": "instance",
+   "name": "Button",
+   "x": 665,
+   "y": 861.5,
+   "w": 73,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23432",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 908,
+   "w": 368,
+   "h": 63,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23433",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 920,
+   "w": 277,
+   "h": 39,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23434",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 920,
+   "w": 277,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23435",
+   "type": "text",
+   "name": "LinkedIn",
+   "x": 370,
+   "y": 920,
+   "w": 52,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23436",
+   "type": "frame",
+   "name": "Container",
+   "x": 370,
+   "y": 940,
+   "w": 277,
+   "h": 19,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23437",
+   "type": "text",
+   "name": "Not connected",
+   "x": 370,
+   "y": 942,
+   "w": 77,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container › Container"
+  },
+  {
+   "id": "2362:23438",
+   "type": "instance",
+   "name": "Button",
+   "x": 659,
+   "y": 923.5,
+   "w": 79,
+   "h": 32,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23439",
+   "type": "frame",
+   "name": "Container",
+   "x": 779,
+   "y": 191,
+   "w": 410,
+   "h": 782,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23440",
+   "type": "frame",
+   "name": "Card",
+   "x": 779,
+   "y": 191,
+   "w": 410,
+   "h": 277,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23441",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 212,
+   "w": 368,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23442",
+   "type": "text",
+   "name": "Brand kit",
+   "x": 800,
+   "y": 212,
+   "w": 60,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23443",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 233,
+   "w": 368,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23444",
+   "type": "text",
+   "name": "Shared assets and skills every workflow can use",
+   "x": 800,
+   "y": 235,
+   "w": 270,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23445",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 253,
+   "w": 368,
+   "h": 164,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23446",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 269,
+   "w": 368,
+   "h": 44,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23447",
+   "type": "frame",
+   "name": "Text",
+   "x": 814,
+   "y": 281,
+   "w": 269,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23448",
+   "type": "text",
+   "name": "Brand guide.pdf",
+   "x": 814,
+   "y": 281,
+   "w": 98,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Text"
+  },
+  {
+   "id": "2362:23449",
+   "type": "instance",
+   "name": "Badge",
+   "x": 1095,
+   "y": 281,
+   "w": 31,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23450",
+   "type": "instance",
+   "name": "Icon / More",
+   "x": 1138,
+   "y": 283,
+   "w": 16,
+   "h": 16,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23451",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 321,
+   "w": 368,
+   "h": 44,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23452",
+   "type": "frame",
+   "name": "Text",
+   "x": 814,
+   "y": 333,
+   "w": 269,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23453",
+   "type": "text",
+   "name": "Logo.svg",
+   "x": 814,
+   "y": 333,
+   "w": 56,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Text"
+  },
+  {
+   "id": "2362:23454",
+   "type": "instance",
+   "name": "Badge",
+   "x": 1095,
+   "y": 333,
+   "w": 31,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23455",
+   "type": "instance",
+   "name": "Icon / More",
+   "x": 1138,
+   "y": 335,
+   "w": 16,
+   "h": 16,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23456",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 373,
+   "w": 368,
+   "h": 44,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23457",
+   "type": "frame",
+   "name": "Text",
+   "x": 814,
+   "y": 385,
+   "w": 266,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23458",
+   "type": "text",
+   "name": "Brand voice",
+   "x": 814,
+   "y": 385,
+   "w": 72,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Text"
+  },
+  {
+   "id": "2362:23459",
+   "type": "instance",
+   "name": "Badge",
+   "x": 1092,
+   "y": 385,
+   "w": 34,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23460",
+   "type": "instance",
+   "name": "Icon / More",
+   "x": 1138,
+   "y": 387,
+   "w": 16,
+   "h": 16,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23461",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 417,
+   "w": 368,
+   "h": 30,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23462",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 429,
+   "w": 129,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container"
+  },
+  {
+   "id": "2362:23463",
+   "type": "instance",
+   "name": "Icon / Plus",
+   "x": 800,
+   "y": 431,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23464",
+   "type": "text",
+   "name": "Upload a file or skill",
+   "x": 818,
+   "y": 429,
+   "w": 111,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23465",
+   "type": "frame",
+   "name": "Card",
+   "x": 779,
+   "y": 488,
+   "w": 410,
+   "h": 161,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23466",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 509,
+   "w": 368,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23467",
+   "type": "text",
+   "name": "People and approvals",
+   "x": 800,
+   "y": 509,
+   "w": 144,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23468",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 530,
+   "w": 368,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23469",
+   "type": "text",
+   "name": "Who can approve posts and spending",
+   "x": 800,
+   "y": 532,
+   "w": 212,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23470",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 550,
+   "w": 368,
+   "h": 44,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23471",
+   "type": "frame",
+   "name": "Text",
+   "x": 800,
+   "y": 566,
+   "w": 119,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23472",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 800,
+   "y": 566,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23473",
+   "type": "text",
+   "name": "Emily · Owner",
+   "x": 836,
+   "y": 570,
+   "w": 83,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23474",
+   "type": "frame",
+   "name": "Text",
+   "x": 935,
+   "y": 566,
+   "w": 73,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23475",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 935,
+   "y": 566,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23476",
+   "type": "text",
+   "name": "Vivian",
+   "x": 971,
+   "y": 570,
+   "w": 37,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23477",
+   "type": "frame",
+   "name": "Text",
+   "x": 1024,
+   "y": 566,
+   "w": 69,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23478",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 1024,
+   "y": 566,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23479",
+   "type": "text",
+   "name": "Tonia",
+   "x": 1060,
+   "y": 570,
+   "w": 33,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Text"
+  },
+  {
+   "id": "2362:23480",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 594,
+   "w": 368,
+   "h": 34,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23481",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 610,
+   "w": 49,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container"
+  },
+  {
+   "id": "2362:23482",
+   "type": "instance",
+   "name": "Icon / Plus",
+   "x": 800,
+   "y": 612,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23483",
+   "type": "text",
+   "name": "Invite",
+   "x": 818,
+   "y": 610,
+   "w": 31,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › Container › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23484",
+   "type": "frame",
+   "name": "Card",
+   "x": 779,
+   "y": 669,
+   "w": 410,
+   "h": 154,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23485",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 690,
+   "w": 368,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23486",
+   "type": "text",
+   "name": "Usage and budget",
+   "x": 800,
+   "y": 690,
+   "w": 123,
+   "h": 21,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23487",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 711,
+   "w": 368,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23488",
+   "type": "text",
+   "name": "AI cost across all workflows",
+   "x": 800,
+   "y": 713,
+   "w": 155,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23489",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 731,
+   "w": 368,
+   "h": 53,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23490",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 747,
+   "w": 141,
+   "h": 37,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23491",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 747,
+   "w": 141,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23492",
+   "type": "text",
+   "name": "This month",
+   "x": 800,
+   "y": 747,
+   "w": 70,
+   "h": 20,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container › Container"
+  },
+  {
+   "id": "2362:23493",
+   "type": "text",
+   "name": "~410k tokens · 5 workflows",
+   "x": 800,
+   "y": 767,
+   "w": 141,
+   "h": 17,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings › Container"
+  },
+  {
+   "id": "2362:23494",
+   "type": "text",
+   "name": "$3.40 of $20",
+   "x": 1081,
+   "y": 761,
+   "w": 87,
+   "h": 23,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings"
+  },
+  {
+   "id": "2362:23495",
+   "type": "frame",
+   "name": "WorkspaceSettings:margin",
+   "x": 800,
+   "y": 784,
+   "w": 368,
+   "h": 18,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card"
+  },
+  {
+   "id": "2362:23496",
+   "type": "frame",
+   "name": "WorkspaceSettings",
+   "x": 800,
+   "y": 796,
+   "w": 368,
+   "h": 6,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings:margin"
+  },
+  {
+   "id": "2362:23497",
+   "type": "frame",
+   "name": "Container",
+   "x": 800,
+   "y": 796,
+   "w": 62.546875,
+   "h": 6,
+   "path": "Shell › WorkspaceSettings › Container › Main Content › Container › Container:margin › Container › Container › Card › WorkspaceSettings:margin › WorkspaceSettings"
+  }
+ ]
+}

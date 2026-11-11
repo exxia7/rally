@@ -1,4 +1,4 @@
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { SegmentedControl, type Segment } from '@/components/ui/SegmentedControl';
 
 // Figma "Panel tabs" (2362:28900): tabs at the top of the right side panel. Plan: Chat + Sandbox.
 // Run adds Decisions with a count. Same segments as the Segmented control, hugging (34px).
@@ -15,12 +15,17 @@ export function PanelTabs({
   onChange: (tab: PanelTab) => void;
   decisions?: number;
 }) {
-  const options: { value: PanelTab; label: string }[] = [
-    { value: 'chat', label: 'Chat' },
-    { value: 'sandbox', label: 'Sandbox' },
+  // Figma tab widths (Panel tabs 2362:24918): Chat 58, Sandbox 83, Decisions · 2 106 → 147 / 253px.
+  const options: Segment<PanelTab>[] = [
+    { value: 'chat', label: 'Chat', minWidth: 58 },
+    { value: 'sandbox', label: 'Sandbox', minWidth: 83 },
   ];
   if (phase === 'run')
-    options.push({ value: 'decisions', label: `Decisions · ${decisions}` });
+    options.push({
+      value: 'decisions',
+      label: `Decisions · ${decisions}`,
+      minWidth: 106,
+    });
   return (
     <SegmentedControl
       label="Side panel"

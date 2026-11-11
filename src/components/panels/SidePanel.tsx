@@ -11,11 +11,15 @@ import { IconButton } from '@/components/ui/IconButton';
 // top bar's panel toggle closes it, so its × only shows under 1280px.
 // Pass it to AppShell's `aside`. Under 1280px it overlays the content from the right over a scrim; under 768px
 // it is a full-screen sheet. Clicking the scrim closes it.
+// `header` replaces the built-in headers (the inspector's own header); `footer` is pinned under the scrolling body
+// (the inspector's Edit / I'll do this one bar).
 export function SidePanel({
   title,
   tabs,
   onClose,
   headerExtra,
+  header,
+  footer,
   children,
   className,
   bodyClassName,
@@ -24,6 +28,8 @@ export function SidePanel({
   tabs?: ReactNode;
   onClose?: () => void;
   headerExtra?: ReactNode;
+  header?: ReactNode;
+  footer?: ReactNode;
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
@@ -43,7 +49,7 @@ export function SidePanel({
           className
         )}
       >
-        {tabs ? (
+        {header ?? (tabs ? (
           <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-3 max-md:px-4">
             <div className="flex min-w-px flex-1 items-center">{tabs}</div>
             {headerExtra}
@@ -57,7 +63,7 @@ export function SidePanel({
               />
             )}
           </div>
-        ) : (
+        ) : title !== undefined ? (
           <div className="flex h-[52px] w-full shrink-0 items-center gap-2 overflow-clip border-b border-line pr-2.5 pl-4">
             <div className="flex min-w-px flex-1 items-center overflow-clip">
               <p className="truncate text-[14px] leading-5 font-semibold text-ink">
@@ -74,7 +80,7 @@ export function SidePanel({
               />
             )}
           </div>
-        )}
+        ) : null)}
         <div
           className={clsx(
             'flex min-h-px w-full flex-1 flex-col items-start overflow-y-auto',
@@ -83,6 +89,7 @@ export function SidePanel({
         >
           {children}
         </div>
+        {footer}
       </aside>
     </>
   );

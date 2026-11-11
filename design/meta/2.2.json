@@ -1,0 +1,927 @@
+{
+ "id": "2.2",
+ "node": "2362:23548",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:23549",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:23550",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23551",
+   "type": "frame",
+   "name": "PlanChat",
+   "x": 68,
+   "y": 8,
+   "w": 956,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23552",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 954,
+   "h": 52,
+   "path": "Shell › PlanChat"
+  },
+  {
+   "id": "2362:23553",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 214,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar"
+  },
+  {
+   "id": "2362:23554",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar › Text"
+  },
+  {
+   "id": "2362:23555",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23556",
+   "type": "frame",
+   "name": "Text",
+   "x": 160,
+   "y": 25,
+   "w": 139,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar › Text"
+  },
+  {
+   "id": "2362:23557",
+   "type": "text",
+   "name": "/",
+   "x": 160,
+   "y": 25,
+   "w": 5,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23558",
+   "type": "text",
+   "name": "AI Coach launch",
+   "x": 171,
+   "y": 25,
+   "w": 108,
+   "h": 20,
+   "path": "Shell › PlanChat › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23559",
+   "type": "instance",
+   "name": "Title menu",
+   "x": 285,
+   "y": 28,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › PlanChat › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:23560",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 299,
+   "y": 19,
+   "w": 193,
+   "h": 32,
+   "path": "Shell › PlanChat › TopBar"
+  },
+  {
+   "id": "2362:23561",
+   "type": "instance",
+   "name": "Segmented control",
+   "x": 315,
+   "y": 19,
+   "w": 177,
+   "h": 32,
+   "path": "Shell › PlanChat › TopBar › Container:margin"
+  },
+  {
+   "id": "2362:23562",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 492,
+   "y": 17,
+   "w": 515,
+   "h": 36,
+   "path": "Shell › PlanChat › TopBar"
+  },
+  {
+   "id": "2362:23563",
+   "type": "frame",
+   "name": "Main Content",
+   "x": 69,
+   "y": 61,
+   "w": 954,
+   "h": 830,
+   "path": "Shell › PlanChat"
+  },
+  {
+   "id": "2362:23564",
+   "type": "frame",
+   "name": "Container",
+   "x": 69,
+   "y": 61,
+   "w": 954,
+   "h": 732,
+   "path": "Shell › PlanChat › Main Content"
+  },
+  {
+   "id": "2362:23565",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 69,
+   "y": 61,
+   "w": 954,
+   "h": 472,
+   "path": "Shell › PlanChat › Main Content › Container"
+  },
+  {
+   "id": "2362:23566",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 61,
+   "w": 620,
+   "h": 472,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin"
+  },
+  {
+   "id": "2362:23567",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 93,
+   "w": 620,
+   "h": 69,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23568",
+   "type": "instance",
+   "name": "Pathfinder avatar",
+   "x": 236,
+   "y": 93,
+   "w": 30,
+   "h": 30,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23569",
+   "type": "frame",
+   "name": "Container",
+   "x": 278,
+   "y": 93,
+   "w": 420,
+   "h": 69,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23570",
+   "type": "text",
+   "name": "Hi, I'm the Planner. What are you launching? Descr",
+   "x": 295,
+   "y": 106,
+   "w": 386,
+   "h": 43,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container › Container"
+  },
+  {
+   "id": "2362:23571",
+   "type": "frame",
+   "name": "Container",
+   "x": 541,
+   "y": 178,
+   "w": 315,
+   "h": 42,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23572",
+   "type": "text",
+   "name": "launch campaign for our new AI Coach feature",
+   "x": 558,
+   "y": 189,
+   "w": 281,
+   "h": 20,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23573",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 236,
+   "w": 620,
+   "h": 69,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23574",
+   "type": "instance",
+   "name": "Pathfinder avatar",
+   "x": 236,
+   "y": 236,
+   "w": 30,
+   "h": 30,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23575",
+   "type": "frame",
+   "name": "Container",
+   "x": 278,
+   "y": 236,
+   "w": 366,
+   "h": 69,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23576",
+   "type": "text",
+   "name": "Nice. Two quick questions so I can plan the right ",
+   "x": 295,
+   "y": 249,
+   "w": 332,
+   "h": 43,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container › Container"
+  },
+  {
+   "id": "2362:23577",
+   "type": "frame",
+   "name": "Container",
+   "x": 602,
+   "y": 321,
+   "w": 254,
+   "h": 42,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23578",
+   "type": "text",
+   "name": "Mar 12, to our 2,800 waitlist signups",
+   "x": 619,
+   "y": 332,
+   "w": 220,
+   "h": 20,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23579",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 379,
+   "w": 620,
+   "h": 90,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23580",
+   "type": "instance",
+   "name": "Pathfinder avatar",
+   "x": 236,
+   "y": 379,
+   "w": 30,
+   "h": 30,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23581",
+   "type": "frame",
+   "name": "Container",
+   "x": 278,
+   "y": 379,
+   "w": 420,
+   "h": 90,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23582",
+   "type": "text",
+   "name": "Got it. I'm putting your team together. Next you'l",
+   "x": 295,
+   "y": 392,
+   "w": 386,
+   "h": 64,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container › Container"
+  },
+  {
+   "id": "2362:23583",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 485,
+   "w": 620,
+   "h": 32,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23584",
+   "type": "instance",
+   "name": "Button",
+   "x": 278,
+   "y": 485,
+   "w": 134,
+   "h": 32,
+   "path": "Shell › PlanChat › Main Content › Container › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23585",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 793,
+   "w": 620,
+   "h": 98,
+   "path": "Shell › PlanChat › Main Content"
+  },
+  {
+   "id": "2362:23586",
+   "type": "frame",
+   "name": "Container",
+   "x": 236,
+   "y": 805,
+   "w": 620,
+   "h": 54,
+   "path": "Shell › PlanChat › Main Content › Container"
+  },
+  {
+   "id": "2362:23587",
+   "type": "instance",
+   "name": "Attach button",
+   "x": 243,
+   "y": 816,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › PlanChat › Main Content › Container › Container"
+  },
+  {
+   "id": "2362:23588",
+   "type": "instance",
+   "name": "Text Input",
+   "x": 283,
+   "y": 812,
+   "w": 502,
+   "h": 40,
+   "path": "Shell › PlanChat › Main Content › Container › Container"
+  },
+  {
+   "id": "2362:23589",
+   "type": "instance",
+   "name": "Button",
+   "x": 793,
+   "y": 816,
+   "w": 56,
+   "h": 32,
+   "path": "Shell › PlanChat › Main Content › Container › Container"
+  },
+  {
+   "id": "2362:23590",
+   "type": "frame",
+   "name": "Artifact panel",
+   "x": 1032,
+   "y": 8,
+   "w": 400,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23591",
+   "type": "frame",
+   "name": "Header",
+   "x": 1033,
+   "y": 9,
+   "w": 398,
+   "h": 52,
+   "path": "Shell › Artifact panel"
+  },
+  {
+   "id": "2362:23592",
+   "type": "frame",
+   "name": "Title",
+   "x": 1049,
+   "y": 24.5,
+   "w": 332,
+   "h": 20,
+   "path": "Shell › Artifact panel › Header"
+  },
+  {
+   "id": "2362:23593",
+   "type": "text",
+   "name": "Resources & outputs",
+   "x": 1049,
+   "y": 24.5,
+   "w": 141,
+   "h": 20,
+   "path": "Shell › Artifact panel › Header › Title"
+  },
+  {
+   "id": "2362:23594",
+   "type": "instance",
+   "name": "Close panel",
+   "x": 1389,
+   "y": 18.5,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › Artifact panel › Header"
+  },
+  {
+   "id": "2362:23595",
+   "type": "frame",
+   "name": "Body",
+   "x": 1033,
+   "y": 61,
+   "w": 398,
+   "h": 830,
+   "path": "Shell › Artifact panel"
+  },
+  {
+   "id": "2362:23596",
+   "type": "frame",
+   "name": "Outputs",
+   "x": 1053,
+   "y": 81,
+   "w": 358,
+   "h": 286,
+   "path": "Shell › Artifact panel › Body"
+  },
+  {
+   "id": "2362:23597",
+   "type": "frame",
+   "name": "Section header",
+   "x": 1053,
+   "y": 81,
+   "w": 358,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Outputs"
+  },
+  {
+   "id": "2362:23598",
+   "type": "text",
+   "name": "Outputs",
+   "x": 1053,
+   "y": 81,
+   "w": 51,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Outputs › Section header"
+  },
+  {
+   "id": "2362:23599",
+   "type": "text",
+   "name": "1",
+   "x": 1110,
+   "y": 82,
+   "w": 6,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Section header"
+  },
+  {
+   "id": "2362:23600",
+   "type": "frame",
+   "name": "Output / Launch brief",
+   "x": 1053,
+   "y": 110,
+   "w": 358,
+   "h": 257,
+   "path": "Shell › Artifact panel › Body › Outputs"
+  },
+  {
+   "id": "2362:23601",
+   "type": "frame",
+   "name": "Top",
+   "x": 1068,
+   "y": 125,
+   "w": 328,
+   "h": 37,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief"
+  },
+  {
+   "id": "2362:23602",
+   "type": "frame",
+   "name": "Icon",
+   "x": 1068,
+   "y": 129.5,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top"
+  },
+  {
+   "id": "2362:23603",
+   "type": "instance",
+   "name": "Icon / Pathfinder spark",
+   "x": 1074.851550102234,
+   "y": 136.3515501022339,
+   "w": 14.296899795532227,
+   "h": 14.296899795532227,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top › Icon"
+  },
+  {
+   "id": "2362:23604",
+   "type": "frame",
+   "name": "Title",
+   "x": 1106,
+   "y": 125,
+   "w": 290,
+   "h": 37,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top"
+  },
+  {
+   "id": "2362:23605",
+   "type": "frame",
+   "name": "Name",
+   "x": 1106,
+   "y": 125,
+   "w": 123,
+   "h": 20,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top › Title"
+  },
+  {
+   "id": "2362:23606",
+   "type": "text",
+   "name": "Launch brief",
+   "x": 1106,
+   "y": 125.5,
+   "w": 78,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top › Title › Name"
+  },
+  {
+   "id": "2362:23607",
+   "type": "instance",
+   "name": "Badge",
+   "x": 1190,
+   "y": 125,
+   "w": 39,
+   "h": 20,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top › Title › Name"
+  },
+  {
+   "id": "2362:23608",
+   "type": "text",
+   "name": "Made by the Planner · updated just now",
+   "x": 1106,
+   "y": 145,
+   "w": 226,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Top › Title"
+  },
+  {
+   "id": "2362:23609",
+   "type": "frame",
+   "name": "Preview",
+   "x": 1068,
+   "y": 174,
+   "w": 328,
+   "h": 138,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief"
+  },
+  {
+   "id": "2362:23610",
+   "type": "frame",
+   "name": "Line / What",
+   "x": 1080,
+   "y": 184,
+   "w": 304,
+   "h": 34,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview"
+  },
+  {
+   "id": "2362:23611",
+   "type": "text",
+   "name": "What",
+   "x": 1080,
+   "y": 184,
+   "w": 60,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / What"
+  },
+  {
+   "id": "2362:23612",
+   "type": "text",
+   "name": "Launch campaign for our new AI Coach feature",
+   "x": 1148,
+   "y": 184,
+   "w": 236,
+   "h": 34,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / What"
+  },
+  {
+   "id": "2362:23613",
+   "type": "frame",
+   "name": "Line / When",
+   "x": 1080,
+   "y": 222,
+   "w": 304,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview"
+  },
+  {
+   "id": "2362:23614",
+   "type": "text",
+   "name": "When",
+   "x": 1080,
+   "y": 222,
+   "w": 60,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / When"
+  },
+  {
+   "id": "2362:23615",
+   "type": "text",
+   "name": "Mar 12",
+   "x": 1148,
+   "y": 222,
+   "w": 236,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / When"
+  },
+  {
+   "id": "2362:23616",
+   "type": "frame",
+   "name": "Line / Who",
+   "x": 1080,
+   "y": 243,
+   "w": 304,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview"
+  },
+  {
+   "id": "2362:23617",
+   "type": "text",
+   "name": "Who",
+   "x": 1080,
+   "y": 243,
+   "w": 60,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Who"
+  },
+  {
+   "id": "2362:23618",
+   "type": "text",
+   "name": "2,800 waitlist signups",
+   "x": 1148,
+   "y": 243,
+   "w": 236,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Who"
+  },
+  {
+   "id": "2362:23619",
+   "type": "frame",
+   "name": "Line / Goal",
+   "x": 1080,
+   "y": 264,
+   "w": 304,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview"
+  },
+  {
+   "id": "2362:23620",
+   "type": "text",
+   "name": "Goal",
+   "x": 1080,
+   "y": 264,
+   "w": 60,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Goal"
+  },
+  {
+   "id": "2362:23621",
+   "type": "text",
+   "name": "Not set yet",
+   "x": 1148,
+   "y": 264,
+   "w": 236,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Goal"
+  },
+  {
+   "id": "2362:23622",
+   "type": "frame",
+   "name": "Line / Channels",
+   "x": 1080,
+   "y": 285,
+   "w": 304,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview"
+  },
+  {
+   "id": "2362:23623",
+   "type": "text",
+   "name": "Channels",
+   "x": 1080,
+   "y": 285,
+   "w": 60,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Channels"
+  },
+  {
+   "id": "2362:23624",
+   "type": "text",
+   "name": "Not set yet",
+   "x": 1148,
+   "y": 285,
+   "w": 236,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief › Preview › Line / Channels"
+  },
+  {
+   "id": "2362:23625",
+   "type": "instance",
+   "name": "Button",
+   "x": 1068,
+   "y": 324,
+   "w": 57,
+   "h": 28,
+   "path": "Shell › Artifact panel › Body › Outputs › Output / Launch brief"
+  },
+  {
+   "id": "2362:23626",
+   "type": "frame",
+   "name": "Resources used",
+   "x": 1053,
+   "y": 395,
+   "w": 358,
+   "h": 184,
+   "path": "Shell › Artifact panel › Body"
+  },
+  {
+   "id": "2362:23627",
+   "type": "frame",
+   "name": "Section header",
+   "x": 1053,
+   "y": 395,
+   "w": 358,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Resources used"
+  },
+  {
+   "id": "2362:23628",
+   "type": "text",
+   "name": "Resources used",
+   "x": 1053,
+   "y": 395,
+   "w": 101,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Resources used › Section header"
+  },
+  {
+   "id": "2362:23629",
+   "type": "text",
+   "name": "2",
+   "x": 1160,
+   "y": 396,
+   "w": 8,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Resources used › Section header"
+  },
+  {
+   "id": "2362:23630",
+   "type": "frame",
+   "name": "Resource / Your answers",
+   "x": 1053,
+   "y": 424,
+   "w": 358,
+   "h": 81,
+   "path": "Shell › Artifact panel › Body › Resources used"
+  },
+  {
+   "id": "2362:23631",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 1068,
+   "y": 437,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Your answers"
+  },
+  {
+   "id": "2362:23632",
+   "type": "frame",
+   "name": "Text",
+   "x": 1106,
+   "y": 437,
+   "w": 290,
+   "h": 55,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Your answers"
+  },
+  {
+   "id": "2362:23633",
+   "type": "text",
+   "name": "Your answers in this chat",
+   "x": 1106,
+   "y": 437,
+   "w": 156,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Your answers › Text"
+  },
+  {
+   "id": "2362:23634",
+   "type": "text",
+   "name": "“launch campaign for our new AI Coach feature” · “Mar 12, to our 2,800 waitlist signups”",
+   "x": 1106,
+   "y": 458,
+   "w": 290,
+   "h": 34,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Your answers › Text"
+  },
+  {
+   "id": "2362:23635",
+   "type": "frame",
+   "name": "Resource / Brand guide",
+   "x": 1053,
+   "y": 515,
+   "w": 358,
+   "h": 64,
+   "path": "Shell › Artifact panel › Body › Resources used"
+  },
+  {
+   "id": "2362:23636",
+   "type": "frame",
+   "name": "File icon",
+   "x": 1068,
+   "y": 528,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Brand guide"
+  },
+  {
+   "id": "2362:23637",
+   "type": "text",
+   "name": "PDF",
+   "x": 1074,
+   "y": 537,
+   "w": 16,
+   "h": 10,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Brand guide › File icon"
+  },
+  {
+   "id": "2362:23638",
+   "type": "frame",
+   "name": "Text",
+   "x": 1106,
+   "y": 528,
+   "w": 290,
+   "h": 38,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Brand guide"
+  },
+  {
+   "id": "2362:23639",
+   "type": "text",
+   "name": "Brand guide.pdf",
+   "x": 1106,
+   "y": 528,
+   "w": 100,
+   "h": 19,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Brand guide › Text"
+  },
+  {
+   "id": "2362:23640",
+   "type": "text",
+   "name": "12 pages · used for tone of voice",
+   "x": 1106,
+   "y": 549,
+   "w": 290,
+   "h": 17,
+   "path": "Shell › Artifact panel › Body › Resources used › Resource / Brand guide › Text"
+  }
+ ]
+}

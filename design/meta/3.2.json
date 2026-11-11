@@ -1,0 +1,707 @@
+{
+ "id": "3.2",
+ "node": "2362:24736",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:24737",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:24738",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:24739",
+   "type": "frame",
+   "name": "Container",
+   "x": 68,
+   "y": 8,
+   "w": 1364,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:24740",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 1362,
+   "h": 52,
+   "path": "Shell › Container"
+  },
+  {
+   "id": "2362:24741",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 214,
+   "h": 20,
+   "path": "Shell › Container › TopBar"
+  },
+  {
+   "id": "2362:24742",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › Container › TopBar › Text"
+  },
+  {
+   "id": "2362:24743",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24744",
+   "type": "frame",
+   "name": "Text",
+   "x": 160,
+   "y": 25,
+   "w": 139,
+   "h": 20,
+   "path": "Shell › Container › TopBar › Text"
+  },
+  {
+   "id": "2362:24745",
+   "type": "text",
+   "name": "/",
+   "x": 160,
+   "y": 25,
+   "w": 5,
+   "h": 20,
+   "path": "Shell › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24746",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 171,
+   "y": 25,
+   "w": 108,
+   "h": 20,
+   "path": "Shell › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24747",
+   "type": "instance",
+   "name": "Title menu",
+   "x": 285,
+   "y": 28,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24748",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 299,
+   "y": 19,
+   "w": 193,
+   "h": 32,
+   "path": "Shell › Container › TopBar"
+  },
+  {
+   "id": "2362:24749",
+   "type": "instance",
+   "name": "Segmented control",
+   "x": 315,
+   "y": 19,
+   "w": 177,
+   "h": 32,
+   "path": "Shell › Container › TopBar › Container:margin"
+  },
+  {
+   "id": "2362:24750",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 492,
+   "y": 19,
+   "w": 923,
+   "h": 32,
+   "path": "Shell › Container › TopBar"
+  },
+  {
+   "id": "2362:24751",
+   "type": "frame",
+   "name": "Container",
+   "x": 1124,
+   "y": 19,
+   "w": 291,
+   "h": 32,
+   "path": "Shell › Container › TopBar › Container:align"
+  },
+  {
+   "id": "2362:24752",
+   "type": "instance",
+   "name": "Run status",
+   "x": 1124,
+   "y": 21,
+   "w": 119,
+   "h": 28,
+   "path": "Shell › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:24753",
+   "type": "instance",
+   "name": "Workflow settings",
+   "x": 1251,
+   "y": 19,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:24754",
+   "type": "instance",
+   "name": "Panel toggle",
+   "x": 1291,
+   "y": 19,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:24755",
+   "type": "instance",
+   "name": "Button",
+   "x": 1331,
+   "y": 19,
+   "w": 84,
+   "h": 32,
+   "path": "Shell › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:24756",
+   "type": "frame",
+   "name": "Container",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › Container"
+  },
+  {
+   "id": "2362:24757",
+   "type": "frame",
+   "name": "ZoomStage",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › Container › Container"
+  },
+  {
+   "id": "2362:24758",
+   "type": "frame",
+   "name": "Container",
+   "x": 114,
+   "y": 144,
+   "w": 1281.999755859375,
+   "h": 581.0502319335938,
+   "path": "Shell › Container › Container › ZoomStage"
+  },
+  {
+   "id": "2362:24759",
+   "type": "frame",
+   "name": "FlowMap",
+   "x": 114,
+   "y": 144,
+   "w": 1281.999755859375,
+   "h": 581.0502319335938,
+   "path": "Shell › Container › Container › ZoomStage › Container"
+  },
+  {
+   "id": "2362:24760",
+   "type": "vector",
+   "name": "FlowMap",
+   "x": 270.7726593017578,
+   "y": 201.18272018432617,
+   "w": 36.929466247558594,
+   "h": 171.5481719970703,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24761",
+   "type": "vector",
+   "name": "Vector",
+   "x": 270.7726593017578,
+   "y": 372.7309265136719,
+   "w": 36.929466247558594,
+   "h": 0,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24762",
+   "type": "vector",
+   "name": "Vector",
+   "x": 270.7726593017578,
+   "y": 372.7309265136719,
+   "w": 36.929466247558594,
+   "h": 171.5481719970703,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24763",
+   "type": "vector",
+   "name": "Vector",
+   "x": 482.902099609375,
+   "y": 201.18272018432617,
+   "w": 50.76397705078125,
+   "h": 162.3251495361328,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24764",
+   "type": "vector",
+   "name": "Vector",
+   "x": 482.902099609375,
+   "y": 363.5079040527344,
+   "w": 50.76397705078125,
+   "h": 9.22301959991455,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24765",
+   "type": "vector",
+   "name": "Vector",
+   "x": 482.902099609375,
+   "y": 363.5079040527344,
+   "w": 50.76397705078125,
+   "h": 180.7711944580078,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24766",
+   "type": "vector",
+   "name": "Vector",
+   "x": 708.8660888671875,
+   "y": 182.73668670654297,
+   "w": 59.96833801269531,
+   "h": 180.7711944580078,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24767",
+   "type": "vector",
+   "name": "Vector",
+   "x": 708.8660888671875,
+   "y": 363.5079040527344,
+   "w": 59.96833801269531,
+   "h": 132.81149291992188,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24768",
+   "type": "vector",
+   "name": "Vector",
+   "x": 944.07177734375,
+   "y": 182.73668670654297,
+   "w": 55.35679626464844,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24769",
+   "type": "vector",
+   "name": "Vector",
+   "x": 944.07177734375,
+   "y": 182.73668670654297,
+   "w": 55.35679626464844,
+   "h": 332.0287170410156,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24770",
+   "type": "vector",
+   "name": "Vector",
+   "x": 944.07177734375,
+   "y": 496.31939697265625,
+   "w": 55.35679626464844,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24771",
+   "type": "vector",
+   "name": "Vector",
+   "x": 1174.628662109375,
+   "y": 201.18272018432617,
+   "w": 46.15248107910156,
+   "h": 162.3251495361328,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24772",
+   "type": "vector",
+   "name": "Vector",
+   "x": 1174.628662109375,
+   "y": 363.5079040527344,
+   "w": 46.15248107910156,
+   "h": 151.2575225830078,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24773",
+   "type": "frame",
+   "name": "Group",
+   "x": 267.0833435058594,
+   "y": 369.04173278808594,
+   "w": 7.378416061401367,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24775",
+   "type": "frame",
+   "name": "Group",
+   "x": 304.01312255859375,
+   "y": 197.4935188293457,
+   "w": 182.578125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24778",
+   "type": "frame",
+   "name": "Group",
+   "x": 304.01312255859375,
+   "y": 369.04173278808594,
+   "w": 182.578125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24781",
+   "type": "frame",
+   "name": "Group",
+   "x": 304.01312255859375,
+   "y": 540.5898742675781,
+   "w": 182.578125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24784",
+   "type": "frame",
+   "name": "Group",
+   "x": 529.9769287109375,
+   "y": 359.8186950683594,
+   "w": 182.578125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24787",
+   "type": "frame",
+   "name": "Group",
+   "x": 765.1452026367188,
+   "y": 179.04747772216797,
+   "w": 182.6157989501953,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24790",
+   "type": "frame",
+   "name": "Group",
+   "x": 765.1452026367188,
+   "y": 492.63018798828125,
+   "w": 182.6157989501953,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24793",
+   "type": "frame",
+   "name": "Group",
+   "x": 995.7391357421875,
+   "y": 197.4935188293457,
+   "w": 182.57861328125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24796",
+   "type": "frame",
+   "name": "Group",
+   "x": 995.7391357421875,
+   "y": 511.07623291015625,
+   "w": 182.57861328125,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24799",
+   "type": "frame",
+   "name": "Group",
+   "x": 1217.0916748046875,
+   "y": 359.8186950683594,
+   "w": 7.378416061401367,
+   "h": 7.378416061401367,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24801",
+   "type": "instance",
+   "name": "Node card",
+   "x": 95.57254219055176,
+   "y": 352.20970153808594,
+   "w": 175.1999969482422,
+   "h": 127.33275604248047,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24802",
+   "type": "instance",
+   "name": "Node card",
+   "x": 307.7020568847656,
+   "y": 180.6615333557129,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24803",
+   "type": "instance",
+   "name": "Node card",
+   "x": 307.70191955566406,
+   "y": 352.2099609375,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24804",
+   "type": "instance",
+   "name": "Node card",
+   "x": 307.7020568847656,
+   "y": 523.7578735351562,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24805",
+   "type": "instance",
+   "name": "Node card",
+   "x": 533.6660766601562,
+   "y": 342.98667907714844,
+   "w": 175.1999969482422,
+   "h": 100.66829681396484,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24806",
+   "type": "instance",
+   "name": "Node card",
+   "x": 768.8344116210938,
+   "y": 162.5036563873291,
+   "w": 175.2373809814453,
+   "h": 170.3348846435547,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24807",
+   "type": "instance",
+   "name": "Node card",
+   "x": 768.83447265625,
+   "y": 476.029296875,
+   "w": 175.2373809814453,
+   "h": 156.33486938476562,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24808",
+   "type": "instance",
+   "name": "Node card",
+   "x": 999.428466796875,
+   "y": 180.6611328125,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24809",
+   "type": "instance",
+   "name": "Node card",
+   "x": 999.428466796875,
+   "y": 494.244140625,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24810",
+   "type": "instance",
+   "name": "Node card",
+   "x": 1220.7811279296875,
+   "y": 342.98667907714844,
+   "w": 175.1999969482422,
+   "h": 87.11397552490234,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24811",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 487.53253173828125,
+   "y": 191.9598388671875,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24812",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 487.53253173828125,
+   "y": 363.5076904296875,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24813",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 487.53253173828125,
+   "y": 535.0560302734375,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24814",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 718.1077270507812,
+   "y": 354.2850341796875,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24815",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 957.9060668945312,
+   "y": 173.51355171203613,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24816",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 957.9060668945312,
+   "y": 487.0965576171875,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24817",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 1179.259033203125,
+   "y": 191.9598388671875,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24818",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 1179.259033203125,
+   "y": 505.5423583984375,
+   "w": 18.4460391998291,
+   "h": 18.4460391998291,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24819",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 913.9999389648438,
+   "y": 134.63215827941895,
+   "w": 36.67302322387695,
+   "h": 36.67302322387695,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24820",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 914,
+   "y": 448.1578063964844,
+   "w": 36.67302322387695,
+   "h": 36.67302322387695,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24821",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 1144.556640625,
+   "y": 152.78963470458984,
+   "w": 36.67302322387695,
+   "h": 36.67302322387695,
+   "path": "Shell › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:24822",
+   "type": "instance",
+   "name": "Completed agents",
+   "x": 85,
+   "y": 811.7421875,
+   "w": 365,
+   "h": 63,
+   "path": "Shell › Container › Container"
+  },
+  {
+   "id": "2362:24823",
+   "type": "instance",
+   "name": "Task progress chip",
+   "x": 85,
+   "y": 77,
+   "w": 208,
+   "h": 36,
+   "path": "Shell › Container › Container"
+  },
+  {
+   "id": "2362:24824",
+   "type": "instance",
+   "name": "Zoom controls",
+   "x": 1243,
+   "y": 839,
+   "w": 172,
+   "h": 36,
+   "path": "Shell › Container › Container"
+  }
+ ]
+}

@@ -1,20 +1,38 @@
 import clsx from 'clsx';
+import type { CSSProperties } from 'react';
 
 import diamondBlue from '@/assets/icons/diamond-blue.svg';
 import diamondDark from '@/assets/icons/diamond-dark.svg';
 import plusWhite from '@/assets/icons/plus-white-14.svg';
 import helperGlyph from '@/assets/icons/step-kind-helper.svg';
+import { type NodeKindName, NodeKindTile } from '@/components/map/NodeKind';
 
-// Figma "Stage label" (2362:29462): numbered column header on the plan map (1 Research, 2 Decide…).
+// Figma "Stage label" (2362:29462): column header on the plan map. Without `number` it is the plain column label
+// the 2.x frames use now ("Research", "Decide the message"…): Medium 12/18 muted at design size; the 2.3 map
+// draws it at its 0.85 scale (10.2/15.3), so pass `scale`. With `number` it is the older numbered tile + label.
 export function StageLabel({
   number,
   label,
+  scale,
   className,
 }: {
-  number: number;
+  number?: number;
   label: string;
+  scale?: number;
   className?: string;
 }) {
+  if (number === undefined)
+    return (
+      <p
+        className={clsx(
+          'text-[12px] leading-[18px] font-medium whitespace-nowrap text-muted',
+          className
+        )}
+        style={scale ? { zoom: scale } : undefined}
+      >
+        {label}
+      </p>
+    );
   return (
     <div className={clsx('flex items-center gap-[4.95px]', className)}>
       <div className="flex size-[14.85px] shrink-0 items-center justify-center rounded-[4.125px] border-[0.825px] border-solid border-line bg-well">
@@ -29,20 +47,26 @@ export function StageLabel({
   );
 }
 
-// Figma "Approval gate" (2362:29466): "You approve" pill on a plan-map connector.
+// Figma "Approval gate" (2362:29466): "You approve" pill on a plan-map connector. Designed at 24.75px tall;
+// `scale` draws a scaled instance (2.3 uses 0.85 → 21.04px), with CSS zoom so layout scales too.
 export function ApprovalGate({
   label = 'You approve',
+  scale,
   onClick,
   className,
+  style,
 }: {
   label?: string;
+  scale?: number;
   onClick?: () => void;
   className?: string;
+  style?: CSSProperties;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      style={scale ? { zoom: scale, ...style } : style}
       className={clsx(
         'flex h-[24.75px] w-max items-center gap-[4.95px] rounded-[6.6px] border-[0.825px] border-solid border-line-2 bg-white px-[9.9px] drop-shadow-[0px_0.825px_0.825px_rgba(16,18,24,0.04)]',
         className
@@ -144,5 +168,28 @@ export function StepOption({
         </span>
       </span>
     </button>
+  );
+}
+
+const LEGEND: { kind: Exclude<NodeKindName, 'task'>; label: string }[] = [
+  { kind: 'action', label: 'Does the work' },
+  { kind: 'decision', label: 'Makes a call' },
+  { kind: 'output', label: 'Makes content' },
+];
+
+// The plan-map key (2.x "PlanMap" legend, e.g. 2362:23682): a 13.2px node-kind tile + 9.075/13.613 muted label per
+// kind, 13.2px apart. Sits above the zoom controls, pinned to the canvas.
+export function PlanLegend({ className }: { className?: string }) {
+  return (
+    <div className={clsx('flex h-[14.025px] items-start gap-[13.2px]', className)}>
+      {LEGEND.map((l) => (
+        <div key={l.kind} className="flex h-full shrink-0 items-center gap-[4.95px]">
+          <NodeKindTile kind={l.kind} size={13.2} />
+          <p className="text-[9.075px] leading-[13.613px] tracking-[-0.066px] whitespace-nowrap text-muted">
+            {l.label}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }

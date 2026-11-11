@@ -12,19 +12,27 @@ import { ZoomControls } from './CanvasControls';
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2;
 const STEP = 0.1;
+// Phones open at a readable zoom (the readout shows 66%) instead of fit-to-width (~23%), scrolled to `focus`.
+const PHONE_ZOOM = 0.8;
+const isPhone = () => typeof window !== 'undefined' && window.innerWidth < 768;
 const clamp = (z: number) =>
   Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.floor(z * 1000 + 1e-6) / 1000));
 
 // Figma "ZoomStage": the map canvas. A pannable viewport (scroll, or drag with the mouse) holding the
 // stage at its design size (1362×830, the canvas area of a 1440×900 frame), so at 1440×900 it is
-// exactly the Figma frame. Zoom controls scale the stage; under 768px it starts fit-to-width.
-// `overlay` is pinned to the viewport (Tasks chip, Completed agents), not to the map.
+// exactly the Figma frame. Zoom controls scale the stage; Fit view fits the whole stage. Under 768px it starts at a
+// readable zoom, scrolled so `focus` (a stage point, e.g. the active node) is in view.
+// `overlay` is pinned to the viewport (Tasks chip, Completed agents), not to the map. Zoom controls sit 16px from
+// the bottom-right; planning screens with "What goes out" put them bottom-left (`zoomPosition="left"`).
 export function MapCanvas({
   stageWidth = 1362,
   stageHeight = 830,
   zoomLabelBase = 83,
   overlay,
   zoomClassName,
+  zoomPosition = 'right',
+  focus,
+  fitWidth,
   className,
   children,
 }: {
@@ -34,29 +42,57 @@ export function MapCanvas({
   zoomLabelBase?: number;
   overlay?: ReactNode;
   zoomClassName?: string;
+  zoomPosition?: 'left' | 'right';
+  /** Stage point to scroll into view when a phone opens the map (defaults to the stage centre). */
+  focus?: { x: number; y: number };
+  /** Desktop: while the viewport is narrower than the stage, scale the stage down to fit its width (the same
+   *  zoom as Fit view), until the zoom controls are used. A run screen with the side panel docked at 1280–1440px. */
+  fitWidth?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(() =>
-    typeof window !== 'undefined' && window.innerWidth < 768 ? -1 : 1
-  );
+  const [zoom, setZoom] = useState(() => (isPhone() ? PHONE_ZOOM : 1));
   const prevZoom = useRef(zoom);
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
 
-  const fit = (mode: 'width' | 'both') => {
+  const fit = () => {
     const el = scroller.current;
     if (!el) return 1;
-    const w = el.clientWidth / stageWidth;
-    const h = el.clientHeight / stageHeight;
-    return clamp(mode === 'width' ? w : Math.min(w, h));
+    return clamp(
+      Math.min(el.clientWidth / stageWidth, el.clientHeight / stageHeight)
+    );
   };
 
-  // Resolve the phone default (fit-to-width) once the viewport is measured.
+  // Phones: scroll the opening zoom to the focus point once the viewport is measured.
   useLayoutEffect(() => {
-    if (zoom === -1) setZoom(fit('width'));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once for the initial fit
+    const el = scroller.current;
+    if (!el || !isPhone()) return;
+    const fx = focus?.x ?? stageWidth / 2;
+    const fy = focus?.y ?? stageHeight / 2;
+    el.scrollLeft = fx * zoom - el.clientWidth / 2;
+    el.scrollTop = fy * zoom - el.clientHeight / 2;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, for the opening view
   }, []);
+
+  // fitWidth: follow the viewport width (never above 100%) until the user zooms by hand.
+  const userZoomed = useRef(false);
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    if (!el || !fitWidth || isPhone()) return;
+    const update = () => {
+      if (userZoomed.current) return;
+      setZoom(el.clientWidth >= stageWidth ? 1 : clamp(el.clientWidth / stageWidth));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fitWidth, stageWidth]);
+  const zoomBy = (next: number) => {
+    userZoomed.current = true;
+    setZoom(next);
+  };
 
   // Keep the viewport centre steady while zooming.
   useLayoutEffect(() => {
@@ -128,10 +164,14 @@ export function MapCanvas({
       {overlay}
       <ZoomControls
         label={`${Math.round(zoomLabelBase * z)}%`}
-        onZoomOut={() => setZoom(clamp(z - STEP))}
-        onZoomIn={() => setZoom(clamp(z + STEP))}
-        onFit={() => setZoom(fit('both'))}
-        className={clsx('absolute right-4 bottom-4', zoomClassName)}
+        onZoomOut={() => zoomBy(clamp(z - STEP))}
+        onZoomIn={() => zoomBy(clamp(z + STEP))}
+        onFit={() => zoomBy(fit())}
+        className={clsx(
+          'absolute bottom-4',
+          zoomPosition === 'left' ? 'left-4' : 'right-4',
+          zoomClassName
+        )}
       />
     </div>
   );

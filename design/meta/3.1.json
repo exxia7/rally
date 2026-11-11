@@ -1,0 +1,207 @@
+{
+ "id": "3.1",
+ "node": "2362:24710",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:24711",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:24712",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:24713",
+   "type": "frame",
+   "name": "NewFlowEmpty",
+   "x": 68,
+   "y": 8,
+   "w": 1364,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:24714",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 1362,
+   "h": 52,
+   "path": "Shell › NewFlowEmpty"
+  },
+  {
+   "id": "2362:24715",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 181,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar"
+  },
+  {
+   "id": "2362:24716",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar › Text"
+  },
+  {
+   "id": "2362:24717",
+   "type": "instance",
+   "name": "Link",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24718",
+   "type": "frame",
+   "name": "Text",
+   "x": 160,
+   "y": 25,
+   "w": 106,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar › Text"
+  },
+  {
+   "id": "2362:24719",
+   "type": "text",
+   "name": "/",
+   "x": 160,
+   "y": 25,
+   "w": 5,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24720",
+   "type": "text",
+   "name": "New workflow",
+   "x": 171,
+   "y": 25,
+   "w": 95,
+   "h": 20,
+   "path": "Shell › NewFlowEmpty › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:24721",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 266,
+   "y": 19,
+   "w": 193,
+   "h": 32,
+   "path": "Shell › NewFlowEmpty › TopBar"
+  },
+  {
+   "id": "2362:24722",
+   "type": "instance",
+   "name": "Segmented control",
+   "x": 282,
+   "y": 19,
+   "w": 177,
+   "h": 32,
+   "path": "Shell › NewFlowEmpty › TopBar › Container:margin"
+  },
+  {
+   "id": "2362:24723",
+   "type": "frame",
+   "name": "Main Content",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › NewFlowEmpty"
+  },
+  {
+   "id": "2362:24726",
+   "type": "frame",
+   "name": "Container",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › NewFlowEmpty › Main Content"
+  },
+  {
+   "id": "2362:24727",
+   "type": "frame",
+   "name": "Empty state / Switch to Planning",
+   "x": 540,
+   "y": 409,
+   "w": 420,
+   "h": 134,
+   "path": "Shell › NewFlowEmpty › Main Content › Container"
+  },
+  {
+   "id": "2362:24728",
+   "type": "frame",
+   "name": "Status / Idle",
+   "x": 540,
+   "y": 409,
+   "w": 420,
+   "h": 76,
+   "path": "Shell › NewFlowEmpty › Main Content › Container › Empty state / Switch to Planning"
+  },
+  {
+   "id": "2362:24732",
+   "type": "instance",
+   "name": "Workflow logo",
+   "x": 722,
+   "y": 409,
+   "w": 56,
+   "h": 56,
+   "path": "Shell › NewFlowEmpty › Main Content › Container › Empty state / Switch to Planning › Status / Idle"
+  },
+  {
+   "id": "2362:24733",
+   "type": "text",
+   "name": "No workflows running",
+   "x": 540,
+   "y": 485,
+   "w": 420,
+   "h": 28,
+   "path": "Shell › NewFlowEmpty › Main Content › Container › Empty state / Switch to Planning"
+  },
+  {
+   "id": "2362:24734",
+   "type": "frame",
+   "name": "Paragraph",
+   "x": 540,
+   "y": 513,
+   "w": 420,
+   "h": 30,
+   "path": "Shell › NewFlowEmpty › Main Content › Container › Empty state / Switch to Planning"
+  },
+  {
+   "id": "2362:24735",
+   "type": "text",
+   "name": "Switch to the Planning tab to get started.",
+   "x": 540,
+   "y": 521,
+   "w": 420,
+   "h": 22,
+   "path": "Shell › NewFlowEmpty › Main Content › Container › Empty state / Switch to Planning › Paragraph"
+  }
+ ]
+}

@@ -1,0 +1,307 @@
+{
+ "id": "1.1",
+ "node": "2362:23299",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:23300",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:23301",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23302",
+   "type": "frame",
+   "name": "Home",
+   "x": 68,
+   "y": 8,
+   "w": 1364,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:23303",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 1362,
+   "h": 52,
+   "path": "Shell › Home"
+  },
+  {
+   "id": "2362:23304",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 121,
+   "h": 20,
+   "path": "Shell › Home › TopBar"
+  },
+  {
+   "id": "2362:23305",
+   "type": "text",
+   "name": "Lumen workspace",
+   "x": 85,
+   "y": 25,
+   "w": 121,
+   "h": 20,
+   "path": "Shell › Home › TopBar › Text"
+  },
+  {
+   "id": "2362:23306",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 206,
+   "y": 19,
+   "w": 1209,
+   "h": 32,
+   "path": "Shell › Home › TopBar"
+  },
+  {
+   "id": "2362:23307",
+   "type": "frame",
+   "name": "Container",
+   "x": 1230.96875,
+   "y": 19,
+   "w": 184.03125,
+   "h": 32,
+   "path": "Shell › Home › TopBar › Container:align"
+  },
+  {
+   "id": "2362:23308",
+   "type": "instance",
+   "name": "Button",
+   "x": 1230.96875,
+   "y": 19,
+   "w": 148.03125,
+   "h": 32,
+   "path": "Shell › Home › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:23309",
+   "type": "instance",
+   "name": "User avatar",
+   "x": 1387,
+   "y": 21,
+   "w": 28,
+   "h": 28,
+   "path": "Shell › Home › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:23310",
+   "type": "frame",
+   "name": "Main Content",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 830,
+   "path": "Shell › Home"
+  },
+  {
+   "id": "2362:23311",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 69,
+   "y": 61,
+   "w": 1362,
+   "h": 600,
+   "path": "Shell › Home › Main Content"
+  },
+  {
+   "id": "2362:23312",
+   "type": "frame",
+   "name": "Container",
+   "x": 230,
+   "y": 61,
+   "w": 1040,
+   "h": 600,
+   "path": "Shell › Home › Main Content › Container:margin"
+  },
+  {
+   "id": "2362:23313",
+   "type": "frame",
+   "name": "Container",
+   "x": 262,
+   "y": 109,
+   "w": 976,
+   "h": 36,
+   "path": "Shell › Home › Main Content › Container:margin › Container"
+  },
+  {
+   "id": "2362:23314",
+   "type": "frame",
+   "name": "Heading 1",
+   "x": 262,
+   "y": 109,
+   "w": 560,
+   "h": 36,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container"
+  },
+  {
+   "id": "2362:23315",
+   "type": "text",
+   "name": "Your workflows",
+   "x": 262,
+   "y": 109,
+   "w": 215,
+   "h": 36,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container › Heading 1"
+  },
+  {
+   "id": "2362:23316",
+   "type": "frame",
+   "name": "Workflow filters",
+   "x": 262,
+   "y": 145,
+   "w": 976,
+   "h": 52,
+   "path": "Shell › Home › Main Content › Container:margin › Container"
+  },
+  {
+   "id": "2362:23317",
+   "type": "instance",
+   "name": "Search workflows",
+   "x": 262,
+   "y": 165,
+   "w": 200,
+   "h": 32,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23318",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 470,
+   "y": 167,
+   "w": 52,
+   "h": 28,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23319",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 530,
+   "y": 167,
+   "w": 82,
+   "h": 28,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23320",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 620,
+   "y": 167,
+   "w": 96,
+   "h": 28,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23321",
+   "type": "instance",
+   "name": "Workflow status filter",
+   "x": 724,
+   "y": 167,
+   "w": 84,
+   "h": 28,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23322",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 816,
+   "y": 165,
+   "w": 422,
+   "h": 32,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters"
+  },
+  {
+   "id": "2362:23323",
+   "type": "instance",
+   "name": "Button",
+   "x": 1105,
+   "y": 165,
+   "w": 133,
+   "h": 32,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Workflow filters › Container:align"
+  },
+  {
+   "id": "2362:23324",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 262,
+   "y": 197,
+   "w": 976,
+   "h": 416,
+   "path": "Shell › Home › Main Content › Container:margin › Container"
+  },
+  {
+   "id": "2362:23325",
+   "type": "frame",
+   "name": "Container",
+   "x": 262,
+   "y": 209,
+   "w": 976,
+   "h": 404,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container:margin"
+  },
+  {
+   "id": "2362:23326",
+   "type": "instance",
+   "name": "Workflow card",
+   "x": 262,
+   "y": 209,
+   "w": 312,
+   "h": 192,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23327",
+   "type": "instance",
+   "name": "Workflow card",
+   "x": 594,
+   "y": 209,
+   "w": 312,
+   "h": 192,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23328",
+   "type": "instance",
+   "name": "Workflow card",
+   "x": 926,
+   "y": 209,
+   "w": 312,
+   "h": 192,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:23329",
+   "type": "instance",
+   "name": "Workflow card",
+   "x": 262,
+   "y": 421,
+   "w": 312,
+   "h": 192,
+   "path": "Shell › Home › Main Content › Container:margin › Container › Container:margin › Container"
+  }
+ ]
+}

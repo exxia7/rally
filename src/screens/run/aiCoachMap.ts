@@ -1,10 +1,20 @@
+import nodeKindOutputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
 import type { AgentName } from '@/components/agents/characters';
 import type { MapEdge, MapNode } from '@/components/map/FlowMap';
+import type { Decision } from '@/components/panels/DecisionLog';
+import type { InspectorData } from '@/components/run/InspectorPanel';
+import type { RunData } from '@/components/run/RunScreenLayout';
+import type { RunChatMessage } from '@/components/run/RunSidePanel';
+import type { SandboxSection } from '@/components/run/SandboxPanel';
+import type { TaskItem } from '@/components/run/TasksOverlay';
 
 // The AI Coach launch run map as Figma draws it in 3.2 "Running" (FlowMap frame 2362:24759, 1282×581
 // placed at 45,83 on the 1362×830 canvas). Other run/rerun/fork frames start from these and override
 // node states, edges and overlays.
 export const AI_COACH_MAP = { x: 45, y: 83, width: 1282, height: 581.05 };
+
+// With the side panel docked (3.3–3.5) the canvas is 954px wide and Figma redraws the same map 874px wide at 43,165.
+export const AI_COACH_DOCKED = { x: 43, y: 165, width: 874 };
 
 export const AI_COACH_NODES: MapNode[] = [
   {
@@ -189,3 +199,178 @@ export const AI_COACH_DONE: AgentName[] = [
   'Strategist',
   'Publisher',
 ];
+
+// The anchored Tasks overlay (3.2-tasks, 2362:26565).
+export const AI_COACH_TASKS: TaskItem[] = [
+  { id: 'writer', title: 'Launch copy', state: 'running' },
+  { id: 'designer', title: 'Visuals', state: 'running' },
+  { id: 'task', title: 'Your launch', state: 'running' },
+  { id: 'ready', title: 'Ready to post', state: 'approval' },
+  { id: 'discord', title: 'Discord post', state: 'waiting' },
+  { id: 'schedule', title: 'Schedule launch', state: 'waiting' },
+  { id: 'plan', title: 'Launch plan', state: 'done' },
+  { id: 'scout', title: 'Competitor scan', state: 'done' },
+  { id: 'insights', title: 'Waitlist survey', state: 'done' },
+  { id: 'decision', title: 'Who is this launch for?', state: 'done' },
+];
+export const AI_COACH_TASKS_SUMMARY = '4 of 10 done · about 4 min left';
+
+// Sandbox tab (3.3, 2362:24921). Assets opens with 4 of 7 rows.
+export const AI_COACH_SANDBOX: SandboxSection[] = [
+  {
+    id: 'assets',
+    title: 'Assets',
+    open: true,
+    visible: 4,
+    items: [
+      { name: 'Brand guide.pdf', source: 'Writer, Designer' },
+      { name: 'Logo.svg', source: 'Designer' },
+      { name: 'lumen.app', source: 'Planner, Writer' },
+      { name: 'Press kit.zip', source: 'New · not used yet' },
+      { name: 'Waitlist export.csv', source: 'Insights' },
+      { name: 'App screenshots.zip', source: 'Designer' },
+      { name: 'Pricing page.url', source: 'Scout' },
+    ],
+  },
+  {
+    id: 'skills',
+    title: 'Skills',
+    items: [
+      { name: 'Brand voice', source: 'Writer' },
+      { name: 'Post examples', source: 'Writer, Community' },
+    ],
+  },
+  {
+    id: 'tools',
+    title: 'Tools',
+    items: [
+      { name: 'Web search', source: 'Scout, Insights' },
+      { name: 'Image maker', source: 'Designer' },
+      { name: 'Discord', source: 'Community' },
+      { name: 'X scheduler', source: 'Publisher' },
+      { name: 'Survey reader', source: 'Insights' },
+    ],
+  },
+  {
+    id: 'facts',
+    title: 'Launch facts',
+    items: [
+      { name: 'Launch on Mar 12, 9am', source: 'From your chat' },
+      { name: '2,800 waitlist signups', source: 'From your chat' },
+      { name: '$300 budget', source: 'Planner' },
+    ],
+  },
+  {
+    id: 'permissions',
+    title: 'Permissions',
+    items: [
+      { name: 'Post to Discord', source: 'Asks you first' },
+      { name: 'Schedule on X', source: 'Asks you first' },
+      { name: 'Spend on ads', source: 'Up to $50' },
+      { name: 'Read your files', source: 'Allowed' },
+    ],
+  },
+];
+
+// Decisions tab (3.4, 2362:25048).
+export const AI_COACH_DECISIONS: Decision[] = [
+  {
+    id: 'audience',
+    agent: 'Strategist',
+    who: 'Strategist',
+    time: '2:10 pm',
+    by: 'helper',
+    title: 'Audience: people who already budget',
+    basis: "Based on Insights' card (61% budget monthly)",
+    tag: 'Was not sure',
+    canFork: true,
+  },
+  {
+    id: 'timing',
+    agent: 'Planner',
+    who: 'Planner',
+    time: '2:02 pm',
+    by: 'helper',
+    title: 'Launch Mar 12 at 9am · $300 budget',
+    basis: 'From your chat',
+  },
+];
+export const AI_COACH_DECISIONS_MORE =
+  '3 more · Permissions set to Balanced, ad limit $50, approved team';
+
+// Chat tab while the run goes (no Figma frame: the plan chat's messages continued).
+export const AI_COACH_CHAT: RunChatMessage[] = [
+  { from: 'user', text: 'Mar 12, to our 2,800 waitlist signups' },
+  {
+    from: 'assistant',
+    text: 'Your launch is running. Writer is on 3 of 5 pieces and Designer is making the first image. I’ll check with you before anything is posted.',
+  },
+];
+export const AI_COACH_CHAT_SUGGESTIONS = [
+  'Make the copy shorter',
+  'Add an Instagram post',
+];
+
+// Node inspector (3.5, 2362:25179) for the Writer's Launch copy. Other nodes fall back to their card data.
+export const AI_COACH_INSPECTOR: Record<string, InspectorData> = {
+  writer: {
+    eyebrow: 'Output',
+    kindIcon: nodeKindOutputGlyph,
+    branch: 'Original path',
+    title: 'Launch copy',
+    meta: 'Writer · Working · 4 pieces',
+    preview: {
+      eyebrow: 'Writer wrote',
+      quote:
+        '“Your money finally has a coach. AI Coach is live for waitlist members on Mar 12.”',
+      action: 'See all 4 pieces',
+    },
+    fork: {
+      description: 'Try another direction. The original path stays as it is.',
+    },
+    rerun: {
+      description:
+        'Available once Writer finishes. Earlier steps stay as they are.',
+      disabled: true,
+    },
+    fields: [
+      {
+        label: 'Why',
+        value:
+          "The Strategist's card says lead with coaching, for people who already budget.",
+      },
+      {
+        label: 'Based on',
+        value:
+          "Strategist's handoff ✓ and your brand voice skill. Every fact traces back to a card.",
+      },
+      {
+        label: 'Impact',
+        value: 'Community and Publisher use this copy next.',
+      },
+    ],
+    extras: {
+      label: 'Just for Writer',
+      items: ['Brand voice · skill', 'Post examples · file'],
+    },
+  },
+};
+
+// Everything the AI Coach run screens (3.2–3.5) show, for RunScreenLayout.
+export const AI_COACH_RUN: RunData = {
+  map: {
+    ...AI_COACH_MAP,
+    nodes: AI_COACH_NODES,
+    edges: AI_COACH_EDGES,
+    docked: AI_COACH_DOCKED,
+  },
+  completed: AI_COACH_DONE,
+  tasks: AI_COACH_TASKS,
+  tasksSummary: AI_COACH_TASKS_SUMMARY,
+  sandbox: AI_COACH_SANDBOX,
+  decisions: AI_COACH_DECISIONS,
+  decisionsMore: AI_COACH_DECISIONS_MORE,
+  chat: AI_COACH_CHAT,
+  chatSuggestions: AI_COACH_CHAT_SUGGESTIONS,
+  inspectors: AI_COACH_INSPECTOR,
+};

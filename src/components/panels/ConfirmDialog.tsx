@@ -3,9 +3,11 @@ import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Modal } from '@/components/ui/Modal';
+import { TextArea } from '@/components/ui/TextArea';
 
 // Confirm dialog from 4.1b "Rerun confirm" (2362:27130), built on Modal. SemiBold 18/26 title, 13/19 ink-2 body
-// (6px apart), optional well box listing what else is affected, a 12/17 muted cost line, an optional
+// (6px apart), an optional note field (6.2 "Rerun from here", 2362:25977: Medium 12 label, 6px, a 57px Text area),
+// optional well box listing what else is affected, a 12/17 muted cost line, an optional
 // "Don't show this again" block (1px top line, 12px top), then right-aligned Cancel + primary confirm.
 export type AffectedItem = {
   key: string;
@@ -26,10 +28,12 @@ export function ConfirmDialog({
   dontShowNote,
   confirmLabel,
   cancelLabel = 'Cancel',
+  note,
 }: {
   open: boolean;
   onClose: () => void;
-  onConfirm: (dontShowAgain: boolean) => void;
+  /** `note` is the note field's text when the dialog has one. */
+  onConfirm: (dontShowAgain: boolean, note: string) => void;
   title: string;
   body: ReactNode;
   affectedLabel?: string;
@@ -38,8 +42,11 @@ export function ConfirmDialog({
   dontShowNote?: string;
   confirmLabel: string;
   cancelLabel?: string;
+  /** Free-text field under the body: what should change on the rerun. */
+  note?: { label: string; defaultValue?: string; placeholder?: string };
 }) {
   const [dontShow, setDontShow] = useState(false);
+  const [noteText, setNoteText] = useState(note?.defaultValue ?? '');
   return (
     <Modal open={open} onClose={onClose} label={title}>
       <div className="flex w-full flex-col items-start gap-1.5 overflow-clip">
@@ -48,6 +55,18 @@ export function ConfirmDialog({
         </p>
         <p className="w-full text-[13px] leading-[19px] text-ink-2">{body}</p>
       </div>
+      {note && (
+        <label className="flex w-full flex-col items-start gap-1.5">
+          <span className="text-[12px] leading-[15px] font-medium whitespace-nowrap text-ink max-md:whitespace-normal">
+            {note.label}
+          </span>
+          <TextArea
+            value={noteText}
+            placeholder={note.placeholder}
+            onChange={(e) => setNoteText(e.target.value)}
+          />
+        </label>
+      )}
       {affected && affected.length > 0 && (
         <div className="flex w-full flex-col items-start gap-2.5 overflow-clip rounded-[10px] bg-well px-3.5 py-3">
           <p className="text-[12px] leading-[17px] font-medium whitespace-nowrap text-muted">
@@ -93,7 +112,7 @@ export function ConfirmDialog({
         <Button variant="secondary" onClick={onClose}>
           {cancelLabel}
         </Button>
-        <Button variant="primary" onClick={() => onConfirm(dontShow)}>
+        <Button variant="primary" onClick={() => onConfirm(dontShow, noteText)}>
           {confirmLabel}
         </Button>
       </div>

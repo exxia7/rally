@@ -28,3 +28,28 @@ export function edgePath(
   ].join('');
 }
 
+
+// Fork line (Figma "Fork line", 4.5/6.5): leaves the parent path at (x, y), the handoff marker on its stub, runs
+// straight down that vertical and turns into each target port. One path for all targets, so a semi-transparent
+// stroke doesn't darken where the branches overlap.
+export function forkLinePath(
+  x: number,
+  y: number,
+  targets: { x: number; y: number }[],
+  radius = RUN_MAP_RADIUS,
+  kappa = 2 / 3
+) {
+  return targets
+    .map((t) => {
+      const r = Math.min(radius, Math.abs(t.y - y), Math.abs(t.x - x));
+      if (r < 0.01) return `M${x} ${y}V${t.y}H${t.x}`;
+      const h = r * (1 - kappa);
+      return [
+        `M${x} ${y}`,
+        `V${t.y - r}`,
+        `C${x} ${t.y - h} ${x + h} ${t.y} ${x + r} ${t.y}`,
+        `H${t.x}`,
+      ].join('');
+    })
+    .join('');
+}

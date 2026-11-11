@@ -10,12 +10,15 @@ export function RadioCard({
   selected,
   onSelect,
   className,
+  titleClassName,
 }: {
   title: string;
   description: string;
   selected?: boolean;
   onSelect?: () => void;
   className?: string;
+  /** e.g. `min-h-[21px]`: Figma rounds the 20.25px title box up to 21px in the hand-raise panel (4.1, 4.3). */
+  titleClassName?: string;
 }) {
   return (
     <button
@@ -35,7 +38,12 @@ export function RadioCard({
         <Radio on={selected} />
       </span>
       <span className="flex min-w-px flex-1 flex-col">
-        <span className="text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] text-ink">
+        <span
+          className={clsx(
+            'text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] text-ink',
+            titleClassName
+          )}
+        >
           {title}
         </span>
         <span className="pt-0.5 text-[12px] leading-[18px] tracking-[-0.08px] text-muted">

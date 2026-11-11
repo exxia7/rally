@@ -1,0 +1,1357 @@
+{
+ "id": "3.4-tasks",
+ "node": "2362:26732",
+ "source": "design/meta/section.xml",
+ "boxes": [
+  {
+   "id": "2362:26733",
+   "type": "frame",
+   "name": "Shell",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:26734",
+   "type": "instance",
+   "name": "Sidebar",
+   "x": 8,
+   "y": 8,
+   "w": 52,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:26735",
+   "type": "frame",
+   "name": "Container",
+   "x": 68,
+   "y": 8,
+   "w": 1364,
+   "h": 884,
+   "path": "Shell"
+  },
+  {
+   "id": "2362:26736",
+   "type": "frame",
+   "name": "Container",
+   "x": 68,
+   "y": 8,
+   "w": 956,
+   "h": 884,
+   "path": "Shell › Container"
+  },
+  {
+   "id": "2362:26737",
+   "type": "frame",
+   "name": "TopBar",
+   "x": 69,
+   "y": 9,
+   "w": 954,
+   "h": 52,
+   "path": "Shell › Container › Container"
+  },
+  {
+   "id": "2362:26738",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 214,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar"
+  },
+  {
+   "id": "2362:26739",
+   "type": "frame",
+   "name": "Text",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar › Text"
+  },
+  {
+   "id": "2362:26740",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 85,
+   "y": 25,
+   "w": 69,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:26741",
+   "type": "frame",
+   "name": "Text",
+   "x": 160,
+   "y": 25,
+   "w": 139,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar › Text"
+  },
+  {
+   "id": "2362:26742",
+   "type": "text",
+   "name": "/",
+   "x": 160,
+   "y": 25,
+   "w": 5,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:26743",
+   "type": "instance",
+   "name": "Breadcrumb",
+   "x": 171,
+   "y": 25,
+   "w": 108,
+   "h": 20,
+   "path": "Shell › Container › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:26744",
+   "type": "instance",
+   "name": "Title menu",
+   "x": 285,
+   "y": 28,
+   "w": 14,
+   "h": 14,
+   "path": "Shell › Container › Container › TopBar › Text › Text"
+  },
+  {
+   "id": "2362:26745",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 299,
+   "y": 19,
+   "w": 193,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar"
+  },
+  {
+   "id": "2362:26746",
+   "type": "instance",
+   "name": "Segmented control",
+   "x": 315,
+   "y": 19,
+   "w": 177,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar › Container:margin"
+  },
+  {
+   "id": "2362:26747",
+   "type": "frame",
+   "name": "Container:align",
+   "x": 492,
+   "y": 19,
+   "w": 515,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar"
+  },
+  {
+   "id": "2362:26748",
+   "type": "frame",
+   "name": "Container",
+   "x": 716,
+   "y": 19,
+   "w": 291,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar › Container:align"
+  },
+  {
+   "id": "2362:26749",
+   "type": "instance",
+   "name": "Run status",
+   "x": 716,
+   "y": 21,
+   "w": 119,
+   "h": 28,
+   "path": "Shell › Container › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:26750",
+   "type": "instance",
+   "name": "Workflow settings",
+   "x": 843,
+   "y": 19,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:26751",
+   "type": "instance",
+   "name": "Panel toggle",
+   "x": 883,
+   "y": 19,
+   "w": 32,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:26752",
+   "type": "instance",
+   "name": "Button",
+   "x": 923,
+   "y": 19,
+   "w": 84,
+   "h": 32,
+   "path": "Shell › Container › Container › TopBar › Container:align › Container"
+  },
+  {
+   "id": "2362:26753",
+   "type": "frame",
+   "name": "Container",
+   "x": 69,
+   "y": 61,
+   "w": 954,
+   "h": 830,
+   "path": "Shell › Container › Container"
+  },
+  {
+   "id": "2362:26754",
+   "type": "frame",
+   "name": "ZoomStage",
+   "x": 69,
+   "y": 61,
+   "w": 954,
+   "h": 830,
+   "path": "Shell › Container › Container › Container"
+  },
+  {
+   "id": "2362:26755",
+   "type": "frame",
+   "name": "Container",
+   "x": 112,
+   "y": 226,
+   "w": 874,
+   "h": 396.1294860839844,
+   "path": "Shell › Container › Container › Container › ZoomStage"
+  },
+  {
+   "id": "2362:26756",
+   "type": "frame",
+   "name": "FlowMap",
+   "x": 112,
+   "y": 226,
+   "w": 874,
+   "h": 396.1294860839844,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container"
+  },
+  {
+   "id": "2362:26757",
+   "type": "vector",
+   "name": "FlowMap",
+   "x": 218.87934112548828,
+   "y": 264.9841766357422,
+   "w": 25.176570892333984,
+   "h": 116.9525146484375,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26758",
+   "type": "vector",
+   "name": "Vector",
+   "x": 218.87934112548828,
+   "y": 381.93670654296875,
+   "w": 25.176570892333984,
+   "h": 0,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26759",
+   "type": "vector",
+   "name": "Vector",
+   "x": 218.87934112548828,
+   "y": 381.93670654296875,
+   "w": 25.176570892333984,
+   "h": 116.9525146484375,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26760",
+   "type": "vector",
+   "name": "Vector",
+   "x": 363.4980773925781,
+   "y": 264.9841766357422,
+   "w": 34.60822296142578,
+   "h": 110.66474151611328,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26761",
+   "type": "vector",
+   "name": "Vector",
+   "x": 363.4980773925781,
+   "y": 375.64891052246094,
+   "w": 34.60822296142578,
+   "h": 6.287769317626953,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26762",
+   "type": "vector",
+   "name": "Vector",
+   "x": 363.4980773925781,
+   "y": 375.64891052246094,
+   "w": 34.60822296142578,
+   "h": 123.24028778076172,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26763",
+   "type": "vector",
+   "name": "Vector",
+   "x": 517.5484313964844,
+   "y": 252.40863609313965,
+   "w": 40.88323211669922,
+   "h": 123.24028778076172,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26764",
+   "type": "vector",
+   "name": "Vector",
+   "x": 517.5484313964844,
+   "y": 375.64891052246094,
+   "w": 40.88323211669922,
+   "h": 90.54387664794922,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26765",
+   "type": "vector",
+   "name": "Vector",
+   "x": 677.8992919921875,
+   "y": 252.40863609313965,
+   "w": 37.73936462402344,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26766",
+   "type": "vector",
+   "name": "Vector",
+   "x": 677.8992919921875,
+   "y": 252.40863609313965,
+   "w": 37.73936462402344,
+   "h": 226.35971069335938,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26767",
+   "type": "vector",
+   "name": "Vector",
+   "x": 677.8992919921875,
+   "y": 466.1927795410156,
+   "w": 37.73936462402344,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26768",
+   "type": "vector",
+   "name": "Vector",
+   "x": 835.080810546875,
+   "y": 264.9841766357422,
+   "w": 31.464332580566406,
+   "h": 110.66474151611328,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26769",
+   "type": "vector",
+   "name": "Vector",
+   "x": 835.080810546875,
+   "y": 375.64891052246094,
+   "w": 31.464332580566406,
+   "h": 103.11942291259766,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26770",
+   "type": "frame",
+   "name": "Group",
+   "x": 216.36394500732422,
+   "y": 379.42156982421875,
+   "w": 5.030216217041016,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26772",
+   "type": "frame",
+   "name": "Group",
+   "x": 241.54043579101562,
+   "y": 262.46906661987305,
+   "w": 124.47259521484375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26775",
+   "type": "frame",
+   "name": "Group",
+   "x": 241.54043579101562,
+   "y": 379.42156982421875,
+   "w": 124.47259521484375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26778",
+   "type": "frame",
+   "name": "Group",
+   "x": 241.54043579101562,
+   "y": 496.37408447265625,
+   "w": 124.47259521484375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26781",
+   "type": "frame",
+   "name": "Group",
+   "x": 395.5914611816406,
+   "y": 373.13380432128906,
+   "w": 124.47161865234375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26784",
+   "type": "frame",
+   "name": "Group",
+   "x": 555.9165649414062,
+   "y": 249.89352989196777,
+   "w": 124.49784851074219,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26787",
+   "type": "frame",
+   "name": "Group",
+   "x": 555.9165649414062,
+   "y": 463.6776885986328,
+   "w": 124.49784851074219,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26790",
+   "type": "frame",
+   "name": "Group",
+   "x": 713.1231689453125,
+   "y": 262.46906661987305,
+   "w": 124.47259521484375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26793",
+   "type": "frame",
+   "name": "Group",
+   "x": 713.1231689453125,
+   "y": 476.2532196044922,
+   "w": 124.47259521484375,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26796",
+   "type": "frame",
+   "name": "Group",
+   "x": 864.0296630859375,
+   "y": 373.13380432128906,
+   "w": 5.030216217041016,
+   "h": 5.030216217041016,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26798",
+   "type": "instance",
+   "name": "Node card",
+   "x": 99.43720626831055,
+   "y": 367.9464111328125,
+   "w": 119.442138671875,
+   "h": 86.76665496826172,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26799",
+   "type": "instance",
+   "name": "Node card",
+   "x": 244.05592346191406,
+   "y": 250.99388885498047,
+   "w": 119.442138671875,
+   "h": 59.38972473144531,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26800",
+   "type": "instance",
+   "name": "Node card",
+   "x": 244.05592346191406,
+   "y": 367.9464111328125,
+   "w": 119.442138671875,
+   "h": 59.38972473144531,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26801",
+   "type": "instance",
+   "name": "Node card",
+   "x": 244.0560302734375,
+   "y": 484.8984375,
+   "w": 119.442138671875,
+   "h": 59.389732360839844,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26802",
+   "type": "instance",
+   "name": "Node card",
+   "x": 398.1062927246094,
+   "y": 361.6586456298828,
+   "w": 119.44214630126953,
+   "h": 68.72239685058594,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26803",
+   "type": "instance",
+   "name": "Node card",
+   "x": 558.431640625,
+   "y": 238.615234375,
+   "w": 119.44145202636719,
+   "h": 116.0341796875,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26804",
+   "type": "instance",
+   "name": "Node card",
+   "x": 558.4316711425781,
+   "y": 452.35972595214844,
+   "w": 119.4676284790039,
+   "h": 107.04887390136719,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26805",
+   "type": "instance",
+   "name": "Node card",
+   "x": 715.6385498046875,
+   "y": 250.994140625,
+   "w": 119.442138671875,
+   "h": 59.208763122558594,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26806",
+   "type": "instance",
+   "name": "Node card",
+   "x": 715.6385498046875,
+   "y": 464.7783203125,
+   "w": 119.442138671875,
+   "h": 59.208763122558594,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26807",
+   "type": "instance",
+   "name": "Node card",
+   "x": 866.545166015625,
+   "y": 361.6586456298828,
+   "w": 119.442138671875,
+   "h": 59.38972473144531,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26808",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 366.65476989746094,
+   "y": 258.6965751647949,
+   "w": 12.575539588928223,
+   "h": 12.575539588928223,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26809",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 366.65476989746094,
+   "y": 375.6487274169922,
+   "w": 12.575539588928223,
+   "h": 12.575539588928223,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26810",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 366.65476989746094,
+   "y": 492.6013488769531,
+   "w": 12.575539588928223,
+   "h": 12.575539588928223,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26811",
+   "type": "instance",
+   "name": "Handoff · Passed",
+   "x": 523.84912109375,
+   "y": 369.3611297607422,
+   "w": 12.575539588928223,
+   "h": 12.575539588928223,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26812",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 687.33154296875,
+   "y": 246.12089347839355,
+   "w": 12.575538635253906,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26813",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 687.33154296875,
+   "y": 459.9050750732422,
+   "w": 12.575538635253906,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26814",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 838.23779296875,
+   "y": 258.6965789794922,
+   "w": 12.575538635253906,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26815",
+   "type": "instance",
+   "name": "Handoff · Pending",
+   "x": 838.23779296875,
+   "y": 472.4807586669922,
+   "w": 12.575538635253906,
+   "h": 12.575538635253906,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26816",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 657.3933715820312,
+   "y": 219.60974979400635,
+   "w": 25.00721549987793,
+   "h": 25.00721549987793,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26817",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 657.3933715820312,
+   "y": 433.354248046875,
+   "w": 25.00721549987793,
+   "h": 25.00721549987793,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26818",
+   "type": "instance",
+   "name": "Agent avatar",
+   "x": 814.5792846679688,
+   "y": 231.99282026290894,
+   "w": 25.001737594604492,
+   "h": 25.001737594604492,
+   "path": "Shell › Container › Container › Container › ZoomStage › Container › FlowMap"
+  },
+  {
+   "id": "2362:26819",
+   "type": "instance",
+   "name": "Completed agents",
+   "x": 85,
+   "y": 811.7421875,
+   "w": 365,
+   "h": 63,
+   "path": "Shell › Container › Container › Container"
+  },
+  {
+   "id": "2362:26820",
+   "type": "instance",
+   "name": "Task progress chip",
+   "x": 85,
+   "y": 77,
+   "w": 208,
+   "h": 36,
+   "path": "Shell › Container › Container › Container"
+  },
+  {
+   "id": "2362:26821",
+   "type": "instance",
+   "name": "Zoom controls",
+   "x": 835,
+   "y": 839,
+   "w": 172,
+   "h": 36,
+   "path": "Shell › Container › Container › Container"
+  },
+  {
+   "id": "2362:26822",
+   "type": "frame",
+   "name": "Sidebar",
+   "x": 1032,
+   "y": 8,
+   "w": 400,
+   "h": 884,
+   "path": "Shell › Container"
+  },
+  {
+   "id": "2362:26823",
+   "type": "frame",
+   "name": "SandboxDecisions",
+   "x": 1033,
+   "y": 9,
+   "w": 398,
+   "h": 882,
+   "path": "Shell › Container › Sidebar"
+  },
+  {
+   "id": "2362:26824",
+   "type": "frame",
+   "name": "Container",
+   "x": 1033,
+   "y": 9,
+   "w": 398,
+   "h": 66,
+   "path": "Shell › Container › Sidebar › SandboxDecisions"
+  },
+  {
+   "id": "2362:26825",
+   "type": "instance",
+   "name": "Panel tabs",
+   "x": 1057,
+   "y": 29,
+   "w": 253,
+   "h": 34,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26826",
+   "type": "frame",
+   "name": "Container",
+   "x": 1033,
+   "y": 75,
+   "w": 398,
+   "h": 816,
+   "path": "Shell › Container › Sidebar › SandboxDecisions"
+  },
+  {
+   "id": "2362:26827",
+   "type": "frame",
+   "name": "Paragraph",
+   "x": 1057,
+   "y": 75,
+   "w": 350,
+   "h": 36,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26828",
+   "type": "text",
+   "name": "Everything your helpers decided and everything you",
+   "x": 1057,
+   "y": 75,
+   "w": 350,
+   "h": 36,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Paragraph"
+  },
+  {
+   "id": "2362:26829",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 111,
+   "w": 358,
+   "h": 40,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26830",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 1057,
+   "y": 123,
+   "w": 52,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26831",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 1115,
+   "y": 123,
+   "w": 70,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26832",
+   "type": "instance",
+   "name": "Choice chip",
+   "x": 1191,
+   "y": 123,
+   "w": 81,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26833",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 151,
+   "w": 358,
+   "h": 38,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26834",
+   "type": "text",
+   "name": "Today",
+   "x": 1057,
+   "y": 171,
+   "w": 36,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26835",
+   "type": "frame",
+   "name": "Container:margin",
+   "x": 1057,
+   "y": 189,
+   "w": 350,
+   "h": 133,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26836",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 193,
+   "w": 350,
+   "h": 129,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin"
+  },
+  {
+   "id": "2362:26837",
+   "type": "frame",
+   "name": "Entry",
+   "x": 1057,
+   "y": 208,
+   "w": 350,
+   "h": 100,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container"
+  },
+  {
+   "id": "2362:26838",
+   "type": "instance",
+   "name": "Agent art",
+   "x": 1057,
+   "y": 208,
+   "w": 20,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry"
+  },
+  {
+   "id": "2362:26839",
+   "type": "frame",
+   "name": "Content",
+   "x": 1087,
+   "y": 208,
+   "w": 320,
+   "h": 100,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry"
+  },
+  {
+   "id": "2362:26840",
+   "type": "frame",
+   "name": "Text",
+   "x": 1087,
+   "y": 208,
+   "w": 320,
+   "h": 62,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content"
+  },
+  {
+   "id": "2362:26841",
+   "type": "frame",
+   "name": "Container",
+   "x": 1087,
+   "y": 208,
+   "w": 320,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26842",
+   "type": "text",
+   "name": "Strategist",
+   "x": 1087,
+   "y": 209,
+   "w": 57,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text › Container"
+  },
+  {
+   "id": "2362:26843",
+   "type": "text",
+   "name": "· 2:10 pm",
+   "x": 1148,
+   "y": 209,
+   "w": 51,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text › Container"
+  },
+  {
+   "id": "2362:26844",
+   "type": "frame",
+   "name": "Tag:align",
+   "x": 1203,
+   "y": 208,
+   "w": 204,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text › Container"
+  },
+  {
+   "id": "2362:26845",
+   "type": "instance",
+   "name": "Badge",
+   "x": 1326,
+   "y": 208,
+   "w": 81,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text › Container › Tag:align"
+  },
+  {
+   "id": "2362:26846",
+   "type": "text",
+   "name": "Audience: people who already budget",
+   "x": 1087,
+   "y": 230,
+   "w": 320,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26847",
+   "type": "text",
+   "name": "Based on Insights' card (61% budget monthly)",
+   "x": 1087,
+   "y": 252,
+   "w": 320,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26848",
+   "type": "frame",
+   "name": "Container",
+   "x": 1087,
+   "y": 280,
+   "w": 320,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content"
+  },
+  {
+   "id": "2362:26849",
+   "type": "instance",
+   "name": "Button",
+   "x": 1087,
+   "y": 280,
+   "w": 71,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Container"
+  },
+  {
+   "id": "2362:26850",
+   "type": "instance",
+   "name": "Button",
+   "x": 1166,
+   "y": 280,
+   "w": 130,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container:margin › Container › Entry › Content › Container"
+  },
+  {
+   "id": "2362:26851",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 322,
+   "w": 350,
+   "h": 129,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26852",
+   "type": "frame",
+   "name": "Entry",
+   "x": 1057,
+   "y": 337,
+   "w": 350,
+   "h": 100,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26853",
+   "type": "instance",
+   "name": "Agent art",
+   "x": 1057,
+   "y": 337,
+   "w": 20,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry"
+  },
+  {
+   "id": "2362:26854",
+   "type": "frame",
+   "name": "Content",
+   "x": 1087,
+   "y": 337,
+   "w": 320,
+   "h": 100,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry"
+  },
+  {
+   "id": "2362:26855",
+   "type": "frame",
+   "name": "Text",
+   "x": 1087,
+   "y": 337,
+   "w": 320,
+   "h": 62,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content"
+  },
+  {
+   "id": "2362:26856",
+   "type": "frame",
+   "name": "Container",
+   "x": 1087,
+   "y": 337,
+   "w": 320,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26857",
+   "type": "text",
+   "name": "Planner",
+   "x": 1087,
+   "y": 338,
+   "w": 44,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Text › Container"
+  },
+  {
+   "id": "2362:26858",
+   "type": "text",
+   "name": "· 2:02 pm",
+   "x": 1135,
+   "y": 338,
+   "w": 53,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Text › Container"
+  },
+  {
+   "id": "2362:26859",
+   "type": "text",
+   "name": "Launch Mar 12 at 9am · $300 budget",
+   "x": 1087,
+   "y": 359,
+   "w": 320,
+   "h": 20,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26860",
+   "type": "text",
+   "name": "From your chat",
+   "x": 1087,
+   "y": 381,
+   "w": 320,
+   "h": 18,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Text"
+  },
+  {
+   "id": "2362:26861",
+   "type": "frame",
+   "name": "Container",
+   "x": 1087,
+   "y": 409,
+   "w": 320,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content"
+  },
+  {
+   "id": "2362:26862",
+   "type": "instance",
+   "name": "Button",
+   "x": 1087,
+   "y": 409,
+   "w": 71,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container › Entry › Content › Container"
+  },
+  {
+   "id": "2362:26863",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 451,
+   "w": 350,
+   "h": 61,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26864",
+   "type": "text",
+   "name": "3 more · Permissions set to Balanced, ad limit $50",
+   "x": 1057,
+   "y": 464,
+   "w": 350,
+   "h": 36,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26865",
+   "type": "frame",
+   "name": "Container",
+   "x": 1057,
+   "y": 512,
+   "w": 350,
+   "h": 402,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container"
+  },
+  {
+   "id": "2362:26866",
+   "type": "instance",
+   "name": "Button",
+   "x": 1057,
+   "y": 516,
+   "w": 137,
+   "h": 28,
+   "path": "Shell › Container › Sidebar › SandboxDecisions › Container › Container"
+  },
+  {
+   "id": "2362:26867",
+   "type": "rounded-rectangle",
+   "name": "Click outside to close",
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "path": ""
+  },
+  {
+   "id": "2362:26868",
+   "type": "frame",
+   "name": "3.4 Decision log · Task progress",
+   "x": 85,
+   "y": 121,
+   "w": 360,
+   "h": 430.689208984375,
+   "path": ""
+  },
+  {
+   "id": "2362:26869",
+   "type": "frame",
+   "name": "Task list header",
+   "x": 102,
+   "y": 138,
+   "w": 326,
+   "h": 18,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26870",
+   "type": "text",
+   "name": "Tasks",
+   "x": 102,
+   "y": 138,
+   "w": 34,
+   "h": 18,
+   "path": "3.4 Decision log · Task progress › Task list header"
+  },
+  {
+   "id": "2362:26872",
+   "type": "text",
+   "name": "4 of 10 done · about 4 min left",
+   "x": 102,
+   "y": 162,
+   "w": 328,
+   "h": 18,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26873",
+   "type": "instance",
+   "name": "Progress",
+   "x": 102,
+   "y": 186,
+   "w": 326,
+   "h": 3.6892080307006836,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26874",
+   "type": "frame",
+   "name": "In progress",
+   "x": 102,
+   "y": 195.689208984375,
+   "w": 326,
+   "h": 198,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26875",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 201.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26876",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 233.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26877",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 265.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26878",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 297.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26879",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 329.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26880",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 361.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › In progress"
+  },
+  {
+   "id": "2362:26881",
+   "type": "rounded-rectangle",
+   "name": "Divider",
+   "x": 102,
+   "y": 399.689208984375,
+   "w": 326,
+   "h": 1,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26882",
+   "type": "frame",
+   "name": "Finished",
+   "x": 102,
+   "y": 406.689208984375,
+   "w": 326,
+   "h": 128,
+   "path": "3.4 Decision log · Task progress"
+  },
+  {
+   "id": "2362:26883",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 406.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › Finished"
+  },
+  {
+   "id": "2362:26884",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 438.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › Finished"
+  },
+  {
+   "id": "2362:26885",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 470.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › Finished"
+  },
+  {
+   "id": "2362:26886",
+   "type": "instance",
+   "name": "Task row",
+   "x": 102,
+   "y": 502.689208984375,
+   "w": 326,
+   "h": 32,
+   "path": "3.4 Decision log · Task progress › Finished"
+  }
+ ]
+}

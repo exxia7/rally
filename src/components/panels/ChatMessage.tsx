@@ -37,9 +37,12 @@ export function AssistantMessage({
 
 export function UserMessage({
   text,
+  wrap,
   className,
 }: {
   text: ReactNode;
+  /** Let long messages wrap at every width (the side panel's run chat); plan chat keeps one line on desktop. */
+  wrap?: boolean;
   className?: string;
 }) {
   return (
@@ -49,7 +52,12 @@ export function UserMessage({
         className
       )}
     >
-      <p className="text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink md:whitespace-nowrap">
+      <p
+        className={clsx(
+          'text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink',
+          !wrap && 'md:whitespace-nowrap'
+        )}
+      >
         {text}
       </p>
     </div>
@@ -68,6 +76,66 @@ export function ChatThread({
     <div
       className={clsx(
         'flex w-[620px] max-w-full flex-col items-end gap-4 pt-8 pb-4 max-md:px-4',
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Side-panel chat (Chat tab in the plan side panel, e.g. 2362:23715). Smaller than the main-column chat:
+// 26px Pathfinder avatar 8px from a flexible bubble (1px line border, 12/10 padding, 5px top-left corner,
+// 12.5/20.313 text). `children` sit inside the bubble, 8px under the text (the Undo button in 2.4d).
+// Figma rounds the text box up to whole pixels; the 10.4px bottom padding splits that difference.
+export function PanelAssistantMessage({
+  text,
+  children,
+}: {
+  text: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex w-full shrink-0 items-start gap-2">
+      <PathfinderAvatar size={26} />
+      <div className="flex min-w-px flex-1 flex-col items-start rounded-tl-[5px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] border border-line px-3 pt-2.5 pb-[10.4px]">
+        <p className="relative top-[0.75px] w-full text-[12.5px] leading-[20.313px] tracking-[-0.08px] text-ink">
+          {text}
+        </p>
+        {children && (
+          <div className="flex w-full flex-col items-start pt-2">{children}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The user's side-panel message: right-aligned well bubble, no border, max 280px, 12/8 padding, 5px top-right
+// corner, 12.5/18.75 text.
+export function PanelUserMessage({ text }: { text: ReactNode }) {
+  return (
+    <div className="flex w-full shrink-0 items-start justify-end overflow-clip">
+      <div className="flex max-w-[280px] flex-col items-start rounded-tl-[10px] rounded-tr-[5px] rounded-br-[10px] rounded-bl-[10px] bg-well px-3 pt-2 pb-[8.5px]">
+        <p className="relative top-[0.75px] w-full text-[12.5px] leading-[18.75px] tracking-[-0.08px] text-ink">
+          {text}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// The side-panel message column: 24px sides, 8px top / 16px bottom, 12px between messages.
+export function PanelThread({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={clsx(
+        'flex w-full flex-col items-start gap-3 px-6 pt-2 pb-4 max-md:px-4',
         className
       )}
     >

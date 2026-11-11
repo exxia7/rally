@@ -282,7 +282,7 @@ export default function WorkspaceSettingsScreen() {
                           initial={p.initial}
                           tone={p.you ? 'dark' : 'light'}
                         />
-                        <p className="text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-ink">
+                        <p className="h-5 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-ink">
                           {p.name}
                         </p>
                       </div>
@@ -303,7 +303,8 @@ export default function WorkspaceSettingsScreen() {
                       <p className="h-5 text-[13px] leading-[19.5px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink">
                         This month
                       </p>
-                      <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+                      {/* Figma rounds this 16.5px line's box up to 17px; matching it keeps "This month" on Figma's y. */}
+                      <p className="h-[17px] text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                         ~410k tokens · 5 workflows
                       </p>
                     </div>

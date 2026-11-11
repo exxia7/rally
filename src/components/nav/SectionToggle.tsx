@@ -1,11 +1,12 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
+import chevronDown from '@/assets/icons/chevron-down-14.svg';
 import chevronRight from '@/assets/icons/chevron-right.svg';
 import { Icon } from '@/components/ui/Icon';
 
 // Figma "Section toggle" (2362:29239): collapsible section header with a count (e.g. Skills 2) in the Sandbox
-// panel. Chevron right rotates down when open; the body renders below when open.
+// panel. Chevron right when closed, Chevron down when open (3.3 Assets); the body renders below when open.
 export function SectionToggle({
   label,
   count,
@@ -29,11 +30,7 @@ export function SectionToggle({
         onClick={onToggle}
         className="flex w-full items-center gap-1.5 text-left"
       >
-        <Icon
-          src={chevronRight}
-          size={14}
-          className={clsx('transition-transform', open && 'rotate-90')}
-        />
+        <Icon src={open ? chevronDown : chevronRight} size={14} />
         <span className="text-[13px] leading-[19.5px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
           {label}
         </span>

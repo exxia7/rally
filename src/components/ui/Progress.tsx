@@ -5,11 +5,14 @@ import clsx from 'clsx';
 export function Progress({
   value,
   height = 3.689,
+  fillColor,
   className,
 }: {
   /** 0–100 */
   value: number;
   height?: number;
+  /** Fill colour other than the accent (a fork's progress takes its Branch/Fork colour). */
+  fillColor?: string;
   className?: string;
 }) {
   const pct = Math.max(0, Math.min(100, value));
@@ -24,7 +27,7 @@ export function Progress({
     >
       <div
         className="h-full rounded-full bg-accent"
-        style={{ width: `${pct}%` }}
+        style={{ width: `${pct}%`, backgroundColor: fillColor }}
       />
     </div>
   );

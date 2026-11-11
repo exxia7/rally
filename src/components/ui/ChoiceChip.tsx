@@ -6,7 +6,9 @@ export function ChoiceChip({
   selected,
   onClick,
   children,
+  className,
 }: {
+  className?: string;
   selected?: boolean;
   onClick?: () => void;
   children: ReactNode;
@@ -18,7 +20,8 @@ export function ChoiceChip({
       aria-pressed={selected}
       className={clsx(
         'flex h-7 shrink-0 flex-col items-center justify-center rounded-[14px] px-2.5 text-center text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap',
-        selected ? 'bg-accent-chip text-accent' : 'bg-chip text-ink-2'
+        selected ? 'bg-accent-chip text-accent' : 'bg-chip text-ink-2',
+        className
       )}
     >
       {children}

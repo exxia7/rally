@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 import chevronDown14 from '@/assets/icons/chevron-down-14.svg';
 import more from '@/assets/icons/more.svg';
+import panelBlue from '@/assets/icons/panel-blue.svg';
 import panel from '@/assets/icons/panel.svg';
+import settingsBlue16 from '@/assets/icons/settings-blue-16.svg';
 import settings16 from '@/assets/icons/settings-16.svg';
 import { TopBar } from '@/components/shell/AppShell';
 import { Icon } from '@/components/ui/Icon';
@@ -21,6 +23,8 @@ import { Breadcrumb } from './Breadcrumb';
 // workflow settings and panel toggle (Outlined icon buttons), then the main action (Pause, Start launch…).
 // Under 1280px the status pill shows only its dot. Under 768px the breadcrumb collapses to the truncated title, and the settings
 // and panel toggle move into a "more" menu.
+// Planning frames show a 12/18 muted `estimate` ("About 9 min · $0.30", 4px extra right padding) instead of a status.
+// An open panel draws its toggle Selected (blue); `settingsActive` does the same for the settings button (2.8).
 export type WorkflowView = 'planning' | 'flowchart';
 
 export function WorkflowTopBar({
@@ -33,6 +37,9 @@ export function WorkflowTopBar({
   panelOpen,
   onTogglePanel,
   action,
+  estimate,
+  settingsActive,
+  hideTitleMenu,
 }: {
   title?: string;
   view: WorkflowView;
@@ -46,6 +53,12 @@ export function WorkflowTopBar({
   onTogglePanel?: () => void;
   /** The main action, e.g. a Pause or Start launch Button. */
   action?: ReactNode;
+  /** Plan estimate text on the right, e.g. "About 9 min · $0.30". */
+  estimate?: string;
+  /** Draws the settings button Selected (you're on the workflow settings page). */
+  settingsActive?: boolean;
+  /** Drops the title menu chevron (a new, unsaved workflow: 3.1). */
+  hideTitleMenu?: boolean;
 }) {
   const navigate = useNavigate();
   const [titleMenu, setTitleMenu] = useState(false);
@@ -107,6 +120,7 @@ export function WorkflowTopBar({
               parents={[{ label: 'Workflows', to: screenPath('1.1') }]}
               current={title}
               after={
+                !hideTitleMenu && (
                 <button
                   type="button"
                   aria-label="Workflow menu"
@@ -117,6 +131,7 @@ export function WorkflowTopBar({
                 >
                   <Icon src={chevronDown14} size={14} />
                 </button>
+                )
               }
             />
             {titleMenu && (
@@ -132,8 +147,9 @@ export function WorkflowTopBar({
             <SegmentedControl
               label="View"
               options={[
-                { value: 'planning', label: 'Planning' },
-                { value: 'flowchart', label: 'Flowchart' },
+                // Figma _Segment widths in the top bar (e.g. 2362:24749): 81 + 90 → 177px control.
+                { value: 'planning', label: 'Planning', minWidth: 81 },
+                { value: 'flowchart', label: 'Flowchart', minWidth: 90 },
               ]}
               value={view}
               onChange={onViewChange}
@@ -149,10 +165,16 @@ export function WorkflowTopBar({
               label={statusLabel}
             />
           )}
+          {estimate && (
+            <p className="pr-1 text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted max-md:hidden">
+              {estimate}
+            </p>
+          )}
           {onSettings && (
             <IconButton
               variant="outlined"
-              icon={settings16}
+              selected={settingsActive}
+              icon={settingsActive ? settingsBlue16 : settings16}
               label="Workflow settings"
               onClick={onSettings}
               className="max-md:hidden"
@@ -161,7 +183,8 @@ export function WorkflowTopBar({
           {onTogglePanel && (
             <IconButton
               variant="outlined"
-              icon={panel}
+              selected={panelOpen}
+              icon={panelOpen ? panelBlue : panel}
               label={panelOpen ? 'Hide side panel' : 'Show side panel'}
               aria-pressed={panelOpen}
               onClick={onTogglePanel}

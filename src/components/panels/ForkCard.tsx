@@ -7,6 +7,16 @@ import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
 import { TextArea } from '@/components/ui/TextArea';
 
+/** What a Fork card says; the inspector data carries it for steps that can fork (4.4, 6.4). */
+export type ForkCardContent = {
+  title?: string;
+  original?: string;
+  prompt?: string;
+  options?: { label: string; text: string }[];
+  note?: string;
+  helpers?: string[];
+};
+
 // Figma "Fork card" (2362:30304): new-fork form in the node inspector (from an Output or a Decision).
 // 1px line border, 10px radius, 16px padding. Title, "Original: …", the prompt with choice chips that fill the
 // instruction text area, a note, helper badges, then Create fork (Primary Small + arrow) and Cancel.

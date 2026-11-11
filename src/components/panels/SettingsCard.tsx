@@ -5,16 +5,19 @@ import { Icon } from '@/components/ui/Icon';
 
 // Settings page card (frame 1.2 "Workspace settings", e.g. 2362:23364): white, 1px line border (in layout),
 // 12px radius, 20px padding, faint drop shadow. SemiBold 14/21 title, 12/18 muted subtitle (2px above it),
-// then the card body.
+// then the card body. `subtitle` is optional (2.8 Budget, Approvers); `subtitleWrap` lets a long one take
+// two lines instead of the fixed 20px box (2.8 Launch facts).
 export function SettingsCard({
   title,
   subtitle,
+  subtitleWrap,
   children,
   className,
   id,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
+  subtitleWrap?: boolean;
   children: ReactNode;
   className?: string;
   id?: string;
@@ -30,9 +33,16 @@ export function SettingsCard({
       <h2 className="text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
         {title}
       </h2>
-      <p className="flex h-5 w-full items-start pt-0.5 text-[12px] leading-[18px] tracking-[-0.08px] text-muted max-md:h-auto">
-        {subtitle}
-      </p>
+      {subtitle && (
+        <p
+          className={clsx(
+            'flex w-full items-start pt-0.5 text-[12px] leading-[18px] tracking-[-0.08px] text-muted',
+            !subtitleWrap && 'h-5 max-md:h-auto'
+          )}
+        >
+          {subtitle}
+        </p>
+      )}
       {children}
     </section>
   );

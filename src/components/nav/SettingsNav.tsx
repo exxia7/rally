@@ -4,6 +4,8 @@ import clsx from 'clsx';
 // an 11px muted group label, then Figma "Settings nav item" rows (2362:29287): 32px, 10px padding, 8px radius;
 // Selected = white with a soft drop shadow and Medium ink, Default = Regular ink-2.
 // Under 768px it becomes a horizontal, scrollable tab row above the content.
+// `value` is optional: 2.8 opens with nothing selected. `more` adds a second titled group (2.8 "More": 16px above
+// its label); on phones its items join the same tab row.
 export type SettingsNavItem<T extends string> = { value: T; label: string };
 
 export function SettingsNav<T extends string>({
@@ -11,11 +13,13 @@ export function SettingsNav<T extends string>({
   items,
   value,
   onChange,
+  more,
 }: {
   title: string;
   items: SettingsNavItem<T>[];
-  value: T;
+  value?: T;
   onChange: (value: T) => void;
+  more?: { title: string; items: SettingsNavItem<T>[] };
 }) {
   return (
     <aside className="flex w-[240px] shrink-0 flex-col items-start self-stretch border-r border-line bg-white p-4 max-md:w-full max-md:border-r-0 max-md:border-b max-md:px-3 max-md:py-2">
@@ -37,6 +41,23 @@ export function SettingsNav<T extends string>({
             onClick={() => onChange(item.value)}
           />
         ))}
+        {more && (
+          <>
+            <div className="flex h-[41px] w-full flex-col items-start px-2 pt-4 pb-2 max-md:hidden">
+              <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+                {more.title}
+              </p>
+            </div>
+            {more.items.map((item) => (
+              <SettingsNavButton
+                key={item.value}
+                label={item.label}
+                selected={item.value === value}
+                onClick={() => onChange(item.value)}
+              />
+            ))}
+          </>
+        )}
       </div>
     </aside>
   );

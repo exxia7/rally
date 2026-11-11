@@ -1,32 +1,47 @@
 import clsx from 'clsx';
-import { useState, type DragEvent, type ReactNode } from 'react';
+import {
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type ReactNode,
+} from 'react';
 
 import checkBadge from '@/assets/icons/check-badge.svg';
 import chevronRightDark from '@/assets/icons/chevron-right-dark.svg';
 import dragHandle from '@/assets/icons/drag-handle.svg';
 import liveDot from '@/assets/icons/live-dot.svg';
+import { FORK_COLOR, type ForkNumber } from '@/components/map/forks';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 
 // Figma "Handoff problem card" (2362:30161): red card showing what a handoff between helpers missed, with its
-// source. #fff1f1 fill, 1px problem border, 10px radius, 16px padding.
+// source. #fff1f1 fill, 1px problem border, 10px radius, 16px padding. The kind ("Missing") is SemiBold red; the
+// context after it is muted Regular in the component (4.1b) and SemiBold red where an instance overrides it
+// (`contextTone="problem"`, 4.1 and 4.3). The action is a Ghost Small button with a chevron, `actionTop` px below
+// the detail (10 in the component, 12 in 4.3).
 export function HandoffProblemCard({
   kind = 'Missing',
   context = "· Didn't reach Strategist",
+  contextTone = 'muted',
   title,
   detail,
-  action = 'See the full handoff (4 items) ›',
+  action = 'See the full handoff (4 items)',
+  actionTop = 10,
   onAction,
   className,
+  style,
 }: {
   kind?: string;
   context?: string;
+  contextTone?: 'muted' | 'problem';
   title: string;
   detail: string;
   action?: string;
+  actionTop?: number;
   onAction?: () => void;
   className?: string;
+  style?: CSSProperties;
 }) {
   return (
     <div
@@ -34,10 +49,15 @@ export function HandoffProblemCard({
         'flex w-[350px] max-w-full flex-col items-start rounded-[10px] border border-problem bg-[#fff1f1] p-4',
         className
       )}
+      style={style}
     >
-      <p className="w-full text-[12px] leading-[18px] tracking-[-0.08px]">
-        <span className="font-semibold text-problem">{kind}</span>{' '}
-        <span className="text-muted">{context}</span>
+      <p className="w-full text-[12px] leading-[18px] font-semibold tracking-[-0.08px] text-problem">
+        {kind}{' '}
+        <span
+          className={clsx(contextTone === 'muted' && 'font-normal text-muted')}
+        >
+          {context}
+        </span>
       </p>
       <p className="w-full pt-1.5 text-[16px] leading-[22px] font-semibold tracking-[-0.08px] text-ink">
         {title}
@@ -45,13 +65,14 @@ export function HandoffProblemCard({
       <p className="w-full pt-1.5 text-[13px] leading-[18.75px] tracking-[-0.08px] text-ink-2">
         {detail}
       </p>
-      <div className="flex w-full items-center pt-2.5">
+      <div className="flex w-full items-center" style={{ paddingTop: actionTop }}>
         <button
           type="button"
           onClick={onAction}
-          className="flex h-7 items-center rounded-control text-[12px] leading-4 font-medium whitespace-nowrap text-ink hover:text-accent"
+          className="flex h-7 items-center gap-1 rounded-control text-[12px] leading-4 font-medium whitespace-nowrap text-ink hover:text-accent"
         >
           {action}
+          <Icon src={chevronRightDark} size={16} />
         </button>
       </div>
     </div>
@@ -64,20 +85,41 @@ export function ResourceRow({
   name,
   source = 'Built in',
   onDragStart,
+  onDragEnd,
+  onClick,
+  expanded,
   className,
 }: {
   name: string;
   source?: string;
   onDragStart?: (e: DragEvent) => void;
+  onDragEnd?: (e: DragEvent) => void;
+  /** Tap path for touch screens, where dragging doesn't work (2.6 opens an "Add to…" menu). */
+  onClick?: () => void;
+  /** With `onClick`: whether the menu it opens is showing. */
+  expanded?: boolean;
   className?: string;
 }) {
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-haspopup={onClick ? 'menu' : undefined}
+      aria-expanded={onClick ? expanded : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', name);
+        e.dataTransfer.effectAllowed = 'copy';
         onDragStart?.(e);
       }}
+      onDragEnd={onDragEnd}
       className={clsx(
         'flex h-8 w-full cursor-grab items-center gap-1.5 rounded-control hover:bg-well active:cursor-grabbing',
         className
@@ -97,11 +139,13 @@ export function ResourceRow({
 
 // Figma "Output preview" (2362:30375): a helper's output at the top of the inspector. White, 1px line border,
 // 10px radius, 16px padding, 4px gaps. Done: muted eyebrow; Working: blue live dot + blue eyebrow.
-// Medium 14/20 quote, then a Secondary Small link button with a chevron.
+// Medium 14/20 quote, then a Secondary Small link button with a chevron. A fork's brief (4.5, 6.5, 6.6) is the
+// Working state in the fork's colour: Branch/Fork N dot + eyebrow.
 export function OutputPreview({
   eyebrow = 'Writer wrote',
   quote,
   working,
+  fork,
   action = 'See all 5 pieces',
   onAction,
   className,
@@ -109,6 +153,7 @@ export function OutputPreview({
   eyebrow?: string;
   quote: string;
   working?: boolean;
+  fork?: ForkNumber;
   action?: string | null;
   onAction?: () => void;
   className?: string;
@@ -123,15 +168,23 @@ export function OutputPreview({
       <div
         className={clsx(
           'flex w-full items-center overflow-clip',
-          working && 'gap-1.5'
+          (working || fork) && 'gap-1.5'
         )}
       >
-        {working && <Icon src={liveDot} size={6} />}
+        {fork ? (
+          <span
+            className="size-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: FORK_COLOR[fork] }}
+          />
+        ) : (
+          working && <Icon src={liveDot} size={6} />
+        )}
         <p
           className={clsx(
             'text-[12px] leading-[18px] whitespace-nowrap',
             working ? 'text-accent' : 'text-muted'
           )}
+          style={fork ? { color: FORK_COLOR[fork] } : undefined}
         >
           {eyebrow}
         </p>
@@ -158,7 +211,8 @@ export function OutputPreview({
 // Figma "Approval item" (2362:30389): one thing waiting for your OK before it goes out. 1px line border, 10px
 // radius, 14px padding. Waiting: Approve (Secondary) + Edit (Ghost) left, Don't post (Ghost, muted) right.
 // After a choice the actions collapse to a status badge (Approved green with check / Won't post neutral)
-// and Undo. Won't post greys the title and body.
+// and Undo. Won't post greys the title and body. Uncontrolled from `initial`, or controlled with `state` (5.1's
+// "Approve all" sets every item).
 export type ApprovalState = 'waiting' | 'approved' | 'wont-post';
 
 export function ApprovalItem({
@@ -167,6 +221,7 @@ export function ApprovalItem({
   body,
   channelNote,
   initial = 'waiting',
+  state: stateProp,
   onEdit,
   onChange,
   className,
@@ -176,13 +231,15 @@ export function ApprovalItem({
   body: string;
   channelNote?: string;
   initial?: ApprovalState;
+  state?: ApprovalState;
   onEdit?: () => void;
   onChange?: (state: ApprovalState) => void;
   className?: string;
 }) {
-  const [state, setState] = useState<ApprovalState>(initial);
+  const [inner, setInner] = useState<ApprovalState>(initial);
+  const state = stateProp ?? inner;
   const set = (s: ApprovalState) => {
-    setState(s);
+    setInner(s);
     onChange?.(s);
   };
   const off = state === 'wont-post';
@@ -193,10 +250,12 @@ export function ApprovalItem({
         className
       )}
     >
+      {/* Figma rounds text boxes up to whole pixels: the title row is 21px, and the body gets ~0.7px below
+          its last line (17.188px lines → 18 / 35px boxes). */}
       <div className="flex w-[320px] max-w-full items-center gap-2">
         <p
           className={clsx(
-            'min-w-px flex-1 text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] whitespace-nowrap',
+            'min-h-[21px] min-w-px flex-1 text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] whitespace-nowrap',
             off ? 'text-muted-2' : 'text-ink'
           )}
         >
@@ -216,7 +275,7 @@ export function ApprovalItem({
       )}
       <p
         className={clsx(
-          'w-[320px] max-w-full pt-1.5 text-[13px] leading-[17.188px] tracking-[-0.08px]',
+          'w-[320px] max-w-full pt-1.5 pb-[0.7px] text-[13px] leading-[17.188px] tracking-[-0.08px]',
           off ? 'text-[#a0a3aa]' : 'text-ink-2'
         )}
       >

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 
 import fork from '@/assets/icons/fork.svg';
+import { AgentArt } from '@/components/agents/AgentAvatar';
+import type { AgentName } from '@/components/agents/characters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
@@ -12,8 +14,10 @@ import { Icon } from '@/components/ui/Icon';
 
 export type Decision = {
   id: string;
-  /** 20px agent art (from components/agents), or a user avatar for your own choices. */
-  art: ReactNode;
+  /** 20px art: a user avatar for your own choices, or any custom mark. */
+  art?: ReactNode;
+  /** The helper who decided; draws its 20px Agent art when `art` is not given. */
+  agent?: AgentName;
   who: string;
   time: string;
   by: 'you' | 'helper';
@@ -23,7 +27,8 @@ export type Decision = {
   canFork?: boolean;
 };
 
-// One decision entry: art, SemiBold name · time (+ optional neutral tag on the right), Medium 13/19.5 decision,
+// One decision entry: art, SemiBold name · time (+ optional neutral tag on the right), Medium 13/19.5 decision
+// (a 20px box, as Figma rounds it),
 // 12/18 muted basis, then Change (and Fork from here) Secondary Small buttons.
 export function DecisionEntry({
   d,
@@ -37,7 +42,9 @@ export function DecisionEntry({
   return (
     <div className="flex w-full flex-col items-start border-t border-line py-3.5">
       <div className="flex w-full items-start gap-2.5 overflow-clip">
-        <div className="relative size-5 shrink-0">{d.art}</div>
+        <div className="relative size-5 shrink-0">
+          {d.art ?? (d.agent && <AgentArt agent={d.agent} size={20} />)}
+        </div>
         <div className="flex min-w-px flex-1 flex-col items-start gap-2.5 overflow-clip">
           <div className="flex w-full flex-col items-start gap-0.5 overflow-clip tracking-[-0.08px]">
             <div className="flex min-h-5 w-full items-center gap-1 text-[12px] leading-[18px] whitespace-nowrap">
@@ -49,7 +56,7 @@ export function DecisionEntry({
                 </div>
               )}
             </div>
-            <p className="w-full text-[13px] leading-[19.5px] font-medium text-ink">
+            <p className="min-h-5 w-full text-[13px] leading-[19.5px] font-medium text-ink">
               {d.title}
             </p>
             <p className="w-full text-[12px] leading-[18px] text-muted">
@@ -92,6 +99,7 @@ export function DecisionLog({
   onFork?: (d: Decision) => void;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
+  const [exported, setExported] = useState(false);
   const yours = decisions.filter((d) => d.by === 'you').length;
   const visible = decisions.filter((d) => filter === 'all' || d.by === filter);
   return (
@@ -131,6 +139,13 @@ export function DecisionLog({
             onFork={() => onFork?.(d)}
           />
         ))}
+        {visible.length === 0 && (
+          <p className="w-full border-t border-line py-3.5 text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
+            {filter === 'you'
+              ? 'You haven’t changed anything in this run yet.'
+              : 'Nothing decided yet.'}
+          </p>
+        )}
       </div>
       {more && (
         <div className="flex w-full flex-col items-start border-t border-line py-3">
@@ -140,8 +155,13 @@ export function DecisionLog({
         </div>
       )}
       <div className="flex w-full flex-col items-start pt-1 pb-6">
-        <Button variant="secondary" size="sm">
-          Export decision log
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={exported}
+          onClick={() => setExported(true)}
+        >
+          {exported ? 'Exported' : 'Export decision log'}
         </Button>
       </div>
     </div>
