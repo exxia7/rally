@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="141" height="145" viewBox="0 0 141 145" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Character / Snail">
+<path id="Ellipse 35" d="M141 89.572C141 147.426 109.436 144.985 70.5 144.985C31.5639 144.985 0 147.426 0 89.572C0 31.7181 31.5639 0 70.5 0C109.436 0 141 31.7181 141 89.572Z" fill="#FF9CBB"/>
+<path id="Subtract" d="M70.5 0C109.436 1.94222e-07 141 31.7184 141 89.5723C141 130.737 125.02 141.372 101.774 144.085C103.217 139.684 104 134.104 104 127.029C104 92.1322 84.972 73 61.5 73C38.028 73 19.0001 92.1322 19 127.029C19 131.424 19.3016 135.242 19.876 138.559C7.57351 131.78 4.32561e-05 117.91 0 89.5723C0 31.7184 31.5639 0 70.5 0Z" fill="#931C44"/>
+<path id="Vector 8" d="M52 98.5L44 59" stroke-width="8" stroke-linecap="round" stroke="#FF9CBB"/>
+<path id="Vector 9" d="M71 97.5L79 58" stroke-width="8" stroke-linecap="round" stroke="#FF9CBB"/>
+<circle id="Ellipse 28" cx="40.5" cy="46.5" r="16.5" fill="#FF9CBB"/>
+<circle id="Ellipse 29" cx="80.5" cy="44.5" r="16.5" fill="#FF9CBB"/>
+<circle id="Ellipse 30" cx="80.5" cy="46.5" r="11.5" fill="white"/>
+<circle id="Ellipse 31" cx="40.5" cy="48.5" r="11.5" fill="white"/>
+<ellipse id="Ellipse 32" cx="46" cy="49" rx="3" ry="5" fill="#931C44"/>
+<ellipse id="Ellipse 33" cx="86" cy="48" rx="3" ry="5" fill="#931C44"/>
+</g>
+</svg>

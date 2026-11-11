@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="126" height="129" viewBox="0 0 126 129" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Character / Chameleon">
+<path id="Ellipse 35" d="M118.5 103.5C101.888 126.713 78.1919 132.512 51 126.5C24.4246 120.624 0 106.614 0 79C0 51.3858 75.3858 0 103 0C113.896 0 124.5 13.5 113.5 41C122 47.5 132.384 84.099 118.5 103.5Z" fill="url(#paint0_radial_0_8)"/>
+<circle id="Ellipse 36" cx="69.8625" cy="68.8622" r="38.2956" fill="white"/>
+<circle id="Ellipse 37" cx="50.1422" cy="68.1422" r="6.5" fill="#73C56E"/>
+</g>
+<defs>
+<radialGradient id="paint0_radial_0_8" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(28.5 94.5) rotate(-33.6149) scale(105.67 102.855)">
+<stop stop-color="#B8C56E"/>
+<stop offset="1" stop-color="#73C56E"/>
+</radialGradient>
+</defs>
+</svg>

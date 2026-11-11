@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Status icon">
+<circle id="Ellipse" cx="7" cy="7" r="5.25" stroke-width="1.5" stroke="#C8CAD0"/>
+<g id="Icon / Lock">
+<path id="Vector" d="M5.25002 6.70834H8.75002C9.07218 6.70834 9.33335 6.96951 9.33335 7.29167V9.04167C9.33335 9.36384 9.07218 9.625 8.75002 9.625H5.25002C4.92785 9.625 4.66668 9.36384 4.66668 9.04167V7.29167C4.66668 6.96951 4.92785 6.70834 5.25002 6.70834Z" stroke-width="0.583333" stroke-linecap="round" stroke-linejoin="round" stroke="#8A5300"/>
+<path id="Vector_2" d="M5.83335 6.70834V5.54167C5.83335 5.23225 5.95627 4.93551 6.17506 4.71671C6.39385 4.49792 6.6906 4.375 7.00002 4.375C7.30944 4.375 7.60618 4.49792 7.82498 4.71671C8.04377 4.93551 8.16668 5.23225 8.16668 5.54167V6.70834" stroke-width="0.583333" stroke-linecap="round" stroke-linejoin="round" stroke="#8A5300"/>
+</g>
+</g>
+</svg>

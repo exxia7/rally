@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import chevronDown from '@/assets/icons/chevron-down.svg';
 import plusIcon from '@/assets/icons/plus.svg';
 import searchIcon from '@/assets/icons/search.svg';
 import {
@@ -13,6 +12,7 @@ import { UserAvatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
+import { StatusFilter, type StatusFilterValue } from '@/components/ui/StatusFilter';
 import { screenPath } from '@/screens/registry';
 
 const WORKFLOWS: WorkflowCardData[] = [
@@ -56,12 +56,16 @@ export default function HomeScreen() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<StatusFilterValue>('all');
 
   const visible = WORKFLOWS.filter(
     (w) =>
       (filter === 'all' ||
         (filter === 'running' && w.status === 'Running') ||
         (filter === 'needs-you' && w.needsYou)) &&
+      (status === 'all' ||
+        (status === 'drafts' && w.status === 'Draft') ||
+        (status === 'done' && w.status === 'Done')) &&
       w.title.toLowerCase().includes(query.toLowerCase())
   );
 
@@ -119,13 +123,7 @@ export default function HomeScreen() {
             >
               Needs you · 1
             </ChoiceChip>
-            <Button
-              variant="secondary"
-              size="sm"
-              trailing={<Icon src={chevronDown} size={16} />}
-            >
-              Status
-            </Button>
+            <StatusFilter value={status} onChange={setStatus} />
             <div className="flex min-w-fit flex-1 justify-end max-md:fixed max-md:right-4 max-md:bottom-[calc(56px+16px+env(safe-area-inset-bottom))] max-md:z-10 max-md:flex-none">
               <Button
                 variant="primary"

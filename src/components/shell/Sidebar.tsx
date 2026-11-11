@@ -5,6 +5,7 @@ import bell from '@/assets/icons/bell.svg';
 import logo from '@/assets/icons/logo.svg';
 import settings from '@/assets/icons/settings.svg';
 import workflows from '@/assets/icons/workflows.svg';
+import workflowsInactive from '@/assets/icons/workflows-ink2.svg';
 import { Icon } from '@/components/ui/Icon';
 import { screenPath } from '@/screens/registry';
 
@@ -34,7 +35,10 @@ export function Sidebar({
           active === 'workflows' ? 'bg-accent-soft' : 'hover:bg-hover'
         )}
       >
-        <Icon src={workflows} size={18} />
+        <Icon
+          src={active === 'workflows' ? workflows : workflowsInactive}
+          size={18}
+        />
       </Link>
       <div className="flex min-h-px flex-1 flex-col items-start justify-end max-md:contents">
         <div className="flex flex-col items-center gap-2 max-md:contents">

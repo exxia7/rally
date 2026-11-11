@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="118" height="161" viewBox="0 0 118 161" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Character / Penguin">
+<g id="body">
+<ellipse id="Ellipse 57" cx="40.0869" cy="12.6543" rx="6" ry="9.5" transform="rotate(-13.756 40.0869 12.6543)" fill="#31326B"/>
+<ellipse id="Ellipse 58" cx="51.0868" cy="9.6544" rx="6" ry="9.5" transform="rotate(1.27307 51.0868 9.6544)" fill="#31326B"/>
+<ellipse id="Ellipse 59" cx="61.4256" cy="10.8023" rx="6" ry="9.5" transform="rotate(16.3021 61.4256 10.8023)" fill="#31326B"/>
+<path id="Head" d="M59 13C96 13 118 61 118 107C118 143 92 161 59 161C26 161 0 143 0 107C0 61 22 13 59 13Z" fill="#31326B"/>
+</g>
+<path id="Eye L" d="M60 86.5C60 103.345 49.479 117 36.5 117C23.521 117 13 103.345 13 86.5C13 69.6549 23.521 56 36.5 56C49.479 56 60 69.6549 60 86.5Z" fill="white"/>
+<path id="Eye R" d="M102 86.5C102 103.345 92.1506 117 80 117C67.8494 117 58 103.345 58 86.5C58 69.6549 67.8494 56 80 56C92.1506 56 102 69.6549 102 86.5Z" fill="white"/>
+<path id="Pupil L" d="M53 102C53 104.761 50.7615 107 48 107C45.2385 107 43 104.761 43 102C43 99.2385 45.2385 97 48 97C50.7615 97 53 99.2385 53 102Z" fill="#31326B"/>
+<path id="Pupil R" d="M81 102C81 104.761 78.7615 107 76 107C73.2385 107 71 104.761 71 102C71 99.2385 73.2385 97 76 97C78.7615 97 81 99.2385 81 102Z" fill="#31326B"/>
+<path id="Beak" d="M48 119C54 115 64 115 70 119L59 133L48 119Z" fill="#FFAB3E"/>
+</g>
+</svg>

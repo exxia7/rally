@@ -1,8 +1,11 @@
 import clsx from 'clsx';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-// Figma "Button" (2362:28740): Primary, Secondary, Ghost, Danger; Small 28px, Medium 32px.
-// 12px horizontal padding, 4px gap, 16px icons, 8px radius.
+import { ShortcutKey } from './ShortcutKey';
+
+// Figma "Button" (2362:28740): Primary, Secondary, Ghost, Danger; Small 28px, Medium 32px; Default, Hover, Disabled.
+// 12px horizontal padding, 4px gap, 16px icons, 8px radius. Optional leading/trailing icon and keyboard shortcut.
+// Secondary's 1px border takes layout space (Figma stroke included); its Disabled variant has no border.
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md';
 
@@ -11,16 +14,19 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: ButtonSize;
   leading?: ReactNode;
   trailing?: ReactNode;
+  /** Keyboard shortcut shown after the label, e.g. "S". */
+  shortcut?: string;
 };
 
 const variants: Record<ButtonVariant, string> = {
   primary:
     'bg-accent text-white hover:bg-accent-hover disabled:bg-disabled disabled:text-disabled-ink',
   secondary:
-    'border border-control-border bg-white text-ink hover:bg-hover disabled:bg-disabled disabled:text-disabled-ink',
-  ghost: 'bg-transparent text-ink hover:bg-hover disabled:text-disabled-ink',
+    'border border-control-border bg-white text-ink hover:bg-hover disabled:border-0 disabled:bg-disabled disabled:text-disabled-ink',
+  ghost:
+    'bg-transparent text-ink hover:bg-hover disabled:bg-transparent disabled:text-disabled-ink',
   danger:
-    'bg-transparent text-problem hover:bg-hover disabled:text-disabled-ink',
+    'bg-transparent text-problem hover:bg-hover disabled:bg-transparent disabled:text-disabled-ink',
 };
 
 export function Button({
@@ -28,6 +34,7 @@ export function Button({
   size = 'md',
   leading,
   trailing,
+  shortcut,
   className,
   children,
   ...rest
@@ -46,6 +53,7 @@ export function Button({
       {leading}
       {children}
       {trailing}
+      {shortcut && <ShortcutKey>{shortcut}</ShortcutKey>}
     </button>
   );
 }
