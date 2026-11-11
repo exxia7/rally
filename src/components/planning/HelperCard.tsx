@@ -109,6 +109,7 @@ export function HelperCard({
     state === 'updated' ? 'Updated' : state === 'new' ? 'New' : null;
   return (
     <div
+      data-helper-card
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}

@@ -10,7 +10,6 @@ import { useOutsideClick } from '@/lib/useOutsideClick';
 
 import { TOOLS } from './tools';
 
-
 // Figma "ToolPicker" (2.4b, 2362:23931): edit a helper's tools right on its card. 296px popover (white, 1px line,
 // 12px radius, 6px padding, layered shadow): "Tools for <helper>" + "From Sandbox", the Tool rows, then a line and
 // Ghost Small "Connect a tool" / "Open full editor ›". The 2.4b map draws it at 0.85 (`scale`).

@@ -82,19 +82,29 @@ export function ApprovalGate({
   );
 }
 
-// Figma "Add step button" (2362:29470): blue + on the plan map to add a step.
+// Figma "Add step button" (2362:29470): blue + on a plan-map connector to add a step there. 16.5px at map scale 1
+// (2.4c); `scale` draws it at another map scale (CSS zoom).
 export function AddStepButton({
   onClick,
+  onFocus,
+  label = 'Add a step',
+  scale,
   className,
 }: {
   onClick?: () => void;
+  onFocus?: () => void;
+  label?: string;
+  scale?: number;
   className?: string;
 }) {
   return (
     <button
       type="button"
-      aria-label="Add a step"
+      aria-label={label}
+      title={label}
       onClick={onClick}
+      onFocus={onFocus}
+      style={scale ? { zoom: scale } : undefined}
       className={clsx(
         'flex size-[16.5px] items-center justify-center rounded-[4.125px] bg-accent drop-shadow-[0px_3.3px_2.475px_rgba(0,0,0,0.1)] drop-shadow-[0px_1.65px_1.65px_rgba(0,0,0,0.1)] hover:bg-accent-hover',
         className
@@ -163,7 +173,7 @@ export function StepOption({
         <span className="text-[9.9px] leading-[14.85px] font-medium tracking-[-0.066px] whitespace-nowrap text-ink">
           {title}
         </span>
-        <span className="text-[9.075px] leading-[13.613px] tracking-[-0.066px] whitespace-nowrap text-muted">
+        <span className="text-[9.075px] leading-[13.613px] tracking-[-0.066px] text-muted">
           {hint}
         </span>
       </span>
@@ -181,9 +191,14 @@ const LEGEND: { kind: Exclude<NodeKindName, 'task'>; label: string }[] = [
 // kind, 13.2px apart. Sits above the zoom controls, pinned to the canvas.
 export function PlanLegend({ className }: { className?: string }) {
   return (
-    <div className={clsx('flex h-[14.025px] items-start gap-[13.2px]', className)}>
+    <div
+      className={clsx('flex h-[14.025px] items-start gap-[13.2px]', className)}
+    >
       {LEGEND.map((l) => (
-        <div key={l.kind} className="flex h-full shrink-0 items-center gap-[4.95px]">
+        <div
+          key={l.kind}
+          className="flex h-full shrink-0 items-center gap-[4.95px]"
+        >
           <NodeKindTile kind={l.kind} size={13.2} />
           <p className="text-[9.075px] leading-[13.613px] tracking-[-0.066px] whitespace-nowrap text-muted">
             {l.label}

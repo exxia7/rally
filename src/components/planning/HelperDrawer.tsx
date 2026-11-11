@@ -56,7 +56,8 @@ export type HelperDraft = {
 
 // Figma "HelperDrawer" (2.4, 2362:23798; 2.4b-full, 2362:27856): edit one helper in the side panel. Header (kind
 // glyph + label, "Saved", ×), then name, What it does, Model, Tools (when the helper has a tool list), Resources,
-// Checks with you and the Gets from / Passes on card, and a footer with Remove helper / Duplicate. A helper with
+// Checks with you and the Gets from / Passes on card, and a footer with Remove helper / Duplicate. Resources
+// add by Upload only (a real file picker; the file joins the list): the user asked to drop "Add from Sandbox". A helper with
 // tools (2.4b-full) packs its sections 16px apart and puts Checks with you last; one without (2.4) uses 20px.
 // Every field is live: the screen gets each change through `onChange`.
 export function HelperDrawer({
@@ -65,7 +66,6 @@ export function HelperDrawer({
   onClose,
   onRemove,
   onDuplicate,
-  onAddFromSandbox,
   onConnectTool,
 }: {
   helper: HelperDraft;
@@ -73,7 +73,6 @@ export function HelperDrawer({
   onClose: () => void;
   onRemove?: () => void;
   onDuplicate?: () => void;
-  onAddFromSandbox?: () => void;
   onConnectTool?: () => void;
 }) {
   const hasTools = helper.tools !== undefined;
@@ -237,13 +236,6 @@ export function HelperDrawer({
               helper.resources.length > 0 ? 'pt-2' : 'pt-1.5'
             )}
           >
-            <Button
-              size="sm"
-              leading={<Icon src={plusGray} size={16} />}
-              onClick={onAddFromSandbox}
-            >
-              Add from Sandbox
-            </Button>
             <Button
               size="sm"
               leading={<Icon src={upload} size={16} />}

@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { edgePath } from '@/components/map/connectors';
 
 import { HelperCard, type HelperCardData } from './HelperCard';
-import { ApprovalGate, StageLabel } from './PlanMapParts';
+import { edgeKey } from './planEdit';
+import { AddStepButton, ApprovalGate, StageLabel } from './PlanMapParts';
 
 // Plan-map geometry, from the 2.3 map where cards draw at 0.85 (154.275px wide): 1.054px connectors with
 // 4.25px circular corners, 4.675px ports centred on the card header. Everything scales with `scale / 0.85`
@@ -21,7 +22,10 @@ export type PlanNode = HelperCardData & {
   id: string;
   x: number;
   y: number;
-  /** Fixed card height in map px, when the Figma instance has one (the Publisher's well overflows it). */
+  /**
+   * @deprecated Ignored: helper cards always hug their content. Some Figma instances pin a height that their
+   * settings overflow (the Publisher); the user called that a bug, so the build deviates from Figma there.
+   */
   height?: number;
   /** Fades a card that isn't involved without the Dimmed state's 40% (the 2.4 drawer map uses 50%). */
   opacity?: number;
@@ -46,6 +50,8 @@ export type PlanEdge = {
   /** Absolute x of the vertical run. Default: halfway between the two ends. */
   lane?: number;
   color?: string;
+  /** Where its "+" (add a step on this line) sits, centre in map px. Default: middle of the run into `to`. */
+  addAt?: { x: number; y: number };
 };
 
 export type PlanStage = { label: string; x: number };
@@ -87,6 +93,8 @@ export function PlanMap({
   onNodeClick,
   onSettingClick,
   onGateClick,
+  onAddStep,
+  addStepOn,
   className,
 }: PlanLayout & {
   overlays?: PlanOverlay[];
@@ -97,8 +105,14 @@ export function PlanMap({
   onNodeClick?: (node: PlanNode) => void;
   onSettingClick?: (node: PlanNode, label: string) => void;
   onGateClick?: (gate: PlanGate) => void;
+  /** Shows a "+" on a connector when it's hovered (or focused); clicking it calls this with the edge and the
+   *  button's centre. */
+  onAddStep?: (edge: PlanEdge, at: { x: number; y: number }) => void;
+  /** Edge key whose "+" stays visible (its add-step popover is open: 2.4c). */
+  addStepOn?: string;
   className?: string;
 }) {
+  const [hovered, setHovered] = useState<string | null>(null);
   const k = scale / BASE;
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const gateById = new Map((gates ?? []).map((g) => [g.id, g]));
@@ -133,9 +147,11 @@ export function PlanMap({
     const lane = e.lane ?? (a.x + b.x) / 2;
     return [
       {
-        key: `${e.from}-${e.to}`,
+        key: edgeKey(e),
+        edge: e,
         color,
         d: edgePath(a.x, a.y, b.x, b.y, lane, RADIUS * k, KAPPA),
+        add: e.addAt ?? { x: (lane + b.x) / 2, y: b.y },
       },
     ];
   });
@@ -170,6 +186,19 @@ export function PlanMap({
         {lines.map((l) => (
           <path key={l.key} d={l.d} stroke={l.color} strokeWidth={STROKE * k} />
         ))}
+        {onAddStep &&
+          lines.map((l) => (
+            // A wide invisible stroke to hover the connector by.
+            <path
+              key={`hit-${l.key}`}
+              d={l.d}
+              stroke="transparent"
+              strokeWidth={12}
+              pointerEvents="stroke"
+              onPointerEnter={() => setHovered(l.key)}
+              onPointerLeave={() => setHovered((h) => (h === l.key ? null : h))}
+            />
+          ))}
         {[...ports.entries()].map(([key, p]) => (
           <circle
             key={key}
@@ -204,17 +233,6 @@ export function PlanMap({
           <HelperCard
             {...n}
             scale={scale}
-            style={
-              n.height
-                ? // A selected card's stroke is thicker than the default 0.825px on each side
-                  // (1.4px ink: +1.15; 2px accent: +2.35), and Figma's stroke takes layout space.
-                  {
-                    height:
-                      n.height / scale +
-                      (n.selected === 'accent' ? 2.35 : n.selected ? 1.15 : 0),
-                  }
-                : undefined
-            }
             onClick={onNodeClick ? () => onNodeClick(n) : undefined}
             onSettingClick={
               onSettingClick ? (label) => onSettingClick(n, label) : undefined
@@ -222,6 +240,31 @@ export function PlanMap({
           />
         </div>
       ))}
+      {onAddStep &&
+        lines.map((l) => {
+          const on = l.key === addStepOn || l.key === hovered;
+          const size = 16.5 * scale;
+          return (
+            <div
+              key={`add-${l.key}`}
+              className="absolute"
+              style={{
+                left: l.add.x - size / 2,
+                top: l.add.y - size / 2,
+                opacity: on ? 1 : 0,
+              }}
+              onPointerEnter={() => setHovered(l.key)}
+              onPointerLeave={() => setHovered((h) => (h === l.key ? null : h))}
+            >
+              <AddStepButton
+                scale={scale}
+                label={`Add a step between ${nodeById.get(l.edge.from)?.name ?? 'these'} and ${nodeById.get(l.edge.to)?.name ?? 'the next step'}`}
+                onFocus={() => setHovered(l.key)}
+                onClick={() => onAddStep(l.edge, l.add)}
+              />
+            </div>
+          );
+        })}
       {overlays?.map((o) => (
         <div key={o.id} className="absolute" style={{ left: o.x, top: o.y }}>
           {o.content}

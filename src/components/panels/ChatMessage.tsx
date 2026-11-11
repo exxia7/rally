@@ -125,17 +125,21 @@ export function PanelUserMessage({ text }: { text: ReactNode }) {
 }
 
 // The side-panel message column: 24px sides, 8px top / 16px bottom, 12px between messages.
+// `inset="column"` is the 300px left chat column of 2.4c: 16px sides, no top padding.
 export function PanelThread({
   children,
+  inset = 'panel',
   className,
 }: {
   children: ReactNode;
+  inset?: 'panel' | 'column';
   className?: string;
 }) {
   return (
     <div
       className={clsx(
-        'flex w-full flex-col items-start gap-3 px-6 pt-2 pb-4 max-md:px-4',
+        'flex w-full flex-col items-start gap-3 pb-4',
+        inset === 'column' ? 'px-4' : 'px-6 pt-2 max-md:px-4',
         className
       )}
     >

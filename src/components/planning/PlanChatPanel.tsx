@@ -28,6 +28,8 @@ export function PlanChatPanel({
   onTabChange,
   sandbox,
   onClose,
+  variant = 'panel',
+  className,
 }: {
   messages: PlanChatMessage[];
   suggestions?: string[];
@@ -36,6 +38,10 @@ export function PlanChatPanel({
   onTabChange?: (tab: PanelTab) => void;
   sandbox?: ReactNode;
   onClose?: () => void;
+  /** 'column': the older left chat column of 2.4c (300px, "Chat with Pathfinder", no tabs), placed in the
+   *  main panel by the screen. */
+  variant?: 'panel' | 'column';
+  className?: string;
 }) {
   const end = useRef<HTMLDivElement>(null);
   const count = useRef(messages.length);
@@ -45,9 +51,41 @@ export function PlanChatPanel({
     count.current = messages.length;
   }, [messages.length]);
 
+  const thread = (inset: 'panel' | 'column') => (
+    <PanelThread inset={inset}>
+      {messages.map((m) =>
+        m.from === 'user' ? (
+          <PanelUserMessage key={m.id} text={m.text} />
+        ) : (
+          <PanelAssistantMessage key={m.id} text={m.text}>
+            {m.extra}
+          </PanelAssistantMessage>
+        )
+      )}
+      <div ref={end} />
+    </PanelThread>
+  );
+
+  if (variant === 'column')
+    return (
+      <section
+        aria-label="Chat with Pathfinder"
+        className="flex h-full w-[300px] shrink-0 flex-col items-start border-r border-line bg-white max-xl:hidden"
+      >
+        <p className="shrink-0 px-4 pt-4 pb-2 text-[12px] leading-[18px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink-2">
+          Chat with Pathfinder
+        </p>
+        <div className="flex min-h-px w-full flex-1 flex-col overflow-y-auto">
+          {thread('column')}
+        </div>
+        <ChatComposer onSend={onSend} suggestions={suggestions} narrow />
+      </section>
+    );
+
   const showSandbox = tab === 'sandbox' && sandbox;
   return (
     <SidePanel
+      className={className}
       tabs={
         <PanelTabs
           phase="plan"
@@ -62,22 +100,7 @@ export function PlanChatPanel({
         )
       }
     >
-      {showSandbox ? (
-        sandbox
-      ) : (
-        <PanelThread>
-          {messages.map((m) =>
-            m.from === 'user' ? (
-              <PanelUserMessage key={m.id} text={m.text} />
-            ) : (
-              <PanelAssistantMessage key={m.id} text={m.text}>
-                {m.extra}
-              </PanelAssistantMessage>
-            )
-          )}
-          <div ref={end} />
-        </PanelThread>
-      )}
+      {showSandbox ? sandbox : thread('panel')}
     </SidePanel>
   );
 }

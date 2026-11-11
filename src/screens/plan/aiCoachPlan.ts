@@ -32,6 +32,8 @@ export type Helper = Omit<HelperCardData, 'settings'> & {
   tools?: string[];
   skills: string[];
   files: string[];
+  /** Files uploaded in the helper drawer (shown with Files on the card). */
+  uploads?: string[];
   /** A setting changed by chat ("Tone · Playful" in 2.4d). Shown highlighted after Model. */
   tone?: string;
   /** Extra card rows after the resources (Publisher: Ads, Posts). */
@@ -177,7 +179,8 @@ export function helperCard(h: Helper): HelperCardData {
   if (h.tools?.length) rows.push({ label: 'Tools', value: h.tools.join(', ') });
   if (h.skills.length)
     rows.push({ label: 'Skills', value: h.skills.join(', ') });
-  if (h.files.length) rows.push({ label: 'Files', value: h.files.join(', ') });
+  const files = [...h.files, ...(h.uploads ?? [])];
+  if (files.length) rows.push({ label: 'Files', value: files.join(', ') });
   rows.push(...(h.extra ?? []));
   return {
     name: h.name,
@@ -206,7 +209,7 @@ const EDGES: PlanEdge[] = [
 
 const STAGES = ['Research', 'Decide the message', 'Create', 'Post'];
 
-type Positions = Record<HelperId, { x: number; y: number; height?: number }>;
+type Positions = Record<HelperId, { x: number; y: number }>;
 
 const layout = (
   base: Omit<PlanLayout, 'nodes'>,
@@ -240,8 +243,8 @@ export const AI_COACH_PLAN: PlanLayout = layout(
     strategist: { x: 227.3625, y: 232.35 },
     writer: { x: 430.725, y: 99.1126 },
     designer: { x: 430.725, y: 365.588 },
-    // The Figma instance is fixed at 121.6px, so its 4-row well hangs out of the bottom.
-    publisher: { x: 711.225, y: 232.2625, height: 121.617 },
+    // Figma pins this card at 121.6px so its 4-row well hangs out; cards hug their content here instead.
+    publisher: { x: 711.225, y: 232.2625 },
   }
 );
 
@@ -264,14 +267,39 @@ export const AI_COACH_PLAN_COMPACT: PlanLayout = layout(
     stageScale: 1,
   },
   {
-    // Figma's scaled instances here are a little taller than the cards' own layout, so pin their heights.
-    planner: { x: 36, y: 178.125, height: 73.6909 },
-    scout: { x: 36, y: 270.154, height: 73.6909 },
-    insights: { x: 36, y: 362.425, height: 73.6909 },
-    strategist: { x: 176.65, y: 270.336, height: 86.5818 },
-    writer: { x: 317.3, y: 178.186, height: 86.5818 },
-    designer: { x: 317.3, y: 362.485, height: 86.5818 },
-    publisher: { x: 511.3, y: 270.275, height: 99.4727 },
+    planner: { x: 36, y: 178.125 },
+    scout: { x: 36, y: 270.154 },
+    insights: { x: 36, y: 362.425 },
+    strategist: { x: 176.65, y: 270.336 },
+    writer: { x: 317.3, y: 178.186 },
+    designer: { x: 317.3, y: 362.485 },
+    publisher: { x: 511.3, y: 270.275 },
+  }
+);
+
+/** 2.4c "Add a step on a line": the map at full size (cards 181.5px) beside the old left chat column. Stage 1062×830.
+ *  Its "+" sits on the Strategist → Writer line, just out of the Strategist. */
+export const AI_COACH_PLAN_WIDE: PlanLayout = layout(
+  {
+    scale: 1,
+    edges: EDGES.map((e) =>
+      e.from === 'strategist' && e.to === 'writer'
+        ? { ...e, addAt: { x: 476.55, y: 280.525 } }
+        : e
+    ),
+    gates: [{ id: 'approve', x: 720.705, y: 268.15, width: 100.25 }],
+    stages: STAGES.map((label, i) => ({ label, x: [36, 275, 515, 845][i] })),
+    stageY: 61.625,
+    stageScale: 1,
+  },
+  {
+    planner: { x: 36, y: 105.625 },
+    scout: { x: 36, y: 262.169 },
+    insights: { x: 36, y: 419.125 },
+    strategist: { x: 275.25, y: 262.478 },
+    writer: { x: 514.5, y: 105.728 },
+    designer: { x: 514.5, y: 419.2285 },
+    publisher: { x: 844.5, y: 262.375 },
   }
 );
 

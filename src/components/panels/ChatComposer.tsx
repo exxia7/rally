@@ -106,18 +106,22 @@ export function ChatComposer({
   onSend,
   suggestions,
   placeholder = 'Ask for changes…',
+  narrow,
   className,
 }: {
   onSend: (text: string) => void;
   suggestions?: string[];
   placeholder?: string;
+  /** 12px sides, for a narrow (300px) chat column (2.4c), as the Figma component description says. */
+  narrow?: boolean;
   className?: string;
 }) {
   const { text, setText, send } = useComposer(onSend);
   return (
     <div
       className={clsx(
-        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white px-6 pt-3 pb-4 max-md:px-3',
+        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white pt-3 pb-4 max-md:px-3',
+        narrow ? 'px-3' : 'px-6',
         className
       )}
     >

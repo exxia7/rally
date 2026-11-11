@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 
 import {
   PlanMap,
+  type PlanEdge,
   type PlanGate,
   type PlanLayout,
   type PlanNode,
@@ -33,6 +34,8 @@ export function PlanCanvas({
   onNodeClick,
   onSettingClick,
   onGateClick,
+  onAddStep,
+  addStepOn,
   focus,
   children,
 }: {
@@ -49,6 +52,9 @@ export function PlanCanvas({
   onNodeClick?: (node: PlanNode) => void;
   onSettingClick?: (node: PlanNode, label: string) => void;
   onGateClick?: (gate: PlanGate) => void;
+  /** Shows a "+" on hovered connectors (see PlanMap). */
+  onAddStep?: (edge: PlanEdge, at: { x: number; y: number }) => void;
+  addStepOn?: string;
   focus?: { x: number; y: number };
   /** Extra canvas-pinned overlays. */
   children?: ReactNode;
@@ -97,6 +103,8 @@ export function PlanCanvas({
         onNodeClick={onNodeClick}
         onSettingClick={onSettingClick}
         onGateClick={onGateClick}
+        onAddStep={onAddStep}
+        addStepOn={addStepOn}
       />
     </MapCanvas>
   );

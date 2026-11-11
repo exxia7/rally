@@ -63,7 +63,6 @@ export const SCREENS: ScreenMeta[] = [
     node: '2362:23969',
     name: 'Add a step on a line',
     chapter: 'Plan',
-    hidden: true,
   },
   { id: '2.4d', node: '2362:24093', name: 'Edit by chat', chapter: 'Plan' },
   {
