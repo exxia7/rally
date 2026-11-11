@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "diff": "node scripts/pixel-diff.mjs",
     "typecheck": "tsc -b --noEmit",
-    "responsive": "node scripts/responsive-check.mjs"
+    "responsive": "node scripts/responsive-check.mjs",
+    "build:hosted": "VITE_HOSTED=1 vite build --base=./ --outDir dist-hosted --emptyOutDir"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.6",

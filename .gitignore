@@ -26,3 +26,6 @@ dist-ssr
 # pixel-diff output
 design/out/
 .idea/
+
+# hosted (Artifact) build
+dist-hosted/
