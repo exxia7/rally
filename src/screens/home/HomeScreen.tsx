@@ -49,7 +49,7 @@ const WORKFLOWS: WorkflowCardData[] = [
 
 type Filter = 'all' | 'running' | 'needs-you';
 
-export const screenId = "1.1"
+export const screenId = '1.1';
 
 // Figma 1.1 "Home · your workflows" (2362:23299)
 export default function HomeScreen() {
@@ -77,7 +77,7 @@ export default function HomeScreen() {
           <>
             <Button
               variant="secondary"
-              className="w-[148.031px]"
+              className="w-[148.031px] max-md:hidden"
               onClick={() => navigate(screenPath('1.2'))}
             >
               Workspace settings
@@ -87,12 +87,12 @@ export default function HomeScreen() {
         }
       />
       <div className="flex min-h-px w-full flex-1 flex-col items-center overflow-auto bg-white">
-        <div className="flex w-[1040px] max-w-[1040px] flex-col items-start px-8 py-12">
-          <h1 className="w-[560px] text-[30px] leading-9 font-semibold tracking-[-0.75px] whitespace-nowrap text-ink">
+        <div className="flex w-full max-w-[1040px] flex-col items-start px-8 py-12 max-md:px-4 max-md:py-6">
+          <h1 className="max-w-[560px] text-[30px] leading-9 font-semibold tracking-[-0.75px] whitespace-nowrap text-ink max-md:text-[24px] max-md:leading-8">
             Your workflows
           </h1>
-          <div className="flex w-[976px] items-center gap-2 pt-5">
-            <label className="flex h-8 w-[200px] shrink-0 items-center gap-2 overflow-clip rounded-control edge [--edge:var(--color-line-2)] px-3">
+          <div className="flex w-full flex-wrap items-center gap-2 pt-5 max-md:pt-4">
+            <label className="flex h-8 w-[200px] shrink-0 items-center gap-2 overflow-clip rounded-control edge [--edge:var(--color-line-2)] px-3 max-md:order-first max-md:w-full">
               <Icon src={searchIcon} size={14} />
               <input
                 value={query}
@@ -126,9 +126,10 @@ export default function HomeScreen() {
             >
               Status
             </Button>
-            <div className="flex min-w-px flex-1 justify-end">
+            <div className="flex min-w-fit flex-1 justify-end max-md:fixed max-md:right-4 max-md:bottom-[calc(56px+16px+env(safe-area-inset-bottom))] max-md:z-10 max-md:flex-none">
               <Button
                 variant="primary"
+                className="max-md:h-10 max-md:shadow-[0_4px_12px_rgba(16,18,24,0.18)]"
                 leading={<Icon src={plusIcon} size={16} />}
                 onClick={() => navigate(screenPath('2.1'))}
               >
@@ -136,7 +137,7 @@ export default function HomeScreen() {
               </Button>
             </div>
           </div>
-          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3">
+          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-md:gap-3 max-md:pb-20 *:max-xl:w-auto">
             {visible.map((w) => (
               <WorkflowCard
                 key={w.title}

@@ -16,7 +16,7 @@ function Screen({ id }: { id: string }) {
   if (Component) return <Component />
   const meta = SCREENS.find((s) => s.id === id)
   return (
-    <div className="flex h-[900px] w-[1440px] items-center justify-center bg-app text-[14px] text-muted">
+    <div className="flex h-dvh w-full flex-wrap items-center justify-center bg-app px-4 text-center text-[14px] text-muted">
       {meta ? `${meta.id} ${meta.name}: not built yet` : `No screen "${id}"`}
       <Link to="/screens" className="ml-2 text-accent">
         All screens

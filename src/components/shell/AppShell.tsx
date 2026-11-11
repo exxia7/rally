@@ -2,7 +2,9 @@ import type { ReactNode } from 'react';
 
 import { Sidebar } from './Sidebar';
 
-// Figma "Shell": 8px app-ground padding, 8px gap, 52px sidebar + 12px-radius main panel. Frames are 1440×900.
+// Figma "Shell": 8px app-ground padding, 8px gap, 52px sidebar + 12px-radius main panel. Frames are 1440×900;
+// the shell fills the viewport so that size is exact. Under 768px (max-md) the sidebar becomes a bottom tab
+// bar and the main panel goes full-bleed.
 export function AppShell({
   children,
   sidebar = 'workflows',
@@ -13,9 +15,9 @@ export function AppShell({
   overlay?: ReactNode;
 }) {
   return (
-    <div className="relative flex h-[900px] w-[1440px] gap-2 bg-app p-2">
+    <div className="relative flex h-dvh w-full gap-2 overflow-clip bg-app p-2 max-md:flex-col-reverse max-md:gap-0 max-md:p-0">
       <Sidebar active={sidebar} />
-      <main className="relative flex h-[884px] min-w-px flex-1 flex-col overflow-clip rounded-card border border-line bg-white">
+      <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip rounded-card border border-line bg-white max-md:rounded-none max-md:border-0">
         {children}
       </main>
       {overlay}
@@ -35,9 +37,9 @@ export function TopBar({
 }) {
   return (
     <header
-      className={`relative flex h-[52px] w-full shrink-0 items-center edge-b bg-white px-4 ${className ?? ''}`}
+      className={`relative flex h-[52px] w-full shrink-0 items-center edge-b bg-white px-4 max-md:px-3 ${className ?? ''}`}
     >
-      <div className="flex shrink-0 items-center">{left}</div>
+      <div className="flex min-w-0 shrink items-center">{left}</div>
       <div className="flex min-w-px flex-1 items-start justify-end">
         <div className="flex items-center gap-2">{right}</div>
       </div>

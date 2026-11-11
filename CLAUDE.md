@@ -81,3 +81,28 @@ menus, switch tabs, toggle, type in the composer, drag a resource) inside a scre
 to a different frame in the flow, `navigate(screenPath('<id>'))`. The flow order follows the chapters
 (Home → Plan → Run → Stuck → Approve → Rerun/fork) and the frame numbers. Map overlays (`*-tasks`)
 open from the Tasks chip, and the attach menus (`*-attach`) open from the composer's attach button.
+
+## Responsive: every screen size
+
+Figma only has 1440×900 desktop frames. The app must work from a 375px phone to a wide desktop **and** stay
+pixel-exact at 1440×900, so:
+
+- Write Figma's desktop styles unprefixed, then adapt with `max-xl:` (under 1280px: tablet and small laptop)
+  and `max-md:` (under 768px: phone). Never restructure the desktop styles to suit small screens; the
+  1440×900 pixel diff must not change.
+- Screen containers never use fixed 1440/900/884 sizes. AppShell fills the viewport (`h-dvh w-full`), and
+  content uses `flex-1`, `min-w-0`, `min-h-0`, `max-w-[…]`, `w-full`. Fixed sizes on cards, map nodes and
+  controls are fine.
+- AppShell: under 768px the sidebar is a bottom tab bar (56px) and the main panel is full-bleed.
+- Side panel (Chat/Sandbox/Decisions), drawers, inspector: docked beside the content at ≥1280px; under 1280px
+  they overlay the content from the right with a scrim and ×; under 768px they're full-screen sheets.
+- Map canvas: a pannable viewport (overflow-auto plus drag-to-pan) holding the map at design size. Zoom
+  controls really scale it; under 768px it starts fit-to-width. Canvas overlays (Tasks chip, agents bar,
+  zoom) stay pinned to the viewport corners.
+- Top bars: under 768px, breadcrumb collapses to the truncated workflow name, and secondary icon buttons go
+  into a "more" menu. Settings side-nav becomes a horizontal scrolling tab row. Modals and menus:
+  `max-w-[calc(100vw-32px)]`. Card grids switch to `grid-cols-[repeat(auto-fill,minmax(280px,1fr))]`
+  under 1280px (see Home).
+- Check: `node scripts/responsive-check.mjs <id>` renders 375/768/1024/1280/1920, saves
+  `design/out/<id>@<w>.png` and flags horizontal overflow. Every screen must pass with no overflow, and the
+  375 and 768 renders must look deliberate: nothing clipped, overlapping or unreachable.

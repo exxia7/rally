@@ -9,14 +9,15 @@ import { Icon } from '@/components/ui/Icon';
 import { screenPath } from '@/screens/registry';
 
 // Figma "Sidebar" (2362:29209): left app rail. Logo + Nav items + account.
+// Under 768px it becomes a bottom tab bar (no logo; workflows, needs you, settings, account in a row).
 export function Sidebar({
   active = 'workflows',
 }: {
   active?: 'workflows' | 'settings' | 'none';
 }) {
   return (
-    <nav className="flex h-full w-[52px] shrink-0 flex-col items-center gap-1.5 rounded-card border border-line bg-white pt-2 pb-3">
-      <div className="pb-2">
+    <nav className="flex h-full w-[52px] shrink-0 flex-col items-center gap-1.5 rounded-card border border-line bg-white pt-2 pb-3 max-md:h-14 max-md:w-full max-md:flex-row max-md:justify-around max-md:gap-0 max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:px-4 max-md:py-0 max-md:pb-[env(safe-area-inset-bottom)]">
+      <div className="pb-2 max-md:hidden">
         <Link
           to={screenPath('1.1')}
           aria-label="Pathfinder home"
@@ -35,8 +36,8 @@ export function Sidebar({
       >
         <Icon src={workflows} size={18} />
       </Link>
-      <div className="flex min-h-px flex-1 flex-col items-start justify-end">
-        <div className="flex flex-col items-center gap-2">
+      <div className="flex min-h-px flex-1 flex-col items-start justify-end max-md:contents">
+        <div className="flex flex-col items-center gap-2 max-md:contents">
           <button
             type="button"
             aria-label="Needs you"
