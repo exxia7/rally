@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import close from '@/assets/icons/close.svg';
 import { IconButton } from '@/components/ui/IconButton';
@@ -34,6 +34,19 @@ export function SidePanel({
   className?: string;
   bodyClassName?: string;
 }) {
+  // While it overlays the content (under 1280px) it behaves like a dialog: Escape closes it, unless a menu
+  // inside it is open (that Escape belongs to the menu). Docked on desktop it stays put.
+  useEffect(() => {
+    if (!onClose) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (window.matchMedia('(min-width: 1280px)').matches) return;
+      if (document.querySelector('[role="menu"]')) return;
+      onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
     <>
       <div
@@ -49,38 +62,39 @@ export function SidePanel({
           className
         )}
       >
-        {header ?? (tabs ? (
-          <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-3 max-md:px-4">
-            <div className="flex min-w-px flex-1 items-center">{tabs}</div>
-            {headerExtra}
-            {onClose && (
-              <IconButton
-                icon={close}
-                iconSize={16}
-                label="Close panel"
-                onClick={onClose}
-                className="xl:hidden"
-              />
-            )}
-          </div>
-        ) : title !== undefined ? (
-          <div className="flex h-[52px] w-full shrink-0 items-center gap-2 overflow-clip border-b border-line pr-2.5 pl-4">
-            <div className="flex min-w-px flex-1 items-center overflow-clip">
-              <p className="truncate text-[14px] leading-5 font-semibold text-ink">
-                {title}
-              </p>
+        {header ??
+          (tabs ? (
+            <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-3 max-md:px-4">
+              <div className="flex min-w-px flex-1 items-center">{tabs}</div>
+              {headerExtra}
+              {onClose && (
+                <IconButton
+                  icon={close}
+                  iconSize={16}
+                  label="Close panel"
+                  onClick={onClose}
+                  className="xl:hidden"
+                />
+              )}
             </div>
-            {headerExtra}
-            {onClose && (
-              <IconButton
-                icon={close}
-                iconSize={16}
-                label="Close panel"
-                onClick={onClose}
-              />
-            )}
-          </div>
-        ) : null)}
+          ) : title !== undefined ? (
+            <div className="flex h-[52px] w-full shrink-0 items-center gap-2 overflow-clip border-b border-line pr-2.5 pl-4">
+              <div className="flex min-w-px flex-1 items-center overflow-clip">
+                <p className="truncate text-[14px] leading-5 font-semibold text-ink">
+                  {title}
+                </p>
+              </div>
+              {headerExtra}
+              {onClose && (
+                <IconButton
+                  icon={close}
+                  iconSize={16}
+                  label="Close panel"
+                  onClick={onClose}
+                />
+              )}
+            </div>
+          ) : null)}
         <div
           className={clsx(
             'flex min-h-px w-full flex-1 flex-col items-start overflow-y-auto',

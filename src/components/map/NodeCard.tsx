@@ -51,11 +51,16 @@ export type NodeCardData = {
   selected?: boolean;
   /** Vertical padding around the card's content, when an instance adds one (the hand-raised decision: 5.868px). */
   padY?: number;
+  /** Kind tile overrides at map scale. Some instances in the docked frames (4.1, 4.3, 6.1, 6.3) keep the
+   *  tile's unscaled mark (15.732px) and/or radius (7.261px). */
+  tile?: { glyph?: number; radius?: number };
   /** Layer opacity of the whole card (Figma dims the rest of the map while a hand is raised: 0.45, 0.62, 0.9). */
   opacity?: number;
   /** The step is on a fork lane: selected takes the fork's colour, working gets a half-strength fork border and
    *  the others a 1px (frame-scale) border. */
   fork?: ForkNumber;
+  /** Border width at map scale where an instance overrides it (1.467 = 1px in a docked frame, 6.5's originals). */
+  strokeWidth?: number;
 };
 
 const KIND_LABEL: Record<NodeKindName, string> = {
@@ -154,6 +159,8 @@ export function NodeCard({
   padY,
   opacity,
   fork,
+  tile,
+  strokeWidth,
   onClick,
   onRerun,
   className,
@@ -172,6 +179,19 @@ export function NodeCard({
       onClick();
     }
   };
+  // Chrome floors fractional border widths to whole px (2.934 → 2), so strokes that must keep their Figma width at
+  // map scale are drawn as an inset box-shadow over an equal padding, which lays out exactly like a border:
+  // selected (2px at frame scale; the fork's colour on a fork lane), finished (0.94px) and waiting fork-lane steps
+  // (1px).
+  const stroke = selected
+    ? { w: 2.934, color: fork ? FORK_COLOR[fork] : '#2457d6' }
+    : state === 'done'
+      ? { w: 1.379, color: '#dcdde1' }
+      : fork && state !== 'working'
+        ? { w: 1.467, color: '#dcdde1' }
+        : strokeWidth
+          ? { w: strokeWidth, color: '#dcdde1' }
+          : null;
   return (
     <div
       role={onClick ? 'button' : undefined}
@@ -180,32 +200,29 @@ export function NodeCard({
       onKeyDown={onKey}
       className={clsx(
         'flex flex-col justify-center rounded-[9.221px] bg-white drop-shadow-[0px_0.922px_0.922px_rgba(16,18,24,0.04)]',
-        selected
-          ? 'border-[2.934px] border-solid border-accent'
+        stroke
+          ? 'border-0'
           : state === 'needs-you'
           ? 'border-[1.4px] border-solid border-ink-2'
           : state === 'will-rerun'
             ? 'border-[0.922px] border-dashed border-accent'
             : state === 'working'
               ? 'border-[0.922px] border-solid border-accent-line'
-              : state === 'done'
-                ? // A finished step (4.4/4.5 after the run): 0.94px at frame scale.
-                  'border-[1.379px] border-solid border-line-2'
-                : 'border-[0.922px] border-solid border-line-2',
+              : 'border-[0.922px] border-solid border-line-2',
         onClick && 'cursor-pointer',
         className
       )}
       style={{
         width,
         opacity,
-        // Fork lanes (4.5, 6.5, 6.6): Branch/Fork N for the selected step, 50% of it while a step works.
+        ...(stroke && {
+          padding: stroke.w,
+          boxShadow: `inset 0 0 0 ${stroke.w}px ${stroke.color}`,
+        }),
+        // A working step on a fork lane (4.5, 6.6): 50% of Branch/Fork N.
         ...(fork &&
-          (selected
-            ? { borderColor: FORK_COLOR[fork] }
-            : state === 'working'
-              ? { borderColor: `${FORK_COLOR[fork]}80` }
-              : // Waiting fork-lane steps: 1px at frame scale.
-                { borderWidth: 1.467 })),
+          !stroke &&
+          state === 'working' && { borderColor: `${FORK_COLOR[fork]}80` }),
         ...style,
       }}
     >
@@ -244,6 +261,8 @@ export function NodeCard({
             <NodeKindTile
               kind={kind}
               emphasis={kind === 'decision' && state === 'needs-you'}
+              glyphSize={tile?.glyph}
+              radius={tile?.radius}
             />
             <p className="min-w-px flex-1 text-[11.99px] leading-[14.987px] font-semibold tracking-[-0.1199px] text-ink">
               {title}

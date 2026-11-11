@@ -124,7 +124,8 @@ export function InspectorPanel({
       footer={
         data.footer !== false && (
         <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
-          <Button variant="secondary" onClick={onEdit}>
+          {/* Figma's Edit is 51px; Chrome sets "Edit" 1.4px narrower, which would shift the next button. */}
+          <Button variant="secondary" onClick={onEdit} className="min-w-[51px] justify-start">
             Edit
           </Button>
           <Button variant="secondary" onClick={onTakeOver}>
@@ -200,7 +201,8 @@ export function InspectorPanel({
             <p className="text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted">
               {data.extras.label}
             </p>
-            <div className="flex min-h-6 w-full flex-wrap items-start gap-1.5 pt-1">
+            {/* Figma keeps this row 24px; the 28px Add button hangs 4px below it. */}
+            <div className="flex h-6 w-full flex-wrap items-start gap-1.5 pt-1 max-md:h-auto">
               {data.extras.items.map((item) => (
                 <Badge key={item} tone="subtle">
                   {item}

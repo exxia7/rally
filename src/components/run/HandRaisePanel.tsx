@@ -133,14 +133,29 @@ export function HandRaisePanel({
           />
         ))}
       </div>
-      <div className="w-full shrink-0 py-3">
+      <div className="relative w-full shrink-0 py-3">
         <input
           value={other}
           onChange={(e) => setOther(e.target.value)}
           placeholder="Something else? Tell the team what to do…"
           aria-label="Something else"
-          className="h-11 w-full rounded-card border border-dashed border-line-2 px-3.5 text-[13px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)] focus:border-solid focus:border-accent-line"
+          className="peer h-11 w-full rounded-card px-[15px] text-[13px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
         />
+        {/* Figma's 1px dashed stroke (2/1 dashes, which CSS `dashed` can't draw); solid blue while typing. */}
+        <svg
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-3 h-11 w-full stroke-line-2 peer-focus:stroke-accent-line"
+          fill="none"
+        >
+          <rect
+            x="0.5"
+            y="0.5"
+            rx="11.5"
+            strokeDasharray="2 1"
+            strokeDashoffset={1}
+            style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
+          />
+        </svg>
       </div>
       <div className="flex min-h-px w-full flex-1 flex-col items-start justify-end">
         {last ? (

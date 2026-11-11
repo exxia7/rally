@@ -42,13 +42,14 @@ export function Sidebar({
       </Link>
       <div className="flex min-h-px flex-1 flex-col items-start justify-end max-md:contents">
         <div className="flex flex-col items-center gap-2 max-md:contents">
-          <button
-            type="button"
+          {/* The workflow waiting on you: AI Coach launch's raised hand (4.1). */}
+          <Link
+            to={screenPath('4.1')}
             aria-label="Needs you"
             className="flex size-9 items-center justify-center rounded-control hover:bg-hover"
           >
             <Icon src={bell} size={18} />
-          </button>
+          </Link>
           <Link
             to={screenPath('1.2')}
             aria-label="Workspace settings"

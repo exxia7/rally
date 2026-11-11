@@ -32,15 +32,22 @@ export function NodeKindTile({
   kind,
   size = 20.291,
   emphasis,
+  glyphSize,
+  radius: radiusOverride,
   className,
 }: {
   kind: NodeKindName;
   size?: number;
   emphasis?: boolean;
+  /** Instance overrides of the mark size and corner radius (some docked-map instances keep the larger mark). */
+  glyphSize?: number;
+  radius?: number;
   className?: string;
 }) {
-  const glyph = kind === 'task' ? 11.99 : emphasis ? 15.732 : 10.725;
-  const radius = kind === 'task' ? 5.534 : emphasis ? 7.261 : 4.95;
+  const glyph =
+    glyphSize ?? (kind === 'task' ? 11.99 : emphasis ? 15.732 : 10.725);
+  const radius =
+    radiusOverride ?? (kind === 'task' ? 5.534 : emphasis ? 7.261 : 4.95);
   return (
     <div
       className={clsx(
