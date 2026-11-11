@@ -1,0 +1,149 @@
+# Pathfinder design notes (text exported from Figma, not UI)
+
+
+## NOTES · design pass
+
+- NOTE
+- VIVIAN
+- P1
+- In the demo path · polish first
+- NOTE
+- VIVIAN
+- P1
+- In the demo path · polish first
+- NOTE
+- VIVIAN
+- P1
+- In the demo path · polish first
+- NOTE
+- VIVIAN
+- P1
+- In the demo path · polish first
+- NOTE
+- VIVIAN
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- VIVIAN
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- VIVIAN
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- EMILY
+- P1
+- In the demo path · polish first
+- NOTE
+- EMILY
+- P1
+- In the demo path · polish first
+- NOTE
+- EMILY
+- P1
+- In the demo path · polish first
+- NOTE
+- EMILY
+- P1
+- In the demo path · polish first
+- NOTE
+- EMILY
+- P1
+- In the demo path · polish first
+- NOTE
+- EMILY
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- EMILY
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- EMILY
+- P3
+- Only if there is time
+- NOTE
+- TONIA
+- P1
+- In the demo path · polish first
+- NOTE
+- TONIA
+- P1
+- In the demo path · polish first
+- NOTE
+- TONIA
+- P1
+- In the demo path · polish first
+- NOTE
+- TONIA
+- P1
+- In the demo path · polish first
+- NOTE
+- TONIA
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- TONIA
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- TONIA
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- TONIA
+- P2
+- Shown briefly · after your P1s
+- NOTE
+- TONIA
+- P3
+- Only if there is time
+- NOTE
+- EMILY
+- P1
+- Rerun + Fork live in the inspector now · not on every card
+- NOTE
+- EMILY
+- P1
+- Uses Tonia's rerun confirm (4.1b) · plus an optional note for what changes
+- NOTE
+- EMILY
+- P1
+- Only Launch copy + what uses it reruns · old version is kept
+- NOTE
+- EMILY
+- P1
+- Same panel pattern · makes a new branch, original stays as is
+- NOTE
+- EMILY
+- P1
+- Forking grows the map · the fork gets its own lane under the original
+- NOTE
+- EMILY
+- P1
+- Mark any step "Asks you first" before the run · it shows as a strip at the bottom of the card here and in the run
+- NOTE
+- EMILY
+- P1
+- Create fork grows the map · the fork lane under the original
+- NOTE
+- EMILY
+- P1
+- Fork from any step, even inside a fork · each new fork takes the next colour
+
+## Chapter labels
+
+- Home · your workflows and workspace
+- Start a launch · write the brief, first chat
+- Shape the team · add, edit and tweak helpers
+- Set the rules · resources, permissions, settings
+- Run · watch the team work
+- When a helper gets stuck · fix it, then rerun
+- Rerun a step · from the inspector
+- Fork · try another direction (from a decision, a step, or a fork)
+- Approve & launch
+
+## What changed
+
+Pathfinder screens: what changed Screens reorganized: one row per chapter (Home → Plan → Run → Stuck → Approve → Rerun/fork), in flow order, with notes right above each screen. Prototype: 8 named flows, and broken or looping links fixed. Fork, rerun, settings and permissions are all clickable now. Side panel: chat, Sandbox and Decisions are one right-hand panel with tabs. The left chat column is gone. Top bar: status · settings · panel toggle · main action. Running shows Pause, paused shows Resume. Forks: the map grows a blue “Fork 1” lane under the original, joined by a bold blue fork line. There’s no compare view. New screen 4.5 shows a fork from a decision. Progress: no setup stepper. Map stages are plain column labels. The Tasks chip is the only place with a count (“4 of 10 done”), and node cards show a status line, not bars. Cards: neutral borders and the same 28px control height everywhere. New components: Output preview, Outputs card, Panel tabs, Icon / Pause, Icon / Panel. Close buttons: × to close, no ← arrows.

@@ -1,0 +1,88 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import 'tailwindcss';
+
+/* Pathfinder tokens, from the Figma "Foundations" swatches and Fig/Button variables. */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-accent: #2457d6;
+  --color-accent-hover: #1c47b8;
+  --color-accent-soft: #edf3fc;
+  --color-accent-chip: #e5edfc;
+  --color-accent-line: #91ade8;
+  --color-ink: #1d1e22;
+  --color-ink-2: #45474d;
+  --color-muted: #70737b;
+  --color-muted-2: #7a7d85;
+  --color-line: #e9e9ec;
+  --color-line-2: #dcdde1;
+  --color-control-border: #dbdde0;
+  --color-well: #f7f7f8;
+  --color-canvas: #fcfcfd;
+  --color-app: #f2f2f4;
+  --color-chip: #f2f3f5;
+  --color-hover: #f2f5f7;
+  --color-disabled: #f0f2f5;
+  --color-disabled-ink: #8c8f96;
+  --color-problem: #e5484d;
+  --color-ok: #22a95a;
+  --color-fork-1: #be348a;
+  --color-fork-2: #0d8579;
+  --color-fork-3: #7a4be0;
+
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --shadow-card: 0px 1px 2px 0px rgba(16, 18, 24, 0.04);
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--color-app);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+  }
+  button { cursor: pointer; font: inherit; color: inherit; }
+  img { display: block; max-width: none; }
+}
+
+/*
+ * Figma strokes are drawn INSIDE a frame, on top of its children, and take no layout space.
+ * A CSS `border` adds space, so hug-sized frames come out 2px bigger and content shifts 1px.
+ * Use `edge` / `edge-t|b|l|r` instead of `border` wherever Figma has a stroke.
+ *   colour: [--edge:var(--color-problem)]   width: [--edge-w:2px]   style: [--edge-style:dashed]
+ */
+@utility edge {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line));
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}
+@utility edge-t {
+  &::after { content: ''; position: absolute; inset: 0; border-top: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line)); border-radius: inherit; pointer-events: none; }
+  &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}
+@utility edge-b {
+  &::after { content: ''; position: absolute; inset: 0; border-bottom: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line)); border-radius: inherit; pointer-events: none; }
+  &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}
+@utility edge-l {
+  &::after { content: ''; position: absolute; inset: 0; border-left: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line)); border-radius: inherit; pointer-events: none; }
+  &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}
+@utility edge-r {
+  &::after { content: ''; position: absolute; inset: 0; border-right: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line)); border-radius: inherit; pointer-events: none; }
+  &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}
