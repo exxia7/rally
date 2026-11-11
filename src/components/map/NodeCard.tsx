@@ -19,7 +19,12 @@ export type NodeState =
   | 'updated'
   | 'done';
 
-export type NodeFlag = { label: string; tone?: 'neutral' | 'blue' };
+export type NodeFlag = {
+  label: string;
+  tone?: 'neutral' | 'blue';
+  /** Fixed label width at map scale, centred and clipped (4.4/4.5's decision draws "Updated" in a 14.8px box). */
+  clip?: number;
+};
 
 export type NodeStatus = {
   text: string;
@@ -87,12 +92,17 @@ export function YourOkFlag() {
   );
 }
 
-function Flag({ label, tone = 'neutral' }: NodeFlag) {
+function Flag({ label, tone = 'neutral', clip }: NodeFlag) {
   return tone === 'blue' ? (
     <div className="flex shrink-0 items-center justify-center gap-[2.921px] rounded-[4.381px] bg-accent-soft px-[4.381px] py-[1.46px]">
-      <p className="text-[8.033px] leading-[11.684px] font-medium whitespace-nowrap text-accent">
-        {label}
-      </p>
+      <div
+        className={clsx(clip && 'flex justify-center overflow-hidden')}
+        style={clip ? { width: clip } : undefined}
+      >
+        <p className="shrink-0 text-[8.033px] leading-[11.684px] font-medium whitespace-nowrap text-accent">
+          {label}
+        </p>
+      </div>
     </div>
   ) : (
     <div className="flex shrink-0 items-center justify-center gap-1 rounded-[6px] bg-chip px-1.5 py-0.5">
@@ -203,12 +213,12 @@ export function NodeCard({
         stroke
           ? 'border-0'
           : state === 'needs-you'
-          ? 'border-[1.4px] border-solid border-ink-2'
-          : state === 'will-rerun'
-            ? 'border-[0.922px] border-dashed border-accent'
-            : state === 'working'
-              ? 'border-[0.922px] border-solid border-accent-line'
-              : 'border-[0.922px] border-solid border-line-2',
+            ? 'border-[1.4px] border-solid border-ink-2'
+            : state === 'will-rerun'
+              ? 'border-[0.922px] border-dashed border-accent'
+              : state === 'working'
+                ? 'border-[0.922px] border-solid border-accent-line'
+                : 'border-[0.922px] border-solid border-line-2',
         onClick && 'cursor-pointer',
         className
       )}

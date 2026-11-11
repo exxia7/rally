@@ -123,15 +123,19 @@ export function InspectorPanel({
       }
       footer={
         data.footer !== false && (
-        <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
-          {/* Figma's Edit is 51px; Chrome sets "Edit" 1.4px narrower, which would shift the next button. */}
-          <Button variant="secondary" onClick={onEdit} className="min-w-[51px] justify-start">
-            Edit
-          </Button>
-          <Button variant="secondary" onClick={onTakeOver}>
-            {takenOver ? 'Hand it back' : "I'll do this one"}
-          </Button>
-        </div>
+          <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
+            {/* Figma's Edit is 51px; Chrome sets "Edit" 1.4px narrower, which would shift the next button. */}
+            <Button
+              variant="secondary"
+              onClick={onEdit}
+              className="min-w-[51px] justify-start"
+            >
+              Edit
+            </Button>
+            <Button variant="secondary" onClick={onTakeOver}>
+              {takenOver ? 'Hand it back' : "I'll do this one"}
+            </Button>
+          </div>
         )
       }
     >
@@ -164,32 +168,34 @@ export function InspectorPanel({
               onCancel={() => onForkOpenChange?.(false)}
             />
           </div>
-        ) : (data.fork || data.rerun) && (
-          <div className="flex w-full flex-col items-center gap-2 pt-4">
-            {data.fork && (
-              <InspectorAction
-                icon={data.fork.icon ?? forkIcon}
-                title="Fork from here"
-                description={data.fork.description}
-                disabled={data.fork.disabled}
-                onClick={
-                  data.forkForm ? () => onForkOpenChange?.(true) : onFork
-                }
-              />
-            )}
-            {data.rerun && (
-              <InspectorAction
-                icon={
-                  data.rerun.icon ??
-                  (data.rerun.disabled ? rerunDim : rerunIcon)
-                }
-                title="Rerun from here"
-                description={data.rerun.description}
-                disabled={data.rerun.disabled}
-                onClick={onRerun}
-              />
-            )}
-          </div>
+        ) : (
+          (data.fork || data.rerun) && (
+            <div className="flex w-full flex-col items-center gap-2 pt-4">
+              {data.fork && (
+                <InspectorAction
+                  icon={data.fork.icon ?? forkIcon}
+                  title="Fork from here"
+                  description={data.fork.description}
+                  disabled={data.fork.disabled}
+                  onClick={
+                    data.forkForm ? () => onForkOpenChange?.(true) : onFork
+                  }
+                />
+              )}
+              {data.rerun && (
+                <InspectorAction
+                  icon={
+                    data.rerun.icon ??
+                    (data.rerun.disabled ? rerunDim : rerunIcon)
+                  }
+                  title="Rerun from here"
+                  description={data.rerun.description}
+                  disabled={data.rerun.disabled}
+                  onClick={onRerun}
+                />
+              )}
+            </div>
+          )
         )}
         {data.fields.map((f) => (
           <InspectorField key={f.label} label={f.label}>

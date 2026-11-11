@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import lock from '@/assets/icons/lock.svg';
@@ -17,6 +17,9 @@ import { UserAvatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { Menu } from '@/components/ui/Menu';
+import { TextInput } from '@/components/ui/TextInput';
+import { useOutsideClick } from '@/lib/useOutsideClick';
 import { Progress } from '@/components/ui/Progress';
 import { screenPath } from '@/screens/registry';
 
@@ -74,13 +77,13 @@ const TOOLS = [
   { name: 'LinkedIn', detail: 'Not connected', connected: false },
 ];
 
-const BRAND = [
+const BRAND: { name: string; kind: 'File' | 'Skill' }[] = [
   { name: 'Brand guide.pdf', kind: 'File' },
   { name: 'Logo.svg', kind: 'File' },
   { name: 'Brand voice', kind: 'Skill' },
 ];
 
-const PEOPLE = [
+const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
   { initial: 'E', name: 'Emily · Owner', you: true },
   { initial: 'V', name: 'Vivian' },
   { initial: 'T', name: 'Tonia' },
@@ -93,6 +96,9 @@ export default function WorkspaceSettingsScreen() {
   const [section, setSection] = useState<Section>('presets');
   const [defaultPreset, setDefaultPreset] = useState('balanced');
   const [tools, setTools] = useState(TOOLS);
+  const [brand, setBrand] = useState(BRAND);
+  const [people, setPeople] = useState(PEOPLE);
+  const upload = useRef<HTMLInputElement>(null);
 
   const goTo = (s: Section) => {
     setSection(s);
@@ -248,17 +254,18 @@ export default function WorkspaceSettingsScreen() {
                   subtitle="Shared assets and skills every workflow can use"
                 >
                   <div className="flex w-full flex-col items-start gap-2 pt-4">
-                    {BRAND.map((b) => (
+                    {brand.map((b) => (
                       <SettingsWellRow key={b.name} className="h-11">
                         <SettingName name={b.name} weight="regular" />
                         <Badge tone="subtle">{b.kind}</Badge>
-                        <button
-                          type="button"
-                          aria-label={`More for ${b.name}`}
-                          className="flex rounded-[4px] hover:bg-hover"
-                        >
-                          <Icon src={more} size={16} />
-                        </button>
+                        <BrandItemMenu
+                          name={b.name}
+                          onRemove={() =>
+                            setBrand((list) =>
+                              list.filter((x) => x.name !== b.name)
+                            )
+                          }
+                        />
                       </SettingsWellRow>
                     ))}
                   </div>
@@ -266,6 +273,29 @@ export default function WorkspaceSettingsScreen() {
                     <SettingsLinkButton
                       icon={plusDark14}
                       label="Upload a file or skill"
+                      onClick={() => upload.current?.click()}
+                    />
+                    {/* The picked files only join the list here; nothing is uploaded anywhere. */}
+                    <input
+                      ref={upload}
+                      type="file"
+                      multiple
+                      hidden
+                      onChange={(e) => {
+                        const picked = [...(e.target.files ?? [])].map((f) => ({
+                          name: f.name,
+                          kind: /\.(md|txt)$/i.test(f.name)
+                            ? ('Skill' as const)
+                            : ('File' as const),
+                        }));
+                        setBrand((list) => [
+                          ...list,
+                          ...picked.filter(
+                            (f) => !list.some((x) => x.name === f.name)
+                          ),
+                        ]);
+                        e.target.value = '';
+                      }}
                     />
                   </div>
                 </SettingsCard>
@@ -276,7 +306,7 @@ export default function WorkspaceSettingsScreen() {
                   subtitle="Who can approve posts and spending"
                 >
                   <div className="flex w-full flex-wrap items-center gap-4 pt-4">
-                    {PEOPLE.map((p) => (
+                    {people.map((p) => (
                       <div key={p.name} className="flex items-center gap-2">
                         <UserAvatar
                           initial={p.initial}
@@ -288,9 +318,17 @@ export default function WorkspaceSettingsScreen() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex w-full flex-col items-start pt-4">
-                    <SettingsLinkButton icon={plusDark14} label="Invite" />
-                  </div>
+                  <InviteRow
+                    onInvite={(email) =>
+                      setPeople((list) => [
+                        ...list,
+                        {
+                          initial: email[0].toUpperCase(),
+                          name: `${email} · Invited`,
+                        },
+                      ])
+                    }
+                  />
                 </SettingsCard>
 
                 <SettingsCard
@@ -327,5 +365,85 @@ export default function WorkspaceSettingsScreen() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+// "More" on a Brand kit row: a one-item menu (Remove) under the button, right-aligned with it.
+function BrandItemMenu({
+  name,
+  onRemove,
+}: {
+  name: string;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const anchor = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useOutsideClick([anchor], open, close);
+  return (
+    <div ref={anchor} className="relative flex">
+      <button
+        type="button"
+        aria-label={`More for ${name}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex rounded-[4px] hover:bg-hover"
+      >
+        <Icon src={more} size={16} />
+      </button>
+      {open && (
+        <Menu
+          label={`${name} actions`}
+          onClose={close}
+          className="absolute top-6 right-0 w-[160px]"
+          items={[{ key: 'remove', label: 'Remove', onSelect: onRemove }]}
+        />
+      )}
+    </div>
+  );
+}
+
+// "+ Invite": opens an inline email field; Enter or "Send invite" adds the person as Invited.
+function InviteRow({ onInvite }: { onInvite: (email: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const v = email.trim();
+    if (!v) return;
+    onInvite(v);
+    setEmail('');
+    setOpen(false);
+  };
+  return (
+    <div className="flex w-full flex-col items-start pt-4">
+      {open ? (
+        <form onSubmit={submit} className="flex w-full items-center gap-2">
+          <TextInput
+            autoFocus
+            type="email"
+            aria-label="Email to invite"
+            placeholder="name@company.com"
+            className="h-8 flex-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+          />
+          <Button type="submit" variant="primary" size="sm">
+            Send invite
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+        </form>
+      ) : (
+        <SettingsLinkButton
+          icon={plusDark14}
+          label="Invite"
+          onClick={() => setOpen(true)}
+        />
+      )}
+    </div>
   );
 }

@@ -190,13 +190,16 @@ export function FlowMap({
   });
 
   return (
-    <div className={className} style={{
+    <div
+      className={className}
+      style={{
         position: x === undefined ? 'relative' : 'absolute',
         left: x,
         top: y,
         width,
         height,
-      }}>
+      }}
+    >
       <svg
         width={width}
         height={height}
@@ -208,20 +211,21 @@ export function FlowMap({
         {[...lines]
           .sort(
             (a, b) =>
-              Number(a.e.status === 'blocked') - Number(b.e.status === 'blocked')
+              Number(a.e.status === 'blocked') -
+              Number(b.e.status === 'blocked')
           )
           .map(({ e, d, color }) => (
-          <path
-            key={`${e.from}-${e.to}`}
-            d={d}
-            stroke={color}
-            strokeWidth={e.status === 'blocked' ? BLOCKED_STROKE : STROKE}
-            strokeDasharray={
-              e.status === 'pending' ? `${DASH} ${DASH}` : undefined
-            }
-            strokeDashoffset={e.status === 'pending' ? DASH / 2 : undefined}
-          />
-        ))}
+            <path
+              key={`${e.from}-${e.to}`}
+              d={d}
+              stroke={color}
+              strokeWidth={e.status === 'blocked' ? BLOCKED_STROKE : STROKE}
+              strokeDasharray={
+                e.status === 'pending' ? `${DASH} ${DASH}` : undefined
+              }
+              strokeDashoffset={e.status === 'pending' ? DASH / 2 : undefined}
+            />
+          ))}
         {forks.map(({ f, d, pending }) => (
           <path
             key={`f-${f.fork}-${f.x}-${f.y}`}

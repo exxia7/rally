@@ -22,7 +22,8 @@ const WORKFLOWS: WorkflowCardData[] = [
     meta: 'Needs your input',
     preview: 'ai-coach',
     needsYou: true,
-    to: '3.2',
+    // "Needs your input": opens the raised hand waiting on you (4.1).
+    to: '4.1',
   },
   {
     title: 'Pricing change announcement',
@@ -96,12 +97,13 @@ export default function HomeScreen() {
             Your workflows
           </h1>
           <div className="flex w-full flex-wrap items-center gap-2 pt-5 max-md:pt-4">
-            <label className="flex h-8 w-[200px] shrink-0 items-center gap-2 overflow-clip rounded-control edge [--edge:var(--color-line-2)] px-3 max-md:order-first max-md:w-full">
+            <label className="flex h-8 w-[200px] shrink-0 items-center gap-2 overflow-clip rounded-control edge [--edge:var(--color-line-2)] focus-within:[--edge:var(--color-accent-line)] px-3 max-md:order-first max-md:w-full">
               <Icon src={searchIcon} size={14} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search workflows"
+                aria-label="Search workflows"
                 className="min-w-px flex-1 bg-transparent text-[13px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
               />
             </label>
