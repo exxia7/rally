@@ -107,6 +107,11 @@ const REROUTE = { duration: 0.42, ease: EASE_OUT } as const;
 const FLOW_LEN = 0.16;
 const isWorking = (n: MapNode) =>
   n.state === 'working' || n.avatar?.state === 'working';
+// A step that waits on you (an approval, a raised hand), not on another helper: nothing flows into it.
+const waitsOnYou = (n: MapNode) =>
+  n.state === 'needs-you' ||
+  n.avatar?.state === 'hand-raised' ||
+  /your OK|for you\b|approv/i.test(n.status?.text ?? '');
 
 const edgeColor = (e: MapEdge) => {
   if (e.fork) return FORK_COLOR[e.fork];
@@ -145,7 +150,15 @@ export function FlowMap({
   className?: string;
 }) {
   // Motion memory for this workflow's map: a change the viewer saw animates, a direct load paints as drawn.
-  const scope = `map:${useAppState().activeId}`;
+  const app = useAppState();
+  const scope = `map:${app.activeId}`;
+  // Work only flows while the run is actually running: not before it starts, not while a hand is raised or it waits
+  // for approval, not after launch, and not while paused.
+  const run = app.workflows[app.activeId]?.run;
+  const live =
+    !!run &&
+    !run.paused &&
+    (run.phase === 'running' || run.phase === 'rerunning');
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const ports = new Map<string, { x: number; y: number; color: string }>();
   // Fork handles, drawn over the cards like Figma's "Fork handle" ellipses.
@@ -180,9 +193,12 @@ export function FlowMap({
       if (!ports.has(portKey) || e.status !== 'pending')
         ports.set(portKey, { x, y, color: portColor });
     }
-    // Work flowing: out of a working step, or out of a finished one into a step still waiting on it.
+    // Work flowing (live runs only): out of a working step, or out of a finished one into a step that waits on it
+    // and is about to work; never into a step that waits on you.
     const flow =
+      live &&
       !e.dimmed &&
+      !waitsOnYou(b) &&
       e.status !== 'blocked' &&
       b.state !== 'done' &&
       (isWorking(a) ||

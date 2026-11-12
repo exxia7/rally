@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 import menu from '@/assets/icons/menu.svg';
 import { IconButton } from '@/components/ui/IconButton';
@@ -30,7 +30,10 @@ export function AppShell({
         {children}
       </main>
       <PanelEnter value={asideFrom === 'closed'}>
-        <AnimatePresence>{aside}</AnimatePresence>
+        {/* One stable key: switching panels swaps in place; only closing the slot plays SidePanel's exit. */}
+        <AnimatePresence>
+          {aside && <Fragment key="aside">{aside}</Fragment>}
+        </AnimatePresence>
       </PanelEnter>
       {overlay}
     </div>

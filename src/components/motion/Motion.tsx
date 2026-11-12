@@ -252,9 +252,9 @@ export function Rise({
 }
 
 /**
- * Text that ticks when it changes ("3 of 9 done" → "4 of 9 done"): the old text slides up and out, the new one up
- * and in (popLayout, so the row doesn't jump). `play` also animates the first mount (a change seen just before a
- * route swap).
+ * Text that changes in place ("3 of 9 done" → "4 of 9 done", "Rerunning"): the old and new text cross-fade, opacity
+ * only, so neither drifts off the row's baseline (popLayout, so the row doesn't jump). `play` also animates the first
+ * mount (a change seen just before a route swap).
  */
 export function TickText({
   text,
@@ -272,9 +272,9 @@ export function TickText({
         key={text}
         className={className}
         style={{ display: 'inline-block' }}
-        initial={{ opacity: 0, y: '45%' }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: '-45%' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={t}
       >
         {text}
