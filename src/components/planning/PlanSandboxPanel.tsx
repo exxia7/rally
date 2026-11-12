@@ -1,5 +1,5 @@
 import close from '@/assets/icons/close.svg';
-import plusWhite from '@/assets/icons/plus-white.svg';
+import { ImportButton } from '@/components/panels/ImportButton';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
 import {
@@ -7,9 +7,7 @@ import {
   SandboxPanel,
   type SandboxSection,
 } from '@/components/run/SandboxPanel';
-import { Button } from '@/components/ui/Button';
 import type { MenuItemData } from '@/components/ui/Menu';
-import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 
 // The planning side panel's Sandbox tab (2.6 / 2.7 "SandboxPanel", 2362:24362): a header with a 1px line (20px top,
@@ -57,15 +55,7 @@ export function PlanSandboxPanel({
           <div className="flex w-full items-center justify-between gap-2">
             <PanelTabs phase="plan" value="sandbox" onChange={onTabChange} />
             <div className="flex items-center gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                leading={<Icon src={plusWhite} size={16} />}
-                onClick={onImport}
-                className="w-[82px]"
-              >
-                Import
-              </Button>
+              <ImportButton onClick={onImport} />
               {onClose && (
                 <IconButton
                   icon={close}
