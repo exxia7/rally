@@ -245,19 +245,24 @@ export function rawCost(helpers: Pick<Helper, 'model' | 'tokensK'>[]) {
 const BASE_TEAM = Object.values(AI_COACH_TEAM);
 const BASE_TOKENS = BASE_TEAM.reduce((s, h) => s + h.tokensK, 0);
 const BASE_COST = rawCost(BASE_TEAM);
-/** Figma's estimate for the 2.3 team. */
-const DRAWN_ESTIMATE = 'About 9 min · $0.30';
-
-/** "About 9 min · $0.30": scaled from the 2.3 team by tokens (time) and model rates (cost). */
-export function estimate(wf: Workflow) {
-  if (wf.asDrawn) return DRAWN_ESTIMATE;
-  const live = wf.helperOrder
+const liveHelpers = (wf: Workflow) =>
+  wf.helperOrder
     .filter((h) => wf.helpers[h] && !wf.removed.includes(h))
     .map((h) => wf.helpers[h]);
-  const tokens = live.reduce((s, h) => s + h.tokensK, 0);
-  const mins = Math.max(1, Math.round((9 * tokens) / BASE_TOKENS));
-  const cost = (0.3 * rawCost(live)) / BASE_COST;
-  return `About ${mins} min · $${cost.toFixed(2)}`;
+
+/** "About 9 min" (Figma's 2.3 text when as drawn): scaled from the 2.3 team by tokens. The top bars show time only,
+ *  no price. */
+export function estimate(wf: Workflow) {
+  if (wf.asDrawn) return 'About 9 min';
+  const tokens = liveHelpers(wf).reduce((s, h) => s + h.tokensK, 0);
+  return `About ${Math.max(1, Math.round((9 * tokens) / BASE_TOKENS))} min`;
+}
+
+/** "$0.30" (Figma's 2.3 text when as drawn): scaled from the 2.3 team by model rates. Only the sandbox's AI cost row
+ *  shows it. */
+export function estimateCost(wf: Workflow) {
+  if (wf.asDrawn) return '$0.30';
+  return `$${((0.3 * rawCost(liveHelpers(wf))) / BASE_COST).toFixed(2)}`;
 }
 
 /** The planning chat's suggestion chips, with today's helper names ("Make the Copywriter more playful…"). They

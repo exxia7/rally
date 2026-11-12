@@ -23,7 +23,7 @@ import { Breadcrumb } from './Breadcrumb';
 // workflow settings and panel toggle (Outlined icon buttons), then the main action (Pause, Start launch…).
 // Under 1280px the status pill shows only its dot. Under 768px the breadcrumb collapses to the truncated title, and the settings
 // and panel toggle move into a "more" menu.
-// Planning frames show a 12/18 muted `estimate` ("About 9 min · $0.30", 4px extra right padding) instead of a status.
+// Planning frames show a 12/18 muted `estimate` ("About 9 min", 4px extra right padding) instead of a status.
 // An open panel draws its toggle Selected (blue); `settingsActive` does the same for the settings button (2.8).
 export type WorkflowView = 'planning' | 'flowchart';
 
@@ -53,7 +53,7 @@ export function WorkflowTopBar({
   onTogglePanel?: () => void;
   /** The main action, e.g. a Pause or Start launch Button. */
   action?: ReactNode;
-  /** Plan estimate text on the right, e.g. "About 9 min · $0.30". */
+  /** Plan estimate text on the right, e.g. "About 9 min". */
   estimate?: string;
   /** Draws the settings button Selected (you're on the workflow settings page). */
   settingsActive?: boolean;

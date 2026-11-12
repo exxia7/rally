@@ -23,7 +23,7 @@ import { Icon } from '@/components/ui/Icon';
 import type { MenuItemData } from '@/components/ui/Menu';
 import { useGo } from '@/state/nav';
 import { CUSTOM, withPermissionRows } from '@/state/permissions';
-import { estimate, planLayout } from '@/state/planView';
+import { estimate, estimateCost, planLayout } from '@/state/planView';
 import { dispatch, useWorkflow } from '@/state/store';
 import { useWorkflowPermissions } from '@/state/usePermissions';
 
@@ -202,9 +202,6 @@ export default function PlanSandboxScreen() {
 
   // Who uses each row: Figma's text, plus every helper you've given it to since.
   const sections = useMemo(() => {
-    const est = estimate(wf)
-      .replace(/^About /, '')
-      .split(' · ');
     const helpers = wf.helperOrder.filter(live);
     const tokens = helpers.reduce((sum, h) => sum + team[h].tokensK, 0);
     const facts = wf.resources.facts;
@@ -254,12 +251,12 @@ export default function PlanSandboxScreen() {
         return {
           ...sec,
           items: [
-            { name: `About ${est[0]}`, source: 'Run time' },
+            { name: estimate(wf), source: 'Run time' },
             {
               name: `~${Math.round((38 * tokens) / BASE_TOKENS)}k tokens`,
               source: `${helpers.length} helpers`,
             },
-            { name: est[1], source: 'AI cost' },
+            { name: estimateCost(wf), source: 'AI cost' },
           ],
         };
       return sec;

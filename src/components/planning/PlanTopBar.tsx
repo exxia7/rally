@@ -9,7 +9,7 @@ import { runFrame } from '@/state/runView';
 import { useWorkflow } from '@/state/store';
 import type { Workflow } from '@/state/types';
 
-// The top bar of the planning-map frames (2.3–2.7, e.g. 2362:23645): Planning view, "About 9 min · $0.30",
+// The top bar of the planning-map frames (2.3–2.7, e.g. 2362:23645): Planning view, "About 9 min",
 // workflow settings, the side-panel toggle and the Primary "Start launch". Flowchart and Start launch move on to
 // the run: Start launch starts it (3.2), Flowchart opens it where it is (3.1 until it has started); settings opens
 // 2.8 and comes back here. The title and estimate come from the workflow in the store.
