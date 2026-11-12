@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import type { MapNode } from '@/components/map/FlowMap';
 import type { ForkNumber } from '@/components/map/forks';
 import type { ApprovalState } from '@/components/panels/Cards';
-import { FORK_CARD_OPTIONS } from '@/components/panels/forkCardOptions';
 import type { InspectorData } from '@/components/run/InspectorPanel';
 import type { RunData, RunPanel } from '@/components/run/RunScreenLayout';
 import {
@@ -20,7 +19,7 @@ import {
   branchOfNode,
   forkBranchId,
   forkFromBranch,
-  forkNameFromInput,
+  forkName,
   mergeBranches,
   nextForkNumber,
 } from './branches';
@@ -59,7 +58,7 @@ export type CreateForkInput = {
   used?: number[];
 };
 
-/** Creates a fork named from the Fork card's input (finding 2g) and returns it, or null when all colours are taken. */
+/** Creates a fork (named by its number) and returns it, or null when all colours are taken. */
 export function useCreateFork() {
   const wf = useWorkflow();
   return (input: CreateForkInput): Branch | null => {
@@ -71,12 +70,7 @@ export function useCreateFork() {
     const branch: Branch & { fork: ForkNumber } = {
       id: forkBranchId(n),
       fork: n,
-      name:
-        forkNameFromInput(
-          input.instruction,
-          input.options ?? FORK_CARD_OPTIONS,
-          input.drawnName
-        ) ?? `Fork ${n}`,
+      name: forkName(n),
       brief: input.instruction.trim(),
       parent: input.parent,
       from: input.from,

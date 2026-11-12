@@ -59,14 +59,18 @@ const forkMarks = (
     x: d(pill.x),
     y: d(pill.y),
     scale: 1 / K,
-    content: createElement(ForkPill, { fork, label: pill.label }),
+    // The map marks a fork by its number; its name shows in the Tasks chip and the inspector.
+    content: createElement(ForkPill, { fork, label: `Fork ${fork}` }),
   },
   {
     id: `fork-${fork}-label`,
     x: d(label.x),
     y: d(label.y),
     scale: 1 / K,
-    content: createElement(ForkLabel, { fork, label: label.label }),
+    content: createElement(ForkLabel, {
+      fork,
+      label: `Fork ${fork} · ${label.label.split(' · ').slice(1).join(' · ')}`,
+    }),
   },
 ];
 
@@ -689,7 +693,7 @@ export const FORK_FROM_FORK_RUN: RunData = {
         ...forkMarks(
           2,
           { x: 553.5, y: 573.866, label: 'In #general' },
-          { x: 602, y: 599.495, label: 'In #general · from Vs Penny' }
+          { x: 602, y: 599.495, label: 'In #general · from Fork 1' }
         ),
       ],
     },

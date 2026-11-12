@@ -1267,7 +1267,7 @@ export function summaryView(
   return {
     line: `${wf.title} · ${wf.resources.facts.date} · ${mins} min · ${money(runCost(wf))}`,
     /** The version that went out, when you chose a fork ("Vs Penny"); the others were kept, not posted. */
-    version: fork?.name,
+    version: fork && `Fork ${fork.n}`,
     wentOut: items.map((i) =>
       approvals[i.id] === 'wont-post'
         ? {
@@ -1311,7 +1311,8 @@ export function workflowCard(wf: Workflow): {
     return { ...wf.card, needsYou: false };
   const st: WorkflowStatus = wf.status;
   // The version you chose, when it isn't the original ("Launched Mar 14 · Vs Penny").
-  const version = chosenFork(wf)?.name;
+  const chosen = chosenFork(wf);
+  const version = chosen && `Fork ${chosen.n}`;
   const withVersion = (meta: string) =>
     version ? `${meta} · ${version}` : meta;
   if (st === 'done')
