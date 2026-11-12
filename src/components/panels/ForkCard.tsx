@@ -79,7 +79,7 @@ export function ForkCard({
       <p className="w-full pt-4 text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
         {note}
       </p>
-      <div className="flex h-7 w-full flex-wrap content-start items-start gap-1.5 pt-2">
+      <div className="flex min-h-7 w-full flex-wrap content-start items-start gap-1.5 pt-2">
         {helpers.map((h) => (
           <Badge key={h} tone="subtle">
             {h}

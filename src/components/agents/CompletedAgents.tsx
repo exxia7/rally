@@ -27,7 +27,11 @@ export function DoneAgent({ agent, name }: { agent: AgentName; name?: string }) 
         state="done"
         badgeText={{ size: 10, leading: 14 }}
       />
-      <p className="pt-px text-[10px] leading-[14px] tracking-[-0.0503px] whitespace-nowrap text-muted">
+      {/* A long (renamed) helper truncates at 72px so the tray doesn't run into the zoom controls. */}
+      <p
+        title={name ?? agent}
+        className="max-w-[72px] truncate pt-px text-[10px] leading-[14px] tracking-[-0.0503px] whitespace-nowrap text-muted"
+      >
         {name ?? agent}
       </p>
     </div>
