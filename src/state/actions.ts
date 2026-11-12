@@ -1,3 +1,4 @@
+import { backendCommand } from './backend';
 import { resumeTarget, useGo } from './nav';
 import { runFrame } from './runView';
 import { dispatch, store } from './store';
@@ -9,6 +10,8 @@ import type { Workflow } from './types';
 export function useStartLaunch() {
   const go = useGo();
   return () => {
+    const current = store.get().workflows[store.get().activeId];
+    if (current.backend) { void backendCommand(current.id, { type: 'start' }).then(result => { if (result) go('3.2'); }); return; }
     dispatch({ type: 'run/start' });
     const s = store.get();
     go(runFrame(s.workflows[s.activeId]));

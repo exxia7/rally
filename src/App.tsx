@@ -1,3 +1,4 @@
+import { sampleMode, useBackendStatus } from '@/state/backend';
 import {
   useEffect,
   useLayoutEffect,
@@ -114,6 +115,7 @@ function Screen({ id }: { id: string }) {
 /** '/w/<workflow>/<page>': opens that workflow, then shows the page. Unknown workflows and pages go Home. */
 function WorkflowPage() {
   const { wf = '', page = '' } = useParams();
+  const backend = useBackendStatus();
   const app = useAppState();
   const id = frameOfPage(page);
   const exists = !!app.workflows[wf];
@@ -121,6 +123,7 @@ function WorkflowPage() {
   useLayoutEffect(() => {
     if (exists && !active) dispatch({ type: 'wf/open', id: wf });
   }, [exists, active, wf]);
+  if (!sampleMode && !backend.loaded) return <div className="p-6 text-sm text-muted">Connect to local workspace…</div>;
   if (!id || !exists) return <Navigate to="/" replace />;
   return active ? <Screen key={`${wf}:${id}`} id={id} /> : null;
 }
@@ -128,8 +131,10 @@ function WorkflowPage() {
 /** '/w/<workflow>': where that workflow is now (the screen it was last on). */
 function WorkflowResume() {
   const { wf = '' } = useParams();
+  const backend = useBackendStatus();
   const app = useAppState();
   const w = app.workflows[wf];
+  if (!sampleMode && !backend.loaded) return null;
   if (!w) return <Navigate to="/" replace />;
   return (
     <Navigate

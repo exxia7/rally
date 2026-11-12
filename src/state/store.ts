@@ -866,10 +866,13 @@ const urlSpeed =
   typeof window === 'undefined' || !import.meta.env.DEV ? null : speedParam();
 if (urlSpeed) state = { ...state, speed: urlSpeed };
 
+let commandHandler: ((a: Action) => boolean) | undefined;
 const listeners = new Set<() => void>();
 
 export const store = {
   get: () => state,
+  replace(next: AppState) { state = next; for (const fn of listeners) fn(); },
+  setCommandHandler(handler: (a: Action) => boolean) { commandHandler = handler; },
   subscribe(fn: () => void) {
     listeners.add(fn);
     return () => {
@@ -877,6 +880,7 @@ export const store = {
     };
   },
   dispatch(action: Action) {
+    if (commandHandler?.(action)) return;
     if (action.type === 'seed') persist = false;
     const next = reduce(state, action);
     if (next === state) return;
@@ -888,7 +892,7 @@ export const store = {
 
 export const dispatch = (action: Action) => store.dispatch(action);
 
-if (typeof window !== 'undefined') installTimeline(store, extraWorkDelay);
+if (typeof window !== 'undefined' && (import.meta.env.VITE_HOSTED === '1' || /^\/(s\/|screens)/.test(window.location.pathname))) installTimeline(store, extraWorkDelay);
 // Dev only: scripts (scripts/story-e2e.mjs) read and drive the store through window.__rally.
 if (typeof window !== 'undefined' && import.meta.env.DEV)
   (window as unknown as { __rally: unknown }).__rally = {

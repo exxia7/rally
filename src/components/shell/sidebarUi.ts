@@ -13,17 +13,14 @@ type SidebarUi = { collapsed: boolean; open: boolean };
 
 function readCollapsed() {
   try {
-    return (
-      (window.localStorage.getItem(KEY) ??
-        window.localStorage.getItem(OLD_KEY)) === 'collapsed'
-    );
+    return (window.localStorage.getItem(KEY) ?? window.localStorage.getItem(OLD_KEY)) !== 'expanded';
   } catch {
-    return false;
+    return true;
   }
 }
 
 let ui: SidebarUi = {
-  collapsed: typeof window === 'undefined' ? false : readCollapsed(),
+  collapsed: typeof window === 'undefined' ? true : readCollapsed(),
   open: false,
 };
 const listeners = new Set<() => void>();

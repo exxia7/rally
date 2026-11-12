@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import { Message, Thread } from '@/components/panels/ChatMessage';
+import { Message, Thread, TypingRow } from '@/components/panels/ChatMessage';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
@@ -22,6 +22,7 @@ export type PlanChatMessage = {
 // never the page or the map) down to it.
 export function PlanChatPanel({
   messages,
+  typing,
   suggestions,
   onSend,
   tab = 'chat',
@@ -32,6 +33,7 @@ export function PlanChatPanel({
   className,
 }: {
   messages: PlanChatMessage[];
+  typing?: boolean;
   suggestions?: string[];
   onSend: (text: string) => void;
   tab?: PanelTab;
@@ -74,6 +76,7 @@ export function PlanChatPanel({
           {m.extra}
         </Message>
       ))}
+      {typing && <TypingRow name="Planner" label="Planner is thinking" />}
     </Thread>
   );
 

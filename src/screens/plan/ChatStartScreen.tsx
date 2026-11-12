@@ -1,3 +1,4 @@
+import { sendPlanner, useBackendStatus, sampleMode, attachFiles, backendError } from '@/state/backend';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import arrowRightWhite from '@/assets/icons/arrow-right-white.svg';
@@ -79,6 +80,7 @@ export default function ChatStartScreen() {
   const [panelOpen, setPanelOpen] = useState(isDesktop);
   const [view, setView] = useState<WorkflowView>('planning');
   const wf = useWorkflow();
+  const backendStatus = useBackendStatus();
   // The chat lives in the store: your brief from 2.1 is the first thing you said.
   const messages: Message[] = wf.briefChat.length
     ? wf.briefChat.map((m, i) => ({
@@ -92,11 +94,11 @@ export default function ChatStartScreen() {
   const [shown] = useState(messages.length);
   // Where the scripted conversation is: the Planner is about to ask (2 lines) or to say the team is ready (4), or
   // waits for your answer to its questions (3).
-  const thinking = wf.briefChat.length === 2 || wf.briefChat.length === 4;
-  const awaitingAnswer = wf.briefChat.length === 3;
+  const thinking = !sampleMode ? !!wf.backend?.planning || backendStatus.busy : wf.briefChat.length === 2 || wf.briefChat.length === 4;
+  const awaitingAnswer = sampleMode && wf.briefChat.length === 3;
   const { speed } = useAppState();
   useEffect(() => {
-    if (!thinking) return;
+    if (!sampleMode || !thinking) return;
     const step = wf.briefChat.length === 2 ? 'ask' : 'ready';
     const t = window.setTimeout(
       () => dispatch({ type: 'briefChat/planner', step }),
@@ -113,6 +115,7 @@ export default function ChatStartScreen() {
   const fileInput = useRef<HTMLInputElement>(null);
   const attach = (kind: 'upload' | 'link' | 'skill') => {
     if (kind === 'upload') fileInput.current?.click();
+    else if (!sampleMode) backendError('Attach a text file or paste the reference content in chat.');
     else setAttachments((a) => [...a, ATTACH_LABEL[kind]]);
   };
   // "Your answers in this chat": scroll to them and outline them for a moment.
@@ -134,6 +137,7 @@ export default function ChatStartScreen() {
   }, [messages.length, shown, thinking]);
 
   const send = (text: string) => {
+    if (!sampleMode) { if (!thinking) void sendPlanner(wf.id, text, attachments).then(result => { if (result) setAttachments([]); }); return; }
     // While the Planner waits for when and who, what you send is that answer (it fills the brief's When / Who).
     if (awaitingAnswer) {
       dispatch({ type: 'briefChat/answer', text });
@@ -218,6 +222,7 @@ export default function ChatStartScreen() {
                   {m.action === 'team' ? seeTeam : undefined}
                 </Message>
               ))}
+              {wf.backend?.error && <Message density="main" from="assistant" text={wf.backend.error + " Send a message to retry."} />}
               {thinking && (
                 <TypingRow
                   density="main"
@@ -251,7 +256,8 @@ export default function ChatStartScreen() {
             type="file"
             multiple
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
+              if (!sampleMode) { const files = [...e.target.files ?? []]; e.target.value = ''; const names = await attachFiles(files); setAttachments(a => [...a, ...names]); return; }
               const names = [...(e.target.files ?? [])].map((f) => f.name);
               setAttachments((a) => [...a, ...names]);
               e.target.value = '';
@@ -272,8 +278,8 @@ export default function ChatStartScreen() {
 const BRIEF_LINES = (goal: string | undefined, brief: Brief) => [
   // The brief as you typed it, capitalised ("launch campaign…" → "Launch campaign…").
   { label: 'What', value: brief.what.charAt(0).toUpperCase() + brief.what.slice(1) },
-  { label: 'When', value: brief.when || AI_COACH_BRIEF.when },
-  { label: 'Who', value: brief.who || AI_COACH_BRIEF.who },
+  { label: 'When', value: brief.when || (sampleMode ? AI_COACH_BRIEF.when : 'Not specified') },
+  { label: 'Who', value: brief.who || (sampleMode ? AI_COACH_BRIEF.who : 'Not specified') },
   { label: 'Goal', value: goal ?? brief.goal },
   { label: 'Channels' },
 ];
@@ -312,19 +318,20 @@ function ResourcesBody({
           onOpen={() => setOpen('brief')}
         />
       </PanelSection>
-      <PanelSection title="Resources used" count={2 + extra.length}>
+      <PanelSection title="Resources used" count={(sampleMode ? 2 : 1) + extra.length + (wf.backend?.attachments.length ?? 0)}>
         <ResourceCard
           leading={<UserAvatar />}
           title="Your answers in this chat"
           description={answers}
           onClick={onShowAnswers}
         />
-        <ResourceCard
+        {sampleMode && (<ResourceCard
           leading={<FileIcon type="PDF" />}
           title="Brand guide.pdf"
           description="12 pages · used for tone of voice"
           onClick={() => setOpen('guide')}
-        />
+        />)}
+        {wf.backend?.attachments.map(a => <ResourceCard key={a.name} leading={<FileIcon type="TXT" />} title={a.name} description="Attached to your brief" />)}
         {extra.map((name, i) => (
           <ResourceCard
             key={`${name}-${i}`}

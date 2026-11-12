@@ -311,7 +311,7 @@ export function ApprovalItem({
       {channelNote && (
         <div className="flex w-full items-center gap-2 pt-1.5">
           <Badge tone="blue" className="shrink-0">
-            Sends for real
+            {channelNote.startsWith('Local artifact') ? 'Local draft' : 'Sends for real'}
           </Badge>
           <p className="min-w-0 truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
             {channelNote}

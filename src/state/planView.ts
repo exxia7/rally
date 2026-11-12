@@ -1,3 +1,4 @@
+import { backendPlanLayout } from './backendViews';
 import type { MiniMap } from '@/components/home/WorkflowCard';
 import { insertStep } from '@/components/planning/planEdit';
 import type { PlanEdge, PlanLayout } from '@/components/planning/PlanMap';
@@ -71,6 +72,7 @@ export type PlanVariant = 'full' | 'compact' | 'wide';
  * `wf.helpers` to `planNodes` as the team.
  */
 export function planLayout(wf: Workflow, variant: PlanVariant): PlanLayout {
+  if (wf.backend) return backendPlanLayout(wf);
   const community = !!wf.helpers.community;
   const base =
     variant === 'wide'
@@ -350,6 +352,7 @@ const liveHelpers = (wf: Workflow) =>
 /** "About 9 min" (Figma's 2.3 text when as drawn): scaled from the 2.3 team by tokens. The top bars show time only,
  *  no price. */
 export function estimate(wf: Workflow) {
+  if (wf.backend) return wf.backend.planning ? 'Planner is working' : `${wf.helperOrder.length} helpers · live run`;
   if (wf.asDrawn) return 'About 9 min';
   const tokens = liveHelpers(wf).reduce((s, h) => s + h.tokensK, 0);
   return `About ${Math.max(1, Math.round((9 * tokens) / BASE_TOKENS))} min`;

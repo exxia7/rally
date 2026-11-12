@@ -1,3 +1,4 @@
+import { sendPlanner } from '@/state/backend';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -215,6 +216,7 @@ export default function TeamMapScreen() {
   };
 
   const send = (text: string) => {
+    if (wf.backend) { void sendPlanner(wf.id, text); return; }
     if (live('writer') && /playful|tiktok/i.test(text)) {
       patch('writer', PLAYFUL_WRITER);
       if (!wf.outputs.some((o) => o.id === TIKTOK_OUTPUT.id))
@@ -470,6 +472,7 @@ export default function TeamMapScreen() {
         // 2.4c draws the chat as a left column on desktop; this panel is its overlay under 1280px.
         className={wide ? 'xl:hidden' : undefined}
         messages={chatMessages}
+        typing={wf.backend?.planning}
         suggestions={suggestions}
         onSend={send}
         tab={tab}
@@ -497,6 +500,7 @@ export default function TeamMapScreen() {
           <PlanChatPanel
             variant="column"
             messages={chatMessages}
+        typing={wf.backend?.planning}
             suggestions={suggestions}
             onSend={send}
           />
@@ -643,7 +647,7 @@ function toDraft(h: Helper): HelperDraft {
     name: h.name,
     agent: h.agent,
     kind: h.kind ?? 'action',
-    description: h.description,
+    description: h.instructions ?? h.description,
     model: h.model,
     cost: modelCost(h),
     tools: h.tools,

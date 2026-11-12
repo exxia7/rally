@@ -1,4 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { backendCommand } from '@/state/backend';
+import { baseStep, branchId } from '@/state/backendViews';
+import { affectedSteps } from '../../../shared/domain';
+import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
 import outputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
@@ -199,6 +203,10 @@ export function RunScreenLayout({
   const scope = `run:${activeId}`;
   // The Tasks list's "Goes out": the plan's outputs and where each is in the run.
   const wf = useWorkflow();
+  const [rerunNode, setRerunNode] = useState<string | null>(null);
+  const questionKey = data.handRaise?.steps[0]?.problem.title;
+  const backendId = wf.backend?.id;
+  useEffect(() => { if (backendId && questionKey) setPanel({ kind: 'hand-raise' }); }, [questionKey, backendId]);
   const outputs = useMemo(() => goesOut(wf), [wf]);
   const asideFrom = useChangedFrom(`${scope}:aside`, panel?.kind ?? 'none');
   const [takenOver, setTakenOver] = useState<Set<string>>(() => new Set());
@@ -208,9 +216,14 @@ export function RunScreenLayout({
   // Figma's smaller redraw of the map beside a docked panel (`map.docked`).
   const place = map.full ?? map;
   const scale = place.width / map.width;
+  // Generated plans and fork lanes can grow beyond the original Figma frame.
+  // Give the whole map a scrollable stage instead of clipping it at 830px.
+  const stageWidth = Math.max(STAGE.width, place.x + map.width * scale + 40);
+  const stageHeight = Math.max(STAGE.height, place.y + map.height * scale + 40);
 
   const inspect = (nodeId: string) => setPanel({ kind: 'inspector', nodeId });
   const onNodeClick = (node: MapNode) => {
+    if (wf.backend && node.id === 'ready' && !wf.forks.length) { if (wf.run.phase === 'launched') go('5.2'); else if (wf.run.phase === 'awaitingApproval') go('5.1'); return; }
     const branchPanel = forks.nodePanel(node);
     if (branchPanel) setPanel(branchPanel);
     else if (nodeLinks?.[node.id]) go(nodeLinks[node.id]);
@@ -289,7 +302,7 @@ export function RunScreenLayout({
           onInspectorFork ? onInspectorFork(inspected.id) : go('6.1')
         }
         onRerun={() =>
-          onInspectorRerun ? onInspectorRerun(inspected.id) : go('6.1')
+          wf.backend ? setRerunNode(inspected.id) : onInspectorRerun ? onInspectorRerun(inspected.id) : go('6.1')
         }
         onEdit={() =>
           onEditNode
@@ -308,7 +321,13 @@ export function RunScreenLayout({
     );
 
   return (
-    <AppShell aside={aside}>
+    <AppShell aside={aside} overlay={wf.backend && rerunNode ? <ConfirmDialog open onClose={() => setRerunNode(null)}
+      title={`Rerun ${wf.helpers[baseStep(rerunNode)]?.name ?? 'this step'}?`}
+      body="This step and its dependent steps will produce new versions. Earlier work stays available."
+      note={{ label: 'What should change?', defaultValue: '', placeholder: 'Make it shorter…' }}
+      affected={[...affectedSteps(wf.backend.plan!, baseStep(rerunNode))].map(id => ({ key: id, art: null, name: wf.helpers[id].name, detail: wf.helpers[id].description }))}
+      cost="Real Claude run · no external posts" confirmLabel="Rerun"
+      onConfirm={(_, note) => { void backendCommand(wf.id, { type: 'rerun', branch: branchId(wf, rerunNode), step: baseStep(rerunNode), text: note || 'Improve this output.', fork: false }).then(result => { if (result) { setRerunNode(null); setPanel(null); } }); }} /> : undefined}>
       <WorkflowTopBar
         title={title}
         view="flowchart"
@@ -331,7 +350,9 @@ export function RunScreenLayout({
           setPanel((p) => (p ? null : { kind: 'tabs', tab: 'sandbox' }))
         }
         action={
-          <Button
+          (!wf.backend || wf.backend.branches.some((branch) =>
+            ['running', 'paused', 'needs_input', 'failed'].includes(branch.status)
+          )) && <Button
             leading={paused ? <Icon src={play16} size={16} /> : <PauseIcon />}
             onClick={togglePause}
             aria-label={paused ? 'Resume' : 'Pause'}
@@ -343,9 +364,8 @@ export function RunScreenLayout({
         }
       />
       <MapCanvas
-        // Remount on dock/undock so the stage re-centres at its new size.
-        stageWidth={STAGE.width}
-        stageHeight={STAGE.height}
+        stageWidth={stageWidth}
+        stageHeight={stageHeight}
         contentScale={RUN_MAP_SCALE * scale}
         viewKey={`run:${activeId}`}
         focus={focus}

@@ -13,19 +13,14 @@ import { useLocation } from 'react-router-dom';
 import bell from '@/assets/icons/bell.svg';
 import chevronDown from '@/assets/icons/chevron-down-14.svg';
 import close16 from '@/assets/icons/close-16.svg';
-import home from '@/assets/icons/home.svg';
-import link from '@/assets/icons/link.svg';
-import lockDark from '@/assets/icons/lock-dark.svg';
 import logo from '@/assets/icons/logo.svg';
-import plus from '@/assets/icons/plus-gray-14.svg';
 import search from '@/assets/icons/search.svg';
+import spark from '@/assets/icons/rally-spark.svg';
 import settings16 from '@/assets/icons/settings-16.svg';
 import sidebarIcon from '@/assets/icons/sidebar.svg';
 import workflowsIcon from '@/assets/icons/workflows-ink2.svg';
-import { UserAvatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
-import { Menu, type MenuItemData } from '@/components/ui/Menu';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { useScrollEdges } from '@/lib/useScrollEdges';
@@ -38,19 +33,9 @@ import type { Workflow } from '@/state/types';
 
 import { focusSearch, SEARCH_ID, sidebarUi, useSidebarUi } from './sidebarUi';
 
-// The app sidebar, structured like Figma's file browser (not in the wireframes, which draw a 52px icon rail; see
-// design/non-figma-ui.md). Top to bottom: the workspace switcher (its menu opens 1.2's sections), search (filters
-// the workflow list; ⌘/Ctrl+K focuses it, Esc clears), Home and Needs you, the Workflows list (every workflow
-// that isn't archived, in Home's order, with a status dot; a row reopens the workflow where you left it), New
-// workflow, and the account row (workspace settings). Rows are 32px, 13px Inter, 8px radius, 8px insets.
-//
-// Sizes: ≥1280px it's docked at 240px and collapses to a 52px rail (remembered). 768–1279px it's the rail, and
-// expanding opens the full sidebar over the content. Under 768px there's no rail: the top bar's menu button opens
-// it as a slide-out drawer. Overlay and drawer close on Esc, the scrim and navigation.
-//
-// Motion (framer-motion): the docked sidebar's collapse and expand animate its width with the `layout` prop while
-// the content cross-fades; the overlay and drawer slide in from the left over a fading scrim. Under reduced motion
-// everything switches instantly.
+// The hifi shell uses a 52px icon rail. Its brand button opens the workflow sidebar.
+// Desktop can dock the expanded panel; tablet and phone use an overlay drawer.
+// Keep navigation at the top and account/help/notifications at the bottom.
 
 type Dot = 'running' | 'needsYou' | 'draft' | 'done';
 
@@ -123,33 +108,6 @@ function useSidebarData() {
     /** The workflow on screen (none on Home or workspace settings). */
     activeId: workflowFrame(page) ? app.activeId : null,
   };
-}
-
-/** Workspace settings and two of its sections (1.2), remembering where you came from for its Back. */
-function useWorkspaceItems(): MenuItemData[] {
-  const go = useGo();
-  const to = (section?: 'tools' | 'presets') =>
-    go('1.2', { returnHere: true, state: section ? { section } : undefined });
-  return [
-    {
-      key: 'settings',
-      label: 'Workspace settings',
-      icon: settings16,
-      onSelect: () => to(),
-    },
-    {
-      key: 'tools',
-      label: 'Connected tools',
-      icon: link,
-      onSelect: () => to('tools'),
-    },
-    {
-      key: 'presets',
-      label: 'Permission presets',
-      icon: lockDark,
-      onSelect: () => to('presets'),
-    },
-  ];
 }
 
 /** Opens the workflow that needs you at its hand-raise or approval screen (as the old bell did). */
@@ -304,15 +262,10 @@ function SidebarPanel({
   const openWorkflow = useOpenWorkflow();
   const openWaiting = useOpenWaiting();
   const newWorkflow = useNewWorkflow();
-  const workspaceItems = useWorkspaceItems();
   const [query, setQuery] = useState('');
-  const [wsMenu, setWsMenu] = useState(false);
   const [accountMenu, setAccountMenu] = useState(false);
-  const wsRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const closeWs = useCallback(() => setWsMenu(false), []);
   const closeAccount = useCallback(() => setAccountMenu(false), []);
-  useOutsideClick([wsRef], wsMenu, closeWs);
   useOutsideClick([accountRef], accountMenu, closeAccount);
   const listRef = useRef<HTMLDivElement>(null);
   const edges = useScrollEdges(listRef);
@@ -325,32 +278,9 @@ function SidebarPanel({
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
       <div className="flex shrink-0 items-center gap-1 p-2">
-        <div ref={wsRef} className="relative flex min-w-0 flex-1">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={wsMenu}
-            onClick={() => setWsMenu((o) => !o)}
-            className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-control px-1.5 hover:bg-hover"
-          >
-            <Icon src={logo} size={24} />
-
-            <span
-              title={d.workspace}
-              className="min-w-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.08px] text-ink"
-            >
-              {d.workspace}
-            </span>
-            <Icon src={chevronDown} size={14} />
-          </button>
-          {wsMenu && (
-            <Menu
-              label="Workspace"
-              items={workspaceItems}
-              onClose={closeWs}
-              className="absolute top-9 left-0 w-[220px]"
-            />
-          )}
+        <div className="flex min-w-0 flex-1 items-center gap-2 px-1.5">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-accent-soft"><Icon src={logo} size={36} /></span>
+          <span className="truncate text-[13px] font-semibold text-ink">{d.workspace}</span>
         </div>
         <IconButton
           icon={mode === 'drawer' ? close16 : sidebarIcon}
@@ -384,35 +314,19 @@ function SidebarPanel({
 
       <nav aria-label="Main" className="flex shrink-0 flex-col gap-px px-2">
         <NavRow
-          icon={home}
-          label="Home"
+          icon={workflowsIcon}
+          label="Workflows"
           active={d.page === '1.1'}
           onClick={() => go('1.1')}
         />
-        <NavRow
-          icon={bell}
-          label="Needs you"
-          count={d.waiting.length}
-          title={
-            d.waiting.length
-              ? `Open ${d.waiting[0].title}`
-              : 'Nothing needs you right now'
-          }
-          disabled={!d.waiting.length}
-          onClick={() => d.waiting[0] && openWaiting(d.waiting[0])}
-        />
-        {/* Several waiting: each is listed under Needs you. One selected row: the open workflow's own row in
-            Workflows, so these shortcuts never show as selected. */}
-        {d.waiting.length > 1 &&
-          d.waiting.map((wf) => (
-            <WorkflowRow
-              key={wf.id}
-              wf={wf}
-              indent
-              active={false}
-              onClick={() => openWaiting(wf)}
-            />
-          ))}
+        <NavRow icon={spark} label="New workflow" onClick={newWorkflow} />
+        <NavRow icon={settings16} label="Workspace settings" active={d.page === '1.2'} onClick={() => go('1.2', { returnHere: true, state: { section: 'general' } })} />
+        <RailPop button={(open, toggle) => <NavRow icon={bell} label="Needs you" count={d.waiting.length} active={open} onClick={toggle} />}>
+          {close => <div role="dialog" aria-label="Needs you" className="absolute left-0 top-full z-40 mt-1 w-[220px] rounded-card border border-line bg-white p-2 shadow-lg">
+            <FlyoutTitle>Needs you</FlyoutTitle>
+            {d.waiting.length ? d.waiting.map(wf => <WorkflowRow key={wf.id} wf={wf} active={false} onClick={() => { close(); openWaiting(wf); }} />) : <p className="p-2 text-[12px] text-muted">Nothing needs you right now.</p>}
+          </div>}
+        </RailPop>
       </nav>
 
       <div className="flex min-h-0 flex-1 flex-col pt-4">
@@ -437,36 +351,30 @@ function SidebarPanel({
                 {`No workflows match “${query.trim()}”`}
               </p>
             )}
-            {!q && (
-              <button
-                type="button"
-                onClick={newWorkflow}
-                className="flex h-8 w-full shrink-0 items-center gap-2 rounded-control px-2 text-left text-[13px] leading-[18px] tracking-[-0.08px] text-muted hover:bg-hover hover:text-ink"
-              >
-                <span className="flex size-4 shrink-0 items-center justify-center">
-                  <Icon src={plus} size={14} />
-                </span>
-                New workflow
-              </button>
-            )}
+
           </div>
           <ScrollFades top={edges.top} bottom={edges.bottom} />
         </div>
       </div>
 
+      <div className="px-2 pb-2">
+        <RailPop button={(open, toggle) => <button type="button" aria-label="Help" aria-expanded={open} onClick={toggle} className="flex h-8 w-full items-center gap-2 rounded-control px-2 text-[13px] text-ink-2 hover:bg-hover"><span className="w-4 text-center font-semibold">?</span>Help</button>}>
+          {() => <div role="dialog" aria-label="Help" className="absolute bottom-full left-0 z-40 mb-1 w-[220px] rounded-card border border-line bg-white p-3 text-[12px] leading-[18px] text-ink-2 shadow-lg"><HelpDetails /></div>}
+        </RailPop>
+      </div>
       <div
         ref={accountRef}
         className="relative shrink-0 border-t border-line p-2"
       >
         <button
           type="button"
-          aria-haspopup="menu"
+          aria-haspopup="dialog"
           aria-expanded={accountMenu}
           aria-label={`Account: ${YOU.name}`}
           onClick={() => setAccountMenu((o) => !o)}
           className="flex h-10 w-full items-center gap-2.5 rounded-control px-1.5 text-left hover:bg-hover"
         >
-          <UserAvatar initial={YOU.initial} tone="dark" />
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#d8edf8] text-[11px] font-semibold text-[#267599]">{YOU.initial}</span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-[13px] leading-[18px] font-medium tracking-[-0.08px] text-ink">
               {YOU.name}
@@ -478,12 +386,7 @@ function SidebarPanel({
           <Icon src={chevronDown} size={14} className="rotate-180" />
         </button>
         {accountMenu && (
-          <Menu
-            label="Account"
-            items={workspaceItems}
-            onClose={closeAccount}
-            className="absolute bottom-full left-2 mb-1 w-[224px]"
-          />
+          <AccountDetails className="absolute bottom-full left-2 mb-1 w-[224px]" />
         )}
       </div>
     </div>
@@ -544,7 +447,7 @@ function NavRow({
       <Icon
         src={icon}
         size={16}
-        className={disabled ? 'opacity-60' : undefined}
+        className={clsx(disabled && 'opacity-60', icon === spark && 'grayscale brightness-[0.65]')}
       />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {!!count && <CountBadge n={count} />}
@@ -660,7 +563,7 @@ function RailButton({
       aria-current={active ? 'page' : undefined}
       onClick={onClick}
       className={clsx(
-        'relative flex size-9 shrink-0 items-center justify-center rounded-control',
+        'relative flex size-8 shrink-0 items-center justify-center rounded-control',
         active || expanded ? 'bg-chip' : !disabled && 'hover:bg-hover',
         disabled && 'cursor-default'
       )}
@@ -668,7 +571,7 @@ function RailButton({
       <Icon
         src={icon}
         size={iconSize}
-        className={disabled ? 'opacity-60' : undefined}
+        className={clsx(disabled && 'opacity-60', icon === spark && 'grayscale brightness-[0.65]')}
       />
       {!!badge && (
         <CountBadge
@@ -686,60 +589,33 @@ const FLYOUT =
 function SidebarRail({ onExpand }: { onExpand: () => void }) {
   const d = useSidebarData();
   const go = useGo();
-  const openWorkflow = useOpenWorkflow();
   const openWaiting = useOpenWaiting();
   const newWorkflow = useNewWorkflow();
-  const workspaceItems = useWorkspaceItems();
   const n = d.waiting.length;
 
   return (
-    <div className="flex h-full w-full flex-col items-center gap-1 py-2">
-      <RailPop
-        button={(open, toggle) => (
-          <button
-            type="button"
-            aria-label={`${d.workspace} menu`}
-            title={d.workspace}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            onClick={toggle}
-            className="mb-1 flex size-9 items-center justify-center rounded-[9px]"
-          >
-            <Icon src={logo} size={36} />
-          </button>
-        )}
+    <div className="flex h-full min-h-0 w-full flex-col items-center pt-2">
+      <button
+        type="button"
+        aria-label="Expand sidebar"
+        title={`Open ${d.workspace} sidebar (${MOD}K to search)`}
+        aria-expanded={false}
+        onClick={onExpand}
+        className="group mb-2 flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-accent-soft"
       >
-        {(close) => (
-          <Menu
-            label="Workspace"
-            items={workspaceItems}
-            onClose={close}
-            className="absolute top-0 left-full ml-3 w-[220px]"
-          />
-        )}
-      </RailPop>
-      <RailButton
-        icon={search}
-        iconSize={14}
-        label={`Search workflows (${MOD}K)`}
-        onClick={() => {
-          onExpand();
-          focusSearch();
-        }}
-      />
-      <RailButton
-        icon={home}
-        label="Home"
-        active={d.page === '1.1'}
-        onClick={() => go('1.1')}
-      />
-      {n > 1 ? (
+        <Icon src={logo} size={36} />
+      </button>
+      <div className="mb-2 shrink-0"><RailButton icon={search} iconSize={14} label="Search workflows" onClick={() => { onExpand(); focusSearch(); }} /></div>
+      <nav aria-label="Main" className="flex shrink-0 flex-col gap-px">
+        <RailButton icon={workflowsIcon} iconSize={18} label="Workflows" active={d.page === '1.1'} onClick={() => go('1.1')} />
+        <RailButton icon={spark} iconSize={20} label="New workflow" onClick={newWorkflow} />
+        <RailButton icon={settings16} iconSize={18} label="Workspace settings" active={d.page === '1.2'} onClick={() => go('1.2', { returnHere: true, state: { section: 'general' } })} />
         <RailPop
           button={(open, toggle) => (
             <RailButton
               icon={bell}
               iconSize={18}
-              label={`Needs you: ${n}`}
+              label="Needs you"
               badge={n}
               expanded={open}
               onClick={toggle}
@@ -749,8 +625,7 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
           {(close) => (
             <div role="dialog" aria-label="Needs you" className={FLYOUT}>
               <FlyoutTitle>Needs you</FlyoutTitle>
-              {/* Shortcuts, never selected (the Workflows row is). */}
-              {d.waiting.map((wf) => (
+              {d.waiting.length ? d.waiting.map((wf) => (
                 <WorkflowRow
                   key={wf.id}
                   wf={wf}
@@ -760,92 +635,52 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
                     openWaiting(wf);
                   }}
                 />
-              ))}
+              )) : <p className="px-2 pb-2 text-[12px] text-muted">Nothing needs you right now.</p>}
             </div>
           )}
         </RailPop>
-      ) : (
-        <RailButton
-          icon={bell}
-          iconSize={18}
-          label={n ? `Needs you: ${d.waiting[0].title}` : 'Nothing needs you'}
-          badge={n}
-          disabled={!n}
-          onClick={() => d.waiting[0] && openWaiting(d.waiting[0])}
-        />
-      )}
-      <RailPop
-        button={(open, toggle) => (
-          <RailButton
-            icon={workflowsIcon}
-            iconSize={18}
-            label="Workflows"
-            active={!!d.activeId}
-            expanded={open}
-            onClick={toggle}
-          />
-        )}
-      >
-        {(close) => (
-          <div role="dialog" aria-label="Workflows" className={FLYOUT}>
-            <FlyoutTitle>Workflows</FlyoutTitle>
-            {d.workflows.map((wf) => (
-              <WorkflowRow
-                key={wf.id}
-                wf={wf}
-                active={wf.id === d.activeId}
-                onClick={() => {
-                  close();
-                  openWorkflow(wf);
-                }}
-              />
-            ))}
+      </nav>
+      <div className="min-h-3 flex-1" />
+      <div className="flex shrink-0 flex-col items-center">
+        <RailPop
+          button={(open, toggle) => (
             <button
               type="button"
-              onClick={() => {
-                close();
-                newWorkflow();
-              }}
-              className="flex h-8 w-full shrink-0 items-center gap-2 rounded-control px-2 text-left text-[13px] leading-[18px] tracking-[-0.08px] text-muted hover:bg-hover hover:text-ink"
+              aria-label="Help"
+              title="Help"
+              aria-expanded={open}
+              onClick={toggle}
+              className="mb-2 flex size-8 shrink-0 items-center justify-center rounded-control text-[18px] font-semibold text-muted hover:bg-hover"
+            >?</button>
+          )}
+        >
+          {() => (
+            <div role="dialog" aria-label="Help" className={`${FLYOUT} top-auto bottom-0 gap-2 p-3 text-[12px] leading-[18px] text-ink-2`}>
+              <HelpDetails />
+            </div>
+          )}
+        </RailPop>
+        <div className="flex h-[57px] items-center">
+        <RailPop
+          button={(open, toggle) => (
+            <button
+              type="button"
+              aria-label={`Account: ${YOU.name}`}
+              title={YOU.name}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={toggle}
+              className="relative flex size-8 items-center justify-center rounded-full bg-[#d8edf8] text-[11px] font-semibold text-[#267599]"
             >
-              <span className="flex size-4 shrink-0 items-center justify-center">
-                <Icon src={plus} size={14} />
-              </span>
-              New workflow
+              {YOU.initial}
+              <span aria-label="Online" className="absolute -right-px bottom-0 size-2 rounded-full bg-ok ring-2 ring-white" />
             </button>
-          </div>
-        )}
-      </RailPop>
-      <div className="min-h-2 flex-1" />
-      <RailButton
-        icon={sidebarIcon}
-        label="Expand sidebar"
-        onClick={onExpand}
-      />
-      <RailPop
-        button={(open, toggle) => (
-          <button
-            type="button"
-            aria-label={`Account: ${YOU.name}`}
-            title={YOU.name}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            onClick={toggle}
-            className="mt-1 flex size-9 items-center justify-center rounded-full hover:bg-hover"
-          >
-            <UserAvatar initial={YOU.initial} tone="dark" />
-          </button>
-        )}
-      >
-        {(close) => (
-          <Menu
-            label="Account"
-            items={workspaceItems}
-            onClose={close}
-            className="absolute bottom-0 left-full ml-3 w-[224px]"
-          />
-        )}
-      </RailPop>
+          )}
+        >
+          {() => <AccountDetails className="absolute bottom-0 left-full ml-3 w-[224px]" />}
+        </RailPop>
+        </div>
+      </div>
     </div>
   );
 }
@@ -856,4 +691,16 @@ function FlyoutTitle({ children }: { children: ReactNode }) {
       {children}
     </p>
   );
+}
+
+function AccountDetails({ className }: { className: string }) {
+  return <div role="dialog" aria-label="Account" className={clsx('z-40 rounded-card border border-line-2 bg-white p-4 shadow-lg', className)}>
+    <p className="text-[13px] font-semibold text-ink">{YOU.name}</p>
+    <p className="mt-1 text-[12px] text-muted">{YOU.role} · Local workspace</p>
+    <p className="mt-3 text-[12px] leading-[18px] text-muted">This local demo has no sign-in or account settings.</p>
+  </div>;
+}
+
+function HelpDetails() {
+  return <><p className="font-semibold text-ink">Your workspace</p><p className="mt-2">Use Workflows to find your work, or {MOD}K to search.</p><p className="mt-2">Start a new workflow with a brief, shape your team, then start the run. Needs you shows requests for your input.</p></>;
 }

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 
+import arrowLeft from '@/assets/icons/arrow-left.svg';
 import chevronDown14 from '@/assets/icons/chevron-down-14.svg';
 import more from '@/assets/icons/more.svg';
 import panelBlue from '@/assets/icons/panel-blue.svg';
@@ -37,8 +38,10 @@ export function WorkflowTopBar({
   action,
   settingsActive,
   hideTitleMenu,
+  onBack,
 }: {
   title?: string;
+  onBack?: () => void;
   view: WorkflowView;
   onViewChange?: (view: WorkflowView) => void;
   status?: RunState;
@@ -115,6 +118,7 @@ export function WorkflowTopBar({
     <TopBar
       left={
         <>
+          {onBack && <IconButton icon={arrowLeft} label="Back to workflows" onClick={onBack} className="mr-2 max-md:hidden" />}
           <div ref={titleRef} className="relative flex min-w-0 items-center">
             <Breadcrumb
               parents={[{ label: 'Workflows', to: screenPath('1.1') }]}

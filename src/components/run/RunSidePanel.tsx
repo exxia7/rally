@@ -9,7 +9,8 @@ import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
-import { dispatch } from '@/state/store';
+import { dispatch, useWorkflow } from '@/state/store';
+import { sendPlanner } from '@/state/backend';
 import type { MenuItemData } from '@/components/ui/Menu';
 
 import {
@@ -227,7 +228,9 @@ function RunChat({
   /** Applies a decision change; returns the reply, or null when the text wasn't one. */
   onSendChange?: (text: string) => string | null;
 }) {
-  const [messages, setMessages] = useState(initial);
+  const wf = useWorkflow();
+  const [localMessages, setMessages] = useState(initial);
+  const messages = wf.backend ? initial : localMessages;
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scroller.current;
@@ -236,6 +239,7 @@ function RunChat({
   }, [messages.length, initial.length]);
 
   const send = (text: string) => {
+    if (wf.backend) { void sendPlanner(wf.id, text); return; }
     const changed = onSendChange?.(text);
     setMessages((m) => [
       ...m,

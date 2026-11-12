@@ -15,7 +15,7 @@ const BRIEF = 'Launch our new Teams plan to existing customers in two weeks'
 const WIDTH = Number(process.argv.find((a) => a.startsWith('--width='))?.split('=')[1] ?? 1440)
 const HEIGHT = WIDTH < 768 ? 812 : WIDTH < 1280 ? 768 : 900
 const PHONE = WIDTH < 768
-const browser = await chromium.launch({ headless: !process.env.HEADED })
+const browser = await chromium.launch({ channel: 'chrome', headless: !process.env.HEADED })
 const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } })
 console.log(`viewport ${WIDTH}×${HEIGHT}`)
 const errors = []

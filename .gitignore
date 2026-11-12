@@ -29,3 +29,7 @@ design/out/
 
 # hosted (Artifact) build
 dist-hosted/
+
+# Local backend state and credentials
+.data/
+.env

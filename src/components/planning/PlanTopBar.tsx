@@ -63,7 +63,7 @@ export function PlanMainAction({ className }: { className?: string }) {
       </Button>
     );
   return (
-    <Button variant="primary" className={className} onClick={start}>
+    <Button variant="primary" className={className} onClick={start} disabled={!!wf.backend?.planning || (wf.backend !== undefined && !wf.backend.plan)}>
       {/* "Start" on phones, so the workflow title keeps room. */}
       <span className="max-md:hidden">Start launch</span>
       <span className="md:hidden">Start</span>
@@ -88,7 +88,7 @@ export function PlanMidRunNote({ className }: { className?: string }) {
     >
       <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
       <span className="min-w-px flex-1">
-        The run is live. Changes apply to steps that haven&apos;t started.
+        {wf.backend ? 'This run uses the approved plan. Duplicate the workflow to change the team.' : <>The run is live. Changes apply to steps that haven&apos;t started.</>}
       </span>
     </div>
   );

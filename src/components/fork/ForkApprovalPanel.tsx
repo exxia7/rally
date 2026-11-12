@@ -41,6 +41,8 @@ export type ForkApprovalPanelProps = {
   /** The text you saved after an in-place Edit. */
   onBodyChange?: (id: string, text: string) => void;
   onDecideLater?: () => void;
+  onExport?: () => void;
+  local?: boolean;
 };
 
 const BRANCH_DOT = { 1: 'bg-fork-1', 2: 'bg-fork-2', 3: 'bg-fork-3' } as const;
@@ -67,6 +69,8 @@ export function ForkApprovalPanel({
   onEdit,
   onBodyChange,
   onDecideLater,
+  onExport,
+  local,
 }: ForkApprovalPanelProps) {
   const waiting = items.filter(
     (i) => (states[i.id] ?? 'waiting') === 'waiting'
@@ -82,9 +86,9 @@ export function ForkApprovalPanel({
             branch={branch.fork ? branch.name : 'Original path'}
             branchColor={branch.fork ? BRANCH_DOT[branch.fork] : undefined}
             branchTextColor={branch.fork ? BRANCH_TEXT[branch.fork] : undefined}
-            title="Ready to post"
+            title={local ? "Ready for approval" : "Ready to post"}
             meta={
-              chosen
+              local ? "Review this version for local export. No external posts." : chosen
                 ? 'This version goes out. The others are kept, not posted.'
                 : 'Pick the version that goes out. The others are kept, not posted.'
             }
@@ -98,10 +102,10 @@ export function ForkApprovalPanel({
           {chosen ? (
             <Button
               variant="primary"
-              disabled={!waiting}
-              onClick={onApproveAll}
+              disabled={!waiting && !onExport}
+              onClick={waiting ? onApproveAll : onExport}
             >
-              {waiting ? `Approve all ${waiting}` : 'All approved'}
+              {waiting ? `Approve all ${waiting}` : onExport ? 'Download outputs' : 'All approved'}
             </Button>
           ) : (
             <Button variant="primary" onClick={onUseVersion}>

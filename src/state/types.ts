@@ -215,6 +215,7 @@ export type Fork = {
 // ---- Workflow and app ----------------------------------------------------------------------------------------
 
 export type Workflow = {
+  backend?: import('../../shared/domain').Workflow;
   id: WorkflowId;
   title: string;
   preview: Preview;

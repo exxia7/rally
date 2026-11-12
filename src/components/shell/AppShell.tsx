@@ -1,3 +1,5 @@
+import { useBackendStatus, clearBackendError, sampleMode } from '@/state/backend';
+import { Button } from '@/components/ui/Button';
 import { AnimatePresence } from 'framer-motion';
 import { Fragment, type ReactNode } from 'react';
 
@@ -9,8 +11,8 @@ import { Sidebar } from './Sidebar';
 import { sidebarUi } from './sidebarUi';
 
 // Figma "Shell": 8px app-ground padding, 8px gap, sidebar + 12px-radius main panel. Frames are 1440×900; the shell
-// fills the viewport so that size is exact. The sidebar (Sidebar.tsx) is 240px docked at ≥1280px, a 52px rail
-// below that, and a slide-out drawer under 768px (max-md), where the main panel goes full-bleed.
+// fills the viewport. The sidebar defaults to a 52px rail and can expand to a 240px panel.
+// Under 768px (max-md), it uses a slide-out drawer and the main panel goes full-bleed.
 export function AppShell({
   children,
   aside,
@@ -22,11 +24,13 @@ export function AppShell({
   overlay?: ReactNode;
 }) {
   // Motion: the side panel slides in when it opens while you watch and out when it closes (SidePanel).
+  const backend = useBackendStatus();
   const asideFrom = useChangedFrom('shell:aside', aside ? 'open' : 'closed');
   return (
     <div className="relative flex h-dvh w-full gap-2 overflow-clip bg-app p-2 max-md:gap-0 max-md:p-0">
       <Sidebar />
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip rounded-card border border-line bg-white max-md:rounded-none max-md:border-0">
+        {!sampleMode && (backend.error || !backend.connected) && <div role="alert" className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-well px-4 py-2 text-[12px] text-ink-2">{backend.error || 'Connect to the local server…'}{backend.error && <Button size="sm" variant="ghost" onClick={clearBackendError}>Dismiss</Button>}</div>}
         {children}
       </main>
       <PanelEnter value={asideFrom === 'closed'}>

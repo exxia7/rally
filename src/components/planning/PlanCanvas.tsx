@@ -57,7 +57,8 @@ export function PlanCanvas({
   /** Extra canvas-pinned overlays. */
   children?: ReactNode;
 }) {
-  const { activeId } = useAppState();
+  const { activeId, workflows } = useAppState();
+  if (workflows[activeId]?.backend) { stageWidth = Math.max(stageWidth, ...nodes.map(n => n.x + 250)); stageHeight = Math.max(stageHeight, ...nodes.map(n => n.y + 350)); }
   // Flow order: left to right, then top to bottom.
   const planned = [...nodes].sort((a, b) => a.x - b.x || a.y - b.y);
   return (

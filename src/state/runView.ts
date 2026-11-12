@@ -1,3 +1,4 @@
+import { backendRunData, backendApprovalItems, remoteBranch } from './backendViews';
 import { createElement } from 'react';
 
 import type { AgentName } from '@/components/agents/characters';
@@ -403,6 +404,7 @@ const FINISHED = new Set(['done', 'reused']);
 
 /** Counts from the steps: agents done, the Tasks summary; plus your own decisions in the log. */
 function applyCounts(d: RunData, wf: Workflow): RunData {
+  if (wf.backend) return backendRunData(wf);
   const beat = wf.run.beat;
   const done = d.tasks.filter((t) => FINISHED.has(t.state)).length;
   const total = d.tasks.length;
@@ -1037,6 +1039,7 @@ export function rerunConfirm(wf: Workflow, choices: number[]) {
 
 /** Spend at the current beat: Figma's number for its team, scaled by what the live team costs. */
 export function runCost(wf: Workflow) {
+  if (wf.backend) return wf.backend.cost;
   const base = BEATS[wf.run.beat].cost;
   if (wf.asDrawn) return base;
   const live = wf.helperOrder
@@ -1052,6 +1055,7 @@ export function runStatus(wf: Workflow): {
   label: string;
   hidden?: boolean;
 } {
+  if (wf.backend?.branches.some(b => b.status === 'failed')) return { state: 'paused', label: 'Needs a retry' };
   const cost = money(runCost(wf));
   const { phase, paused } = wf.run;
   if (phase === 'needsYou')
@@ -1071,6 +1075,7 @@ export function runStatus(wf: Workflow): {
 
 /** The frame the run is at (the Flowchart toggle and run screens go here). A run not started yet is 3.1. */
 export function runFrame(wf: Workflow) {
+  if (wf.backend) return wf.run.phase === 'notStarted' ? '3.1' : wf.run.phase === 'launched' ? '3.2' : wf.run.phase === 'awaitingApproval' && !wf.forks.length ? '5.1' : '3.2';
   return BEATS[wf.run.beat].frame;
 }
 
@@ -1097,6 +1102,7 @@ export const FRAME_FAMILY: Record<string, string> = {
 
 /** The original's items for this team and these answers (dates, copy). */
 function originalItems(wf: Workflow) {
+  if (wf.backend) return backendApprovalItems(wf);
   const facts = wf.asDrawn ? null : factsPass(wf);
   return APPROVAL_ITEMS.filter((i) => isLive(wf, i.owner)).map((i) =>
     facts
@@ -1178,6 +1184,7 @@ export function withEditedText<T extends { id: string; body: string }>(
 
 /** 5.1's items: the chosen version's, with the text you edited in place (5.1 "Edit", `edited` set). */
 export function approvalItems(wf: Workflow) {
+  if (wf.backend) return backendApprovalItems(wf, chosenBranch(wf));
   return withEditedText(wf, chosenBranch(wf), branchItems(wf, chosenFork(wf)));
 }
 
@@ -1192,6 +1199,7 @@ export function approvalsOf(wf: Workflow) {
  * posting); one with nothing to approve is ready. Once launched it posted, or didn't.
  */
 export function goesOut(wf: Workflow): (Output & { status: OutputStatus })[] {
+  if (wf.backend) return wf.outputs.map(o => ({ ...o, status: (remoteBranch(wf, chosenBranch(wf))?.attempts.find(a => a.stepId === o.id)?.approval === 'approved' ? 'ready' : remoteBranch(wf, chosenBranch(wf))?.attempts.find(a => a.stepId === o.id)?.approval === 'declined' ? 'not-posting' : 'approval') as OutputStatus }));
   const { phase } = wf.run;
   const approvals = approvalsOf(wf);
   const approvable = new Set(approvalItems(wf).map((i) => i.id));
@@ -1232,6 +1240,7 @@ export function summaryView(
   wf: Workflow,
   blocked: (output: string) => string | undefined = () => undefined
 ) {
+  if (wf.backend) return { line: `${wf.title} · ${money(wf.backend.cost)}`, wentOut: backendApprovalItems(wf, chosenBranch(wf)).map(i => ({ ...i.summary, edited: undefined as string | undefined, skipped: approvalsOf(wf)[i.id] === 'wont-post' })), fixed: wf.backend.events.filter(e => e.text.startsWith('Your answer')).map(e => e.text), skipped: Object.values(approvalsOf(wf)).filter(a => a === 'wont-post').length, askAbout: '', rule: '', ruleHelper: '', version: chosenFork(wf)?.name };
   const items = approvalItems(wf);
   const approvals = approvalsOf(wf);
   const skipped = items.filter(
@@ -1318,7 +1327,7 @@ export function workflowCard(wf: Workflow): {
   if (st === 'done')
     return {
       status: 'Done',
-      meta: withVersion(`Launched ${wf.launchedOn ?? wf.resources.facts.date}`),
+      meta: wf.backend ? 'Review complete · ready to export' : withVersion(`Launched ${wf.launchedOn ?? wf.resources.facts.date}`),
       needsYou: false,
     };
   if (st === 'draft')

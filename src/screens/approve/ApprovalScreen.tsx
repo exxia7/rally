@@ -1,3 +1,4 @@
+import { approveAll, useBackendStatus } from '@/state/backend';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import checkBadge from '@/assets/icons/check-badge.svg';
@@ -37,7 +38,7 @@ import {
   runCost,
   runData,
 } from '@/state/runView';
-import { dispatch, useAppState, useWorkflow } from '@/state/store';
+import { dispatch, store, useAppState, useWorkflow } from '@/state/store';
 
 import { LAUNCH_MAP } from './launchMap';
 
@@ -49,12 +50,13 @@ export const screenId = '5.1';
 export default function ApprovalScreen() {
   const go = useGo();
   const wf = useWorkflow();
+  const backend = useBackendStatus();
   useRunFrameSync('5.1');
   // Permissions/settings agent (3d, 3e): LinkedIn's workspace connection and the workflow's ad limit. A frame as drawn
   // keeps Figma's text.
   const app = useAppState();
   const [connectDialog, connect] = useConnectTool();
-  const blockedBy = (id: string) => !!blockedOutput(app, wf, id);
+  const blockedBy = (id: string) => !wf.backend && !!blockedOutput(app, wf, id);
   const [panelOpen, setPanelOpen] = useState(true);
   const xl = useMediaQuery('(min-width: 1280px)');
   // A map card other than "Ready to post" opens its own (read-only) inspector instead of the approval panel.
@@ -85,6 +87,7 @@ export default function ApprovalScreen() {
     } else setInspecting(id);
   };
   const launch = () => {
+    if (wf.backend) { void approveAll(wf.id).then(() => { if (store.get().workflows[wf.id].run.phase === 'launched') go('5.2'); }); return; }
     for (const i of items)
       if (stateOf(i.id) === 'waiting')
         dispatch({
@@ -130,8 +133,8 @@ export default function ApprovalScreen() {
                     branch={version?.name}
                     branchColor={version && `bg-fork-${version.n}`}
                     branchTextColor={version && `text-fork-${version.n}`}
-                    title="Ready to post"
-                    meta="Nothing goes out until you approve it."
+                    title={wf.backend ? "Ready for approval" : "Ready to post"}
+                    meta={wf.backend ? "Review your drafts before export. No external posts." : "Nothing goes out until you approve it."}
                     onClose={() => setPanelOpen(false)}
                   />
                 </div>
@@ -143,8 +146,9 @@ export default function ApprovalScreen() {
                     variant="primary"
                     className="min-w-[106px]"
                     onClick={launch}
+                    disabled={!!wf.backend && backend.busy}
                   >
-                    {waiting ? `Approve all ${waiting}` : 'Launch'}
+                    {waiting ? `Approve all ${waiting}` : wf.backend ? 'View summary' : 'Launch'}
                   </Button>
                   <Button
                     className="w-[101px]"
@@ -157,7 +161,7 @@ export default function ApprovalScreen() {
               }
             >
               <Badge tone="green" icon={<Icon src={checkBadge} size={10} />}>
-                14 handoff cards checked · 2 caught and fixed
+                {wf.backend ? `${run.tasks.length} steps complete` : '14 handoff cards checked · 2 caught and fixed'}
               </Badge>
               <div className="flex w-full flex-col items-start gap-2.5">
                 {items.map((item) => (
@@ -192,7 +196,7 @@ export default function ApprovalScreen() {
                     className={`w-full shrink-0 ${item.minH}`}
                   />
                 ))}
-                <div className="flex w-full shrink-0 flex-col items-start rounded-[10px] border border-dashed border-line-2 p-3.5">
+                {!wf.backend && (<div className="flex w-full shrink-0 flex-col items-start rounded-[10px] border border-dashed border-line-2 p-3.5">
                   <div className="flex w-full items-center gap-2">
                     <p className="min-w-0 flex-1 truncate text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] text-muted">
                       $300 ad test
@@ -236,7 +240,7 @@ export default function ApprovalScreen() {
                       </div>
                     </>
                   )}
-                </div>
+                </div>)}
               </div>
             </SidePanel>
           )
@@ -263,7 +267,7 @@ export default function ApprovalScreen() {
       <MapCanvas
         contentScale={RUN_MAP_SCALE}
         viewKey={`run:${app.activeId}`}
-        focus={runMapFocus(run.map.nodes, LAUNCH_MAP)}
+        focus={runMapFocus(run.map.nodes, wf.backend ? run.map : LAUNCH_MAP)}
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
@@ -291,12 +295,12 @@ export default function ApprovalScreen() {
       >
         {/* Drawn as on every run screen (5.2 too), not Figma's smaller redraw beside the docked panel. */}
         <FlowMap
-          x={LAUNCH_MAP.x}
-          y={LAUNCH_MAP.y}
+          x={wf.backend ? run.map.x : LAUNCH_MAP.x}
+          y={wf.backend ? run.map.y : LAUNCH_MAP.y}
           nodes={run.map.nodes}
           edges={run.map.edges}
-          width={LAUNCH_MAP.width}
-          height={LAUNCH_MAP.height}
+          width={wf.backend ? run.map.width : LAUNCH_MAP.width}
+          height={wf.backend ? run.map.height : LAUNCH_MAP.height}
           onNodeClick={(n) => openNode(n.id)}
         />
       </MapCanvas>

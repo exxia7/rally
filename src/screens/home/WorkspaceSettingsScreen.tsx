@@ -169,7 +169,7 @@ export default function WorkspaceSettingsScreen() {
   const location = useLocation();
   // The sidebar's workspace menu opens a section (Connected tools, Permission presets); otherwise as drawn.
   const asked = (location.state as { section?: Section } | null)?.section;
-  const [section, setSection] = useState<Section>(asked ?? 'presets');
+  const [section, setSection] = useState<Section>(asked ?? 'general');
   const [shownFor, setShownFor] = useState(location.state);
   if (shownFor !== location.state) {
     setShownFor(location.state);

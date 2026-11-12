@@ -10,7 +10,7 @@ export const screenId = ['3.2', '3.2-tasks'];
 // Figma 3.2 "Running" (2362:24736): the run flowchart while helpers work, and 3.2-tasks (2362:26475) with the
 // anchored Tasks overlay open from the Tasks chip.
 export default function RunningScreen() {
-  const id = useScreenId() ?? '';
+  const id = useScreenId() ?? '3.2';
   const { layout } = useLiveRun(id);
   return (
     <RunScreenLayout {...layout} initialTasksOpen={id === '3.2-tasks'} />

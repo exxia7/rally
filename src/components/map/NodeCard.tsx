@@ -58,7 +58,7 @@ export type NodeCardData = {
   /** Task brief, medium and dark (Task cards). */
   lead?: string;
   /** Output preview box: small label + text. */
-  preview?: { label: string; text: string };
+  preview?: { label: string; text: string; compact?: boolean };
   /** Status / summary line under the header. */
   status?: NodeStatus;
   showRerun?: boolean;
@@ -444,7 +444,10 @@ export function NodeCard({
                   <p className="min-h-3.5 w-full text-[8.762px] leading-[13.143px] font-medium tracking-[-0.0738px] text-muted">
                     {preview.label}
                   </p>
-                  <p className="w-full pt-[1.845px] text-[10.145px] leading-[13.95px] tracking-[-0.0738px] text-ink">
+                  <p className={clsx(
+                    'w-full pt-[1.845px] text-[10.145px] leading-[13.95px] tracking-[-0.0738px] text-ink',
+                    preview.compact && 'line-clamp-4 break-words whitespace-pre-line'
+                  )}>
                     {preview.text}
                   </p>
                 </div>

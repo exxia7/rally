@@ -1,3 +1,4 @@
+import { exportOutputs } from '@/state/backend';
 import { useMemo, useState } from 'react';
 
 import checkDark from '@/assets/icons/check-dark.svg';
@@ -87,6 +88,7 @@ export default function LaunchSummaryScreen() {
   };
 
   const exportSummary = () => {
+    if (wf.backend) { exportOutputs(wf); return; }
     const text = [
       `Your launch is live: ${summary.line}`,
       ...WENT_OUT.map(
@@ -124,7 +126,7 @@ export default function LaunchSummaryScreen() {
       <MapCanvas
         contentScale={RUN_MAP_SCALE}
         viewKey={`run:${app.activeId}`}
-        focus={runMapFocus(run.map.nodes, LAUNCH_MAP)}
+        focus={runMapFocus(run.map.nodes, wf.backend ? run.map : LAUNCH_MAP)}
         zoomClassName="z-[60] max-md:bottom-[95px] max-md:z-0"
         overlay={
           <>
@@ -153,7 +155,7 @@ export default function LaunchSummaryScreen() {
                   <RallyAvatar size={52} />
                   <div className="flex min-w-0 flex-1 flex-col items-start">
                     <h2 className="text-[24px] leading-7 font-semibold tracking-[-0.48px] text-ink max-md:text-[20px]">
-                      Your launch is live
+                      {wf.backend ? 'Your work is ready' : 'Your launch is live'}
                     </h2>
                     <p className="w-full text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
                       {summary.line}
@@ -164,7 +166,7 @@ export default function LaunchSummaryScreen() {
               footer={
                 <>
                   <Button onClick={exportSummary}>
-                    {exported ? 'Copied' : 'Export summary'}
+                    {wf.backend ? 'Download approved outputs' : exported ? 'Copied' : 'Export summary'}
                   </Button>
                   <Button variant="primary" onClick={() => go('1.1')}>
                     Done
@@ -176,7 +178,7 @@ export default function LaunchSummaryScreen() {
                 {/* The version you chose with "Use this version"; the others were kept, not posted. */}
                 {summary.version
                   ? `What went out · ${summary.version}`
-                  : 'What went out'}
+                  : wf.backend ? 'Approved outputs' : 'What went out'}
               </p>
               <div className="flex w-full shrink-0 flex-col items-start pt-1">
                 {WENT_OUT.map((r) => (
@@ -214,13 +216,15 @@ export default function LaunchSummaryScreen() {
                   </div>
                 ))}
               </div>
-              <div className={rowClass}>
+              {!wf.backend && (<div className={rowClass}>
                 <p className={dash}>–</p>
                 <p className="min-w-0 flex-1 truncate text-[13px] leading-5 tracking-[-0.08px] text-muted">
                   $300 ad test
                 </p>
-                <p className={status}>Not run, over your $50 ad limit</p>
-              </div>
+                <p className={status}>
+                  Not run, over your $50 ad limit
+                </p>
+              </div>)}
               <p className={`${heading} pt-5`}>What you fixed</p>
               <ul className="flex w-full shrink-0 flex-col items-start gap-1 pt-1.5">
                 {FIXED.map((f) => (
@@ -233,7 +237,7 @@ export default function LaunchSummaryScreen() {
                 ))}
               </ul>
               {/* Phones: "Next time" moves up under the header so its buttons aren't below the fold. */}
-              <div className="flex w-full shrink-0 flex-col pt-5 max-md:order-first max-md:pt-0 max-md:pb-5">
+              {!wf.backend && (<div className="flex w-full shrink-0 flex-col pt-5 max-md:order-first max-md:pt-0 max-md:pb-5">
                 <div className="flex w-full items-center gap-3 rounded-[10px] bg-well p-4 max-md:flex-col max-md:items-start">
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
                     <p className="text-[12px] leading-4 tracking-[-0.08px] text-muted">
@@ -277,18 +281,18 @@ export default function LaunchSummaryScreen() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>)}
             </Modal>
           </>
         }
       >
         <FlowMap
-          x={LAUNCH_MAP.x}
-          y={LAUNCH_MAP.y}
+          x={wf.backend ? run.map.x : LAUNCH_MAP.x}
+          y={wf.backend ? run.map.y : LAUNCH_MAP.y}
           nodes={run.map.nodes}
           edges={run.map.edges}
-          width={LAUNCH_MAP.width}
-          height={LAUNCH_MAP.height}
+          width={wf.backend ? run.map.width : LAUNCH_MAP.width}
+          height={wf.backend ? run.map.height : LAUNCH_MAP.height}
           onNodeClick={(n) => openNode(n.id)}
         />
       </MapCanvas>

@@ -134,7 +134,7 @@ export function HandRaisePanel({
       footer={
         <div className="flex w-full shrink-0 items-start bg-white px-6 pt-3 pb-5 max-md:px-4">
           {last ? (
-            <Button variant="primary" onClick={() => onConfirm(choices, other)}>
+            <Button variant="primary" disabled={!current.options.length && !other.trim()} onClick={() => onConfirm(choices, other)}>
               {data.confirmLabel}
             </Button>
           ) : (

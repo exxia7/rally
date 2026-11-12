@@ -1,3 +1,4 @@
+import { backendCommand } from './backend';
 import { useMemo } from 'react';
 
 import { planFrame, useGo, useRunFrameSync } from './nav';
@@ -22,10 +23,15 @@ export function useLiveRun(id: string, opts: { confirm?: boolean } = {}) {
     wf,
     layout: {
       data,
+      onHandRaiseConfirm: wf.backend ? (_choices?: number[], answer?: string) => {
+        const b = wf.backend!.branches.find(b => b.status === 'needs_input');
+        const a = b?.attempts.find(a => a.status === 'needs_input');
+        if (b && a && answer?.trim()) void backendCommand(wf.id, { type: 'answer', branch: b.id, step: a.stepId, text: answer });
+      } : undefined,
       title: wf.title,
       status,
       // A raised hand holds the run: the button reads Resume (as Figma draws 4.1 and 4.3).
-      paused: wf.run.paused || needsYou,
+      paused: wf.run.paused || needsYou || !!wf.backend?.branches.some(b => b.status === 'failed'),
       onPauseToggle: () =>
         dispatch({ type: 'run/pause', paused: !wf.run.paused }),
       agentNames: names,

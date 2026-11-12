@@ -1,3 +1,4 @@
+import { attachFiles, sampleMode } from '@/state/backend';
 import clsx from 'clsx';
 import {
   useCallback,
@@ -52,7 +53,7 @@ export type HelperDraft = {
   agent?: AgentName;
   kind: Exclude<NodeKindName, 'task'>;
   description: string;
-  model: 'Haiku 5.5' | 'Opus 5.5';
+  model: 'Haiku 5.5' | 'Opus 5.5' | 'Haiku' | 'Opus';
   cost: string;
   /** Undefined = no Tools section; the drawer then leads with Resources (2.4). */
   tools?: string[];
@@ -186,7 +187,7 @@ export function HelperDrawer({
           <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 pt-1.5">
             <SegmentedControl
               label="Model"
-              options={[
+              options={helper.model === 'Haiku' || helper.model === 'Opus' ? [{ value: 'Haiku', label: 'Haiku' }, { value: 'Opus', label: 'Opus' }] : [
                 { value: 'Haiku 5.5', label: 'Haiku 5.5' },
                 { value: 'Opus 5.5', label: 'Opus 5.5' },
               ]}
@@ -289,7 +290,8 @@ export function HelperDrawer({
               type="file"
               multiple
               className="hidden"
-              onChange={(e) => {
+              onChange={async (e) => {
+                if (!sampleMode) { const incoming = [...e.target.files ?? []]; e.target.value = ''; const names = await attachFiles(incoming); if (names.length) onChange({ resources: [...helper.resources, ...names.map(name => ({ name, type: 'File · uploaded' }))] }); return; }
                 const files = [...(e.target.files ?? [])].map((f) => ({
                   name: f.name,
                   type: 'File · uploaded',

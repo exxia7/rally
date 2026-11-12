@@ -22,10 +22,11 @@ export type HelperId =
   | 'designer'
   | 'publisher';
 
-export type ModelName = 'Haiku 5.5' | 'Opus 5.5';
+export type ModelName = 'Haiku 5.5' | 'Opus 5.5' | 'Haiku' | 'Opus';
 
 export type Helper = Omit<HelperCardData, 'settings'> & {
   model: ModelName;
+  instructions?: string;
   /** ~k tokens a run uses (the drawer's cost hint: Haiku $0.005/k, Opus $0.01/k). */
   tokensK: number;
   /** Tools it may use; undefined = a helper without a tool list (its drawer shows Resources first). */
@@ -168,6 +169,7 @@ export const HELPER_IDS = Object.keys(AI_COACH_TEAM) as HelperId[];
 
 /** The drawer's cost hint for a model choice, e.g. "~4k tokens · $0.04". */
 export function modelCost(h: Pick<Helper, 'model' | 'tokensK'>) {
+  if (h.model === 'Haiku' || h.model === 'Opus') return 'Usage shown during the run';
   const rate = h.model === 'Opus 5.5' ? 0.01 : 0.005;
   return `~${h.tokensK}k tokens · $${(h.tokensK * rate).toFixed(2)}`;
 }

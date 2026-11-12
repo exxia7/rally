@@ -117,7 +117,8 @@ export function useRunFrameSync(id: string) {
   const family = FRAME_FAMILY[id];
   const targetFamily = FRAME_FAMILY[target];
   useEffect(() => {
+    if (wf.backend && id === '5.2') return;
     if (family && targetFamily && family !== targetFamily)
       go(target, { replace: true });
-  }, [family, targetFamily, target, go]);
+  }, [family, targetFamily, target, go, wf.backend, id]);
 }

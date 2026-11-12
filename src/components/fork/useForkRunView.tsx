@@ -1,3 +1,5 @@
+import { exportOutputs } from '@/state/backend';
+import { backendApprovalItems } from '@/state/backendViews';
 import type { ReactNode } from 'react';
 
 import type { MapNode } from '@/components/map/FlowMap';
@@ -152,7 +154,7 @@ export function useForkRunView({
     );
   };
   const itemsFor = (b: Branch): ForkApprovalItem[] =>
-    withEditedText(
+    wf.backend ? backendApprovalItems(wf, b.id) : withEditedText(
       wf,
       b.id,
       b.fork
@@ -201,6 +203,8 @@ export function useForkRunView({
     return (
       <ForkApprovalPanel
         key={b.id}
+        local={!!wf.backend}
+        onExport={wf.backend && wf.chosenVersion === b.id ? () => exportOutputs(wf) : undefined}
         branch={b}
         items={items}
         states={states}
@@ -237,7 +241,7 @@ export function useForkRunView({
   // ---- Inline Fork card ----
 
   const inspector = (insp: InspectorData, node: MapNode): InspectorData =>
-    inline
+    wf.backend ? { ...insp, forkForm: { title: `New fork from ${node.title}`, original: node.preview?.text ?? node.title, options: [], note: "Earlier steps stay available. This step and dependent steps run on a new branch.", helpers: [] } } : inline
       ? withInlineForkForm(insp, node, view.map, branchName(branchOfNode(node)))
       : insp;
 
@@ -271,6 +275,7 @@ export function useForkRunView({
    * each fork no frame draws adding its lane's spend. A frame as drawn keeps Figma's label.
    */
   const costLabel = (label: string) => {
+    if (wf.backend) return label;
     const named = swapText(label, swaps);
     if (!hasForks || wf.asDrawn) return named;
     const forks = branches.filter((b) => b.fork);
