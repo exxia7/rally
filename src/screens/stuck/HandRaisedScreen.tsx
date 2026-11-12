@@ -3,11 +3,11 @@ import { useMemo, useState } from 'react';
 import { AgentAvatar } from '@/components/agents/AgentAvatar';
 import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
+import { useScreenId } from '@/screens/screenId';
 import { useGo } from '@/state/nav';
 import { rerunConfirm } from '@/state/runView';
 import { dispatch, store } from '@/state/store';
 import { useLiveRun } from '@/state/useRun';
-import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['4.1', '4.1b'];
@@ -48,9 +48,9 @@ export default function HandRaisedScreen() {
         open={confirm}
         onClose={() => setConfirm(false)}
         onConfirm={() => {
-          const h = store.get().workflows[wf.id].handRaises.find(
-            (x) => x.id === 'missing'
-          );
+          const h = store
+            .get()
+            .workflows[wf.id].handRaises.find((x) => x.id === 'missing');
           dispatch({
             type: 'handRaise/confirm',
             id: 'missing',
@@ -60,7 +60,7 @@ export default function HandRaisedScreen() {
           go('4.2', { replace: true });
         }}
         title={rerun.title}
-        body={`Rerunning "Who is this launch for?" also reruns every agent that depends on it. Their current work will be replaced with new versions.`}
+        body={`Your fixes change facts other helpers already used, like the launch date, so every helper whose work depends on them reruns too. Their current work will be replaced with new versions.`}
         affected={rerun.affected.map((r) => ({
           key: r.agent,
           art: <AgentAvatar agent={r.agent} size={24} />,

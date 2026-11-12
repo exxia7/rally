@@ -18,12 +18,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
 import { blockedOutput } from '@/state/permissions';
-import {
-  agentNames,
-  goesOut,
-  runData,
-  summaryView,
-} from '@/state/runView';
+import { agentNames, goesOut, runData, summaryView } from '@/state/runView';
 import { dispatch, useAppState, useWorkflow } from '@/state/store';
 
 import { LAUNCH_MAP } from './launchMap';
@@ -60,9 +55,14 @@ export default function LaunchSummaryScreen() {
     () => summaryView(wf, (id) => blockedOutput(app, wf, id)),
     [wf, app]
   );
+  // Posts that went out exactly as drafted: the case for letting the helper post on its own next time.
+  const approvedAsWritten = summary.wentOut.filter(
+    (w) => !w.skipped && !('edited' in w && w.edited) && !/^Not /.test(w.status)
+  ).length;
   const WENT_OUT = summary.wentOut;
   const FIXED = summary.fixed;
-  const rules: Partial<Record<string, 'allow' | 'keep'>> = wf.permissions.nextTime;
+  const rules: Partial<Record<string, 'allow' | 'keep'>> =
+    wf.permissions.nextTime;
   const nextTime = rules[summary.rule] ?? 'ask';
   const setNextTime = (v: 'ask' | 'allow' | 'keep') =>
     dispatch({
@@ -71,7 +71,8 @@ export default function LaunchSummaryScreen() {
       value: v === 'ask' ? undefined : v,
     });
   const helper = summary.ruleHelper;
-  const posts = summary.rule === 'community-discord' ? 'post to Discord' : 'schedule posts';
+  const posts =
+    summary.rule === 'community-discord' ? 'post to Discord' : 'schedule posts';
   const [exported, setExported] = useState(false);
   const inspected = inspecting
     ? run.map.nodes.find((n) => n.id === inspecting)
@@ -88,7 +89,9 @@ export default function LaunchSummaryScreen() {
   const exportSummary = () => {
     const text = [
       `Your launch is live: ${summary.line}`,
-      ...WENT_OUT.map((r) => `${r.skipped ? '–' : '✓'} ${r.label}: ${r.status}`),
+      ...WENT_OUT.map(
+        (r) => `${r.skipped ? '–' : '✓'} ${r.label}: ${r.status}`
+      ),
       '– $300 ad test: Not run, over your $50 ad limit',
       ...FIXED.map((f) => `Fixed: ${f}`),
     ].join('\n');
@@ -216,9 +219,7 @@ export default function LaunchSummaryScreen() {
                 <p className="min-w-0 flex-1 truncate text-[13px] leading-5 tracking-[-0.08px] text-muted">
                   $300 ad test
                 </p>
-                <p className={status}>
-                  Not run, over your $50 ad limit
-                </p>
+                <p className={status}>Not run, over your $50 ad limit</p>
               </div>
               <p className={`${heading} pt-5`}>What you fixed</p>
               <ul className="flex w-full shrink-0 flex-col items-start gap-1 pt-1.5">
@@ -247,13 +248,16 @@ export default function LaunchSummaryScreen() {
                         : nextTime === 'keep'
                           ? `${helper} will keep asking before it posts.`
                           : summary.skipped
-                            ? `You skipped ${summary.skipped} post${summary.skipped === 1 ? '' : 's'} today.`
+                            ? // Why it's worth trusting the helper more: what you approved unchanged, not what you skipped.
+                              `You approved ${approvedAsWritten} of its post${approvedAsWritten === 1 ? '' : 's'} as written today.`
                             : 'You approved every post as written today.'}
                     </p>
                   </div>
                   {nextTime === 'ask' ? (
                     <div className="flex shrink-0 items-start gap-1.5">
-                      <Button onClick={() => setNextTime('allow')}>Allow</Button>
+                      <Button onClick={() => setNextTime('allow')}>
+                        Allow
+                      </Button>
                       <Button onClick={() => setNextTime('keep')}>
                         Keep asking
                       </Button>
