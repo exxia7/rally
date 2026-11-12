@@ -12,7 +12,10 @@ export function ScrollArea({
   children,
   className,
   ref,
+  phoneFlow,
 }: {
+  /** Under 768px don't scroll here: the content flows in a parent that scrolls (SidePanel's phoneHeader="scroll"). */
+  phoneFlow?: boolean;
   children: ReactNode;
   /** Classes for the scrolling element (padding, gap, alignment). */
   className?: string;
@@ -29,11 +32,17 @@ export function ScrollArea({
     [ref]
   );
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col">
+    <div
+      className={clsx(
+        'relative flex min-h-0 w-full flex-1 flex-col',
+        phoneFlow && 'max-md:flex-none'
+      )}
+    >
       <div
         ref={setRef}
         className={clsx(
           'flex min-h-0 w-full flex-1 flex-col items-start overflow-x-clip overflow-y-auto overscroll-contain',
+          phoneFlow && 'max-md:flex-none max-md:overflow-visible',
           className
         )}
       >

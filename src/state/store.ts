@@ -1,6 +1,10 @@
 import { useSyncExternalStore } from 'react';
 
-import { briefChat, type Helper } from '@/screens/plan/aiCoachPlan';
+import {
+  briefAnswer,
+  briefChat,
+  type Helper,
+} from '@/screens/plan/aiCoachPlan';
 
 import {
   type CheckLevel,
@@ -55,6 +59,10 @@ export type Action =
   | { type: 'wf/open'; id: WorkflowId }
   | { type: 'brief/send'; text: string; attachments?: string[] }
   | { type: 'briefChat/send'; text: string; reply: string }
+  /** 2.2 after a brief: the Planner's next line once it has "thought" (its questions, then "Your team is ready"). */
+  | { type: 'briefChat/planner'; step: 'ask' | 'ready' }
+  /** 2.2: your answer to the Planner's questions; its date and audience become the brief's When and Who. */
+  | { type: 'briefChat/answer'; text: string }
   | { type: 'plan/stage'; stage: PlanStage }
   | { type: 'helper/patch'; id: HelperId; patch: Partial<Helper> }
   | { type: 'helper/remove'; id: HelperId }
@@ -258,7 +266,24 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
         brief: { ...wf.brief, what: text, summary: text },
         attachments: [...wf.attachments, ...(a.attachments ?? [])],
         planStage: 'chat',
-        briefChat: briefChat(text),
+        // The conversation starts with your brief; the Planner asks its questions on 2.2 (briefChat/planner).
+        briefChat: briefChat(text).slice(0, 2),
+      };
+    }
+    case 'briefChat/planner': {
+      // The scripted lines: 3 is the questions, 5 the team (after your answer, 4).
+      const at = a.step === 'ask' ? 2 : 4;
+      if (wf.briefChat.length !== at) return wf;
+      const line = briefChat(wf.brief.what)[at];
+      return { ...wf, briefChat: [...wf.briefChat, line] };
+    }
+    case 'briefChat/answer': {
+      if (wf.briefChat.length !== 3) return wf;
+      const { when, who } = briefAnswer(a.text);
+      return {
+        ...wf,
+        brief: { ...wf.brief, when: when || wf.brief.when, who: who || wf.brief.who },
+        briefChat: [...wf.briefChat, { id: '4', from: 'user', text: a.text }],
       };
     }
     case 'briefChat/send': {

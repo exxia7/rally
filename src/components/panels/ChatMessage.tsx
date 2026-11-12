@@ -159,36 +159,53 @@ export function Thread({
   );
 }
 
-// The helper working right now, at the foot of a thread (the run Chat tab): its character in the avatar's place,
-// then a panel-style bubble with three dots that pulse in turn (ThinkingDots; still under reduced motion) and
-// "<Name> is working". Keyed by the screen on the agent, so it changes (and rises in) as the run moves on.
+// Someone working at the foot of a thread: a helper in the run Chat tab ("Writer is working", its character in the
+// avatar's place) or the Planner in 2.2 while it thinks of a reply (no `agent`: the Pathfinder avatar). Then an
+// assistant-style bubble with three dots that pulse in turn (ThinkingDots; still under reduced motion) and the label.
+// Keyed by the screen on who is working, so it changes (and rises in) as that moves on. Same density values as
+// Message: 26px avatar 8px from the bubble in the panel, 30px and 12px in the main column.
 export function TypingRow({
   agent,
   name,
+  label = `${name} is working`,
+  density = 'panel',
   className,
 }: {
-  agent: AgentName;
+  agent?: AgentName;
   name: string;
+  /** Default "<name> is working". */
+  label?: string;
+  density?: ChatDensity;
   className?: string;
 }) {
   const enter = useEnter();
+  const s = STYLE[density];
   return (
     <motion.div
-      className={clsx('flex w-full shrink-0 items-center gap-2', className)}
+      className={clsx('flex w-full shrink-0 items-center', s.row, className)}
       role="status"
       variants={variants.rise}
       initial={enter ? 'hidden' : false}
       animate="shown"
       transition={transitions.slow}
     >
-      <AgentArt agent={agent} size={STYLE.panel.avatar} />
-      <div className="flex min-w-0 items-center gap-2 rounded-[10px] rounded-tl-[5px] border border-line bg-white px-3 py-2">
+      {agent ? (
+        <AgentArt agent={agent} size={s.avatar} />
+      ) : (
+        <PathfinderAvatar size={s.avatar} />
+      )}
+      <div
+        className={clsx(
+          'flex min-w-0 items-center gap-2 rounded-[10px] border border-line bg-white px-3 py-2',
+          density === 'main' ? 'rounded-tl-[6px]' : 'rounded-tl-[5px]'
+        )}
+      >
         <ThinkingDots
           className="flex shrink-0 items-center gap-[3px]"
           dotClassName="size-1 rounded-full bg-muted"
         />
         <span className="truncate text-[12px] leading-[18px] text-muted">
-          {name} is working
+          {label}
         </span>
       </div>
     </motion.div>

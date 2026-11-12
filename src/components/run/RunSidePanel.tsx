@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 
-import plusWhite from '@/assets/icons/plus-white.svg';
 import type { AgentName } from '@/components/agents/characters';
 import { ChatComposer } from '@/components/panels/ChatComposer';
 import { Message, Thread, TypingRow } from '@/components/panels/ChatMessage';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
+import { ImportButton } from '@/components/panels/ImportButton';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
 import { dispatch } from '@/state/store';
-import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
 import type { MenuItemData } from '@/components/ui/Menu';
 
 import {
@@ -26,7 +24,7 @@ export type RunChatMessage = { from: 'assistant' | 'user'; text: string };
 export type SandboxStep = { id: string; name: string; detail: string };
 
 // The run side panel (3.3 Sandbox 2362:24915, 3.4 Decisions 2362:25044): SidePanel with run Panel tabs
-// (Chat · Sandbox · Decisions · N). Sandbox adds a Primary Small "Import" on the right of the tabs.
+// (Chat · Sandbox · Decisions · N). Sandbox adds the ImportButton on the right of the tabs.
 // Docked at ≥1280px (the top bar's panel toggle closes it); an overlay with × below 1280, a sheet below 768.
 export function RunSidePanel({
   tab,
@@ -179,18 +177,7 @@ export function RunSidePanel({
         />
       }
       headerExtra={
-        tab === 'sandbox' && (
-          <Button
-            variant="primary"
-            size="sm"
-            leading={<Icon src={plusWhite} size={16} />}
-            onClick={() => importFile()}
-            aria-label="Import"
-            className="max-md:px-1.5"
-          >
-            <span className="max-md:hidden">Import</span>
-          </Button>
-        )
+        tab === 'sandbox' && <ImportButton onClick={() => importFile()} />
       }
     >
       {tab === 'sandbox' && (

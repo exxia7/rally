@@ -26,8 +26,10 @@ import { ScrollArea } from './ScrollArea';
 // The body is a ScrollArea between the header and the footer, which stay put: it scrolls when content outgrows it,
 // with a line under the header while scrolled and a fade at the bottom while there's more. `scroll={false}` hands
 // scrolling to the content (the run Chat scrolls its thread above its own composer).
-// `sheet="half"` (hand-raise, inspector, approval): under 768px a bottom sheet 56% of the screen tall instead of a
-// full-screen one, so the top bar's status pill and the card it's about stay in view above it.
+// `sheet="half"` (inspector, approval): under 768px a bottom sheet 56% of the screen tall instead of a full-screen
+// one, so the top bar's status pill and the card it's about stay in view above it. `sheet="tall"` (hand-raise): an
+// 85%-tall sheet, for content you have to act on. `phoneHeader="scroll"`: under 768px the custom `header` scrolls
+// away with the body instead of staying put, so a tall header doesn't eat a sheet (the scrim and Escape still close).
 export function SidePanel({
   sheet = 'full',
   title,
@@ -42,10 +44,13 @@ export function SidePanel({
   scroll = true,
   bodyRef,
   enter,
+  phoneHeader = 'sticky',
 }: {
+  /** Under 768px: keep the custom `header` put ('sticky', default) or let it scroll with the body ('scroll'). */
+  phoneHeader?: 'sticky' | 'scroll';
   /** Motion: slide in on mount. Default: when the panel slot opens while you watch (AppShell's PanelEnter). */
   enter?: boolean;
-  sheet?: 'full' | 'half';
+  sheet?: 'full' | 'half' | 'tall';
   title?: ReactNode;
   tabs?: ReactNode;
   onClose?: () => void;
@@ -110,12 +115,17 @@ export function SidePanel({
           'flex h-full w-[400px] shrink-0 flex-col items-start overflow-clip rounded-card border border-line bg-white',
           'max-xl:absolute max-xl:inset-y-2 max-xl:right-2 max-xl:z-40 max-xl:h-auto max-xl:max-w-[calc(100%-16px)] max-xl:shadow-[0px_8px_32px_0px_rgba(0,0,0,0.16)]',
           'max-md:fixed max-md:inset-0 max-md:w-full max-md:max-w-none max-md:rounded-none max-md:border-0',
-          sheet === 'half' &&
-            'max-md:top-auto max-md:h-[56dvh] max-md:rounded-t-[16px] max-md:shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.16)]',
+          sheet !== 'full' &&
+            'max-md:top-auto max-md:rounded-t-[16px] max-md:shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.16)]',
+          sheet === 'half' && 'max-md:h-[56dvh]',
+          sheet === 'tall' && 'max-md:h-[85dvh]',
+          // Phones: the whole sheet scrolls (header included) and the footer sticks to its bottom.
+          phoneHeader === 'scroll' && 'max-md:overflow-y-auto',
           className
         )}
       >
-        {header ??
+        {header}
+        {!header &&
           (tabs ? (
             <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-3 max-md:px-4">
               <div className="flex min-w-px flex-1 items-center">{tabs}</div>
@@ -149,7 +159,11 @@ export function SidePanel({
             </div>
           ) : null)}
         {scroll ? (
-          <ScrollArea ref={bodyRef} className={bodyClassName}>
+          <ScrollArea
+            ref={bodyRef}
+            className={bodyClassName}
+            phoneFlow={phoneHeader === 'scroll'}
+          >
             {children}
           </ScrollArea>
         ) : (
@@ -162,7 +176,13 @@ export function SidePanel({
             {children}
           </div>
         )}
-        {footer}
+        {phoneHeader === 'scroll' && footer ? (
+          <div className="w-full shrink-0 max-md:sticky max-md:bottom-0">
+            {footer}
+          </div>
+        ) : (
+          footer
+        )}
       </motion.aside>
     </>
   );

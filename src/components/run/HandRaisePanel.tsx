@@ -44,7 +44,11 @@ export type HandRaiseData = {
   confirmLabel: string;
   /** "See the full handoff": who passed to whom and what arrived fine (runView.handoffOf); the Fix steps'
    *  problems are the rest. */
-  handoff?: { from: string; to: string; passed: { title: string; detail: string }[] };
+  handoff?: {
+    from: string;
+    to: string;
+    passed: { title: string; detail: string }[];
+  };
 };
 
 // The hand-raise panel (4.1 2362:27655, 4.3 2362:25379): the side panel when a helper raised its hand. Inspector
@@ -90,6 +94,8 @@ export function HandRaisePanel({
     setStep(i);
     setReached((r) => Math.max(r, i));
     body.current?.scrollTo({ top: 0 });
+    // Phones: the whole sheet scrolls (phoneHeader="scroll").
+    body.current?.closest('aside')?.scrollTo({ top: 0 });
   };
   const choicesRef = useRef<HTMLDivElement>(null);
   const [nudged, setNudged] = useState(0);
@@ -118,12 +124,13 @@ export function HandRaisePanel({
 
   return (
     <SidePanel
-      sheet="half"
+      // Phones: an 85%-tall sheet whose header scrolls away, so the choices show on open.
+      sheet="tall"
+      phoneHeader="scroll"
       onClose={onClose}
       className={className}
       enter={enter}
       bodyRef={body}
-      bodyClassName="px-6 max-md:px-4"
       footer={
         <div className="flex w-full shrink-0 items-start bg-white px-6 pt-3 pb-5 max-md:px-4">
           {last ? (
@@ -151,85 +158,90 @@ export function HandRaisePanel({
         />
       }
     >
-      {data.steps.length > 1 && (
-        <div role="tablist" className="flex w-full shrink-0 items-center gap-5">
-          {data.steps.map((s, i) => (
-            <FixStep
-              key={s.label}
-              n={i + 1}
-              label={s.label}
-              current={i === step}
-              onClick={() => goTo(i)}
+      <div className="flex w-full shrink-0 flex-col items-start px-6 max-md:px-4">
+        {data.steps.length > 1 && (
+          <div
+            role="tablist"
+            className="flex w-full shrink-0 items-center gap-5"
+          >
+            {data.steps.map((s, i) => (
+              <FixStep
+                key={s.label}
+                n={i + 1}
+                label={s.label}
+                current={i === step}
+                onClick={() => goTo(i)}
+              />
+            ))}
+          </div>
+        )}
+        <div
+          className={
+            data.steps.length > 1 ? 'w-full shrink-0 pt-4' : 'w-full shrink-0'
+          }
+        >
+          <HandoffProblemCard
+            key={step}
+            kind={problem.kind}
+            context={problem.context}
+            contextTone={problem.contextTone ?? 'problem'}
+            title={problem.title}
+            detail={problem.detail}
+            action={problem.action}
+            actionTop={problem.actionTop}
+            onAction={() => setHandoffOpen(true)}
+            className="w-full"
+            // Figma's whole-pixel card height; a minimum, so narrow phones can wrap more.
+            style={problem.height ? { minHeight: problem.height } : undefined}
+          />
+        </div>
+        <p className="shrink-0 pt-6 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
+          What should we do?
+        </p>
+        <div
+          ref={choicesRef}
+          role="radiogroup"
+          aria-label="What should we do?"
+          className="flex w-full shrink-0 flex-col items-start gap-2 pt-3"
+        >
+          {current.options.map((o, i) => (
+            <RadioCard
+              key={o.title}
+              title={o.title}
+              description={o.description}
+              selected={choices[step] === i}
+              onSelect={() =>
+                setChoices((c) => c.map((v, j) => (j === step ? i : v)))
+              }
+              className="w-full"
+              titleClassName="min-h-[21px]"
             />
           ))}
         </div>
-      )}
-      <div
-        className={
-          data.steps.length > 1 ? 'w-full shrink-0 pt-4' : 'w-full shrink-0'
-        }
-      >
-        <HandoffProblemCard
-          key={step}
-          kind={problem.kind}
-          context={problem.context}
-          contextTone={problem.contextTone ?? 'problem'}
-          title={problem.title}
-          detail={problem.detail}
-          action={problem.action}
-          actionTop={problem.actionTop}
-          onAction={() => setHandoffOpen(true)}
-          className="w-full"
-          // Figma's whole-pixel card height; a minimum, so narrow phones can wrap more.
-          style={problem.height ? { minHeight: problem.height } : undefined}
-        />
-      </div>
-      <p className="shrink-0 pt-6 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
-        What should we do?
-      </p>
-      <div
-        ref={choicesRef}
-        role="radiogroup"
-        aria-label="What should we do?"
-        className="flex w-full shrink-0 flex-col items-start gap-2 pt-3"
-      >
-        {current.options.map((o, i) => (
-          <RadioCard
-            key={o.title}
-            title={o.title}
-            description={o.description}
-            selected={choices[step] === i}
-            onSelect={() =>
-              setChoices((c) => c.map((v, j) => (j === step ? i : v)))
-            }
-            className="w-full"
-            titleClassName="min-h-[21px]"
+        <div className="relative w-full shrink-0 pt-3">
+          <input
+            value={other}
+            onChange={(e) => setOther(e.target.value)}
+            placeholder="Something else? Tell the team what to do…"
+            aria-label="Something else"
+            className="peer h-11 w-full rounded-card px-[15px] text-[13px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
           />
-        ))}
-      </div>
-      <div className="relative w-full shrink-0 pt-3">
-        <input
-          value={other}
-          onChange={(e) => setOther(e.target.value)}
-          placeholder="Something else? Tell the team what to do…"
-          aria-label="Something else"
-          className="peer h-11 w-full rounded-card px-[15px] text-[13px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
-        />
-        {/* Figma's 1px dashed stroke (2/1 dashes, which CSS `dashed` can't draw); solid blue while typing. */}
-        <svg
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-3 h-11 w-full stroke-line-2 peer-focus:stroke-accent-line"
-          fill="none"
-        >
-          <rect
-            x="0.5"
-            y="0.5"
-            rx="11.5"
-            strokeDasharray="2 1"
-            strokeDashoffset={1}
-            style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
-          />
-        </svg>
+          {/* Figma's 1px dashed stroke (2/1 dashes, which CSS `dashed` can't draw); solid blue while typing. */}
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-3 h-11 w-full stroke-line-2 peer-focus:stroke-accent-line"
+            fill="none"
+          >
+            <rect
+              x="0.5"
+              y="0.5"
+              rx="11.5"
+              strokeDasharray="2 1"
+              strokeDashoffset={1}
+              style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
+            />
+          </svg>
+        </div>
       </div>
       <HandoffModal
         open={handoffOpen}

@@ -1,4 +1,4 @@
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import type { HelperCardData } from '@/components/planning/HelperCard';
 import type {
   PlanEdge,
@@ -375,7 +375,7 @@ export function briefChat(brief: string) {
     {
       id: '4',
       from: 'user' as const,
-      text: `${AI_COACH_BRIEF.when}, to our ${AI_COACH_BRIEF.who}`,
+      text: BRIEF_ANSWER,
     },
     {
       id: '5',
@@ -384,6 +384,24 @@ export function briefChat(brief: string) {
       action: 'team' as const,
     },
   ];
+}
+
+/** The default answer to the Planner's two questions (2.2's suggestion chip). */
+export const BRIEF_ANSWER = `${AI_COACH_BRIEF.when}, to our ${AI_COACH_BRIEF.who}`;
+
+/** Reads your answer to "When is the launch? Who is it for?": the part before the first comma is the date, the rest
+ *  the audience ("Mar 12, to our 2,800 waitlist signups" → Mar 12 / 2,800 waitlist signups). No comma: all date. */
+export function briefAnswer(text: string): { when: string; who: string } {
+  const t = text.trim();
+  const i = t.indexOf(',');
+  if (i < 0) return { when: t, who: '' };
+  return {
+    when: t.slice(0, i).trim(),
+    who: t
+      .slice(i + 1)
+      .trim()
+      .replace(/^(to|for)\s+(our\s+|the\s+)?/i, ''),
+  };
 }
 
 /** Launch facts (the run Sandbox's "Launch facts", the hand-raise problems, approvals and summary). */
