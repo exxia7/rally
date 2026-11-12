@@ -29,10 +29,14 @@ function homeCard(wf: Workflow): WorkflowCardData {
     meta: card.meta,
     preview: wf.preview,
     needsYou: card.needsYou,
-    // The AI Coach art is its hand raised (Figma 1.1): any other time (a duplicate, a draft, a run that doesn't need
-    // you) the card shows its own plan.
+    // Figma's mock workflows keep their art, and the AI Coach art is its hand raised (1.1); every other workflow
+    // whose plan is in the store (a duplicate, a draft, a new workflow, a run going on its own) shows its own plan.
     plan:
-      wf.preview === 'ai-coach' && !card.needsYou ? planMiniMap(wf) : undefined,
+      !wf.card &&
+      wf.helperOrder.length > 0 &&
+      !(wf.preview === 'ai-coach' && card.needsYou)
+        ? planMiniMap(wf)
+        : undefined,
     to: cardTarget(wf),
   };
 }

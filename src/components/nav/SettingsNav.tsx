@@ -43,10 +43,20 @@ export function SettingsNav<T extends string>({
     const first = !placed.current;
     placed.current = true;
     if (!el || !tab || el.scrollWidth <= el.clientWidth) return;
-    const left = tab.offsetLeft - el.offsetLeft;
-    if (left < el.scrollLeft || left + tab.offsetWidth > el.scrollLeft + el.clientWidth) {
+    // Positions from the rects: offsetLeft is relative to the offset parent, not the row, so it lands mid-tab.
+    const GUTTER = 12;
+    const left = tab.getBoundingClientRect().left - el.getBoundingClientRect().left + el.scrollLeft;
+    const right = left + tab.offsetWidth;
+    // The fade on the right covers 48px: keep the tab clear of it.
+    const target =
+      left - GUTTER < el.scrollLeft
+        ? left - GUTTER
+        : right + 48 > el.scrollLeft + el.clientWidth
+          ? Math.min(left - GUTTER, right + 48 - el.clientWidth)
+          : null;
+    if (target !== null) {
       const still = first || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      el.scrollTo({ left: left - 12, behavior: still ? 'auto' : 'smooth' });
+      el.scrollTo({ left: Math.max(0, target), behavior: still ? 'auto' : 'smooth' });
     }
   }, [value]);
   return (
@@ -120,7 +130,8 @@ export function SettingsNavButton({
       className={clsx(
         'flex h-8 w-full shrink-0 items-center rounded-control px-2.5 text-left text-[13px] leading-[19.5px] tracking-[-0.08px] max-md:w-auto max-md:whitespace-nowrap',
         selected
-          ? 'bg-white font-medium text-ink drop-shadow-[0px_1px_1.5px_rgba(0,0,0,0.1)]'
+          ? // Phones: the tab row sits on white, so the selected tab takes the accent tint to stand out.
+          'bg-white font-medium text-ink drop-shadow-[0px_1px_1.5px_rgba(0,0,0,0.1)] max-md:bg-accent-soft max-md:text-accent max-md:drop-shadow-none'
           : 'text-ink-2 hover:bg-hover'
       )}
     >

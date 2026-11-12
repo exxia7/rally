@@ -21,7 +21,9 @@ import type { Workflow } from './types';
 
 /**
  * Removes `gone` nodes from a list of lines, reconnecting each one's inputs to its outputs (a → X → b becomes
- * a → b, once). `merge` builds the new line from the two it replaces. Shared by the plan map and the run map.
+ * a → b, once). A reconnection that another path already makes (a → Writer → b) isn't added: it would only draw a
+ * long line across the column between. `merge` builds the new line from the two it replaces. Shared by the plan map
+ * and the run map.
  */
 export function bridgeEdges<E extends { from: string; to: string }>(
   edges: E[],
@@ -34,14 +36,29 @@ export function bridgeEdges<E extends { from: string; to: string }>(
     const out = list.filter((e) => e.from === id);
     const rest = list.filter((e) => e.from !== id && e.to !== id);
     const has = new Set(rest.map((e) => `${e.from}>${e.to}`));
+    const reaches = (from: string, to: string) => {
+      const seen = new Set([from]);
+      const todo = [from];
+      while (todo.length) {
+        const at = todo.pop()!;
+        for (const e of rest)
+          if (e.from === at && !seen.has(e.to)) {
+            if (e.to === to) return true;
+            seen.add(e.to);
+            todo.push(e.to);
+          }
+      }
+      return false;
+    };
+    const added: E[] = [];
     for (const a of into)
       for (const b of out) {
         const k = `${a.from}>${b.to}`;
-        if (a.from === b.to || has.has(k)) continue;
+        if (a.from === b.to || has.has(k) || reaches(a.from, b.to)) continue;
         has.add(k);
-        rest.push(merge(a, b));
+        added.push(merge(a, b));
       }
-    list = rest;
+    list = [...rest, ...added];
   }
   return list;
 }
@@ -71,15 +88,95 @@ export function planLayout(wf: Workflow, variant: PlanVariant): PlanLayout {
     ...wf.removed,
     ...inserted.nodes.map((n) => n.id).filter((id) => !wf.helpers[id]),
   ]);
-  if (!gone.size) return inserted;
+  if (!gone.size) return reflowPlan(base, inserted, inserted, gone);
+  return reflowPlan(
+    base,
+    inserted,
+    {
+      ...inserted,
+      nodes: inserted.nodes.filter((n) => !gone.has(n.id)),
+      edges: bridgeEdges<PlanEdge>(inserted.edges, gone, (into, out) => ({
+        from: into.from,
+        to: out.to,
+        color: into.color,
+      })),
+    },
+    gone
+  );
+}
+
+/**
+ * Re-stacks every column whose cards changed (a helper removed from it, or one added to it) on the base layout's
+ * rows, so a removal leaves no empty slot and an added card doesn't hang below: one card sits on the middle row (where
+ * the Strategist is), two on the outer rows, three on all three, more continue down at the same pitch; cards never
+ * overlap. Columns you didn't touch keep Figma's places. `drawn` is the layout before removals (where removed cards
+ * were).
+ */
+function reflowPlan(
+  base: PlanLayout,
+  drawn: PlanLayout,
+  plan: PlanLayout,
+  gone: Set<string>
+): PlanLayout {
+  const s = plan.scale;
+  const inBase = new Set(base.nodes.map((n) => n.id));
+  const columnsOf = (nodes: PlanLayout['nodes']) => {
+    const xs: number[] = [];
+    for (const n of nodes)
+      if (!xs.some((x) => Math.abs(x - n.x) < 1)) xs.push(n.x);
+    return xs;
+  };
+  const changed = columnsOf(plan.nodes).filter(
+    (x) =>
+      plan.nodes.some((n) => Math.abs(n.x - x) < 1 && !inBase.has(n.id)) ||
+      drawn.nodes.some((n) => Math.abs(n.x - x) < 1 && gone.has(n.id))
+  );
+  if (!changed.length) return plan;
+  // The base's fullest column gives the rows (2.3: Planner, Scout, Insights).
+  const rows = columnsOf(base.nodes)
+    .map((x) =>
+      base.nodes
+        .filter((n) => Math.abs(n.x - x) < 1)
+        .map((n) => n.y)
+        .sort((a, b) => a - b)
+    )
+    .reduce((a, b) => (b.length > a.length ? b : a), [] as number[]);
+  if (rows.length < 2) return plan;
+  const pitch = rows[1] - rows[0];
+  const R = rows.length;
+  const height = (n: PlanLayout['nodes'][number]) =>
+    (81.3 + 21.87 * n.settings.length) * s;
+  const moved = new Map<string, number>();
+  for (const x of changed) {
+    const col = plan.nodes
+      .filter((n) => Math.abs(n.x - x) < 1)
+      .sort((a, b) => a.y - b.y);
+    const k = col.length;
+    let bottom = -Infinity;
+    col.forEach((n, i) => {
+      const row =
+        k === 1
+          ? rows[Math.floor((R - 1) / 2)]
+          : k <= R
+            ? rows[Math.round((i * (R - 1)) / (k - 1))]
+            : rows[0] + i * pitch;
+      const y = Math.max(row, bottom + 24 * s);
+      bottom = y + height(n);
+      if (Math.abs(y - n.y) > 0.5) moved.set(n.id, y);
+    });
+  }
+  if (!moved.size) return plan;
   return {
-    ...inserted,
-    nodes: inserted.nodes.filter((n) => !gone.has(n.id)),
-    edges: bridgeEdges<PlanEdge>(inserted.edges, gone, (into, out) => ({
-      from: into.from,
-      to: out.to,
-      color: into.color,
-    })),
+    ...plan,
+    nodes: plan.nodes.map((n) =>
+      moved.has(n.id) ? { ...n, y: moved.get(n.id)! } : n
+    ),
+    // A "+" pinned to a line (2.4c) goes back to the line's middle once its card moves.
+    edges: plan.edges.map((e) =>
+      e.addAt && (moved.has(e.from) || moved.has(e.to))
+        ? { ...e, addAt: undefined }
+        : e
+    ),
   };
 }
 
