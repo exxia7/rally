@@ -24,8 +24,8 @@ export type SandboxSection = {
 };
 
 // The Sandbox tab of the run side panel (3.3, 2362:24921): a 12/18 muted note (4px top, 24px sides), then
-// collapsible sections, each 12px top/bottom with a 1px line under it. A section header is a Section toggle with
-// its count and a 14px plus on the right; open sections list Resource rows (6px above) and a Medium 12/18 muted
+// collapsible sections, each 12px top/bottom with a 1px line under it, and 24px under the last (as the Decisions
+// tab ends). A section header is a Section toggle with its count and a 14px plus on the right; open sections list Resource rows (6px above) and a Medium 12/18 muted
 // "Show N more" (20px in). Rows drag onto helpers on the map: `onRowDragStart` / `onRowDragEnd` tell the screen
 // which resource is in flight. The plan Sandbox (2.6, 2.7) puts its note in the panel header: `note={null}`.
 // Touch screens can't drag, so `rowMenu` gives a row a tap path: return menu items (e.g. "Add to Community") and a
@@ -81,7 +81,7 @@ export function SandboxPanel({
           {note}
         </p>
       )}
-      <div className="flex w-full flex-col items-start px-6 max-md:px-4">
+      <div className="flex w-full flex-col items-start px-6 pb-6 max-md:px-4">
         {sections.map((s) => {
           const isOpen = open.has(s.id);
           const limit = expanded.has(s.id)

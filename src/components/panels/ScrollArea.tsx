@@ -39,20 +39,18 @@ export function ScrollArea({
       >
         {children}
       </div>
-      <div
-        aria-hidden
-        className={clsx(
-          'pointer-events-none absolute inset-x-0 -top-px h-px bg-line transition-opacity duration-150',
-          edges.top ? 'opacity-100' : 'opacity-0'
-        )}
-      />
-      <div
-        aria-hidden
-        className={clsx(
-          'pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent transition-opacity duration-150',
-          edges.bottom ? 'opacity-100' : 'opacity-0'
-        )}
-      />
+      {edges.top && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-px h-px bg-line"
+        />
+      )}
+      {edges.bottom && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent"
+        />
+      )}
     </div>
   );
 }

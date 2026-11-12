@@ -1,5 +1,8 @@
 import clsx from 'clsx';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, type ReactNode } from 'react';
+
+import { transitions, useEnter, useTransition, variants } from '@/lib/motion';
 
 import { useScrollEdges } from '@/lib/useScrollEdges';
 
@@ -73,9 +76,15 @@ type Props = {
   bodyClassName?: string;
 };
 
+// Motion: opened while you watch, the scrim fades in and the dialog scales up from 97% (240ms); closing reverses it.
+// A frame that opens with the modal showing (4.1b) paints it still.
 export function Modal(props: Props) {
-  if (!props.open) return null;
-  return <ModalFrame {...props} />;
+  const appear = useEnter();
+  return (
+    <AnimatePresence initial={appear}>
+      {props.open && <ModalFrame key="modal" {...props} />}
+    </AnimatePresence>
+  );
 }
 
 function ModalFrame({
@@ -115,8 +124,14 @@ function ModalFrame({
       </div>
     ));
   const overflowing = edges.top || edges.bottom;
+  const t = useTransition(transitions.base);
   return (
-    <div
+    <motion.div
+      variants={variants.fadeIn}
+      initial="hidden"
+      animate="shown"
+      exit="hidden"
+      transition={t}
       className={clsx(
         'inset-0 z-50 flex items-center justify-center p-4',
         contained ? 'absolute' : 'fixed',
@@ -126,7 +141,9 @@ function ModalFrame({
       )}
       onClick={onClose}
     >
-      <div
+      <motion.div
+        variants={variants.scaleIn}
+        transition={t}
         role="dialog"
         aria-modal
         aria-label={label}
@@ -183,7 +200,7 @@ function ModalFrame({
             {footer}
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

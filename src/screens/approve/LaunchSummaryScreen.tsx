@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react';
 
 import checkDark from '@/assets/icons/check-dark.svg';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
-import { TaskProgressChip } from '@/components/map/CanvasControls';
 import { FlowMap } from '@/components/map/FlowMap';
 import { MapCanvas } from '@/components/map/MapCanvas';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { InspectorPanel } from '@/components/run/InspectorPanel';
 import { inspectorFromNode } from '@/components/run/RunScreenLayout';
+import { TasksDropdown } from '@/components/run/TasksDropdown';
 import { AppShell } from '@/components/shell/AppShell';
 import { PathfinderAvatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -73,6 +73,14 @@ export default function LaunchSummaryScreen() {
     ? run.map.nodes.find((n) => n.id === inspecting)
     : undefined;
 
+  // A map card or its Tasks row: "Ready to post" reopens the summary, any other step its read-only inspector.
+  const openNode = (id: string) => {
+    if (id === 'ready') {
+      setInspecting(null);
+      setOpen(true);
+    } else setInspecting(id);
+  };
+
   const exportSummary = () => {
     const text = [
       `Your launch is live: ${summary.line}`,
@@ -110,10 +118,11 @@ export default function LaunchSummaryScreen() {
         zoomClassName="z-[60] max-md:bottom-[95px] max-md:z-0"
         overlay={
           <>
-            <TaskProgressChip
-              done={run.tasks.filter((t) => t.state === 'done').length}
-              total={run.tasks.length}
-              className="absolute top-4 left-4 w-[213px]"
+            <TasksDropdown
+              motionKey={`run:${app.activeId}:tasks`}
+              tasks={run.tasks}
+              note={run.tasksSummary}
+              onSelectTask={(t) => t.id && openNode(t.id)}
             />
             <CompletedAgents
               agents={run.completed}
@@ -267,12 +276,7 @@ export default function LaunchSummaryScreen() {
           edges={run.map.edges}
           width={LAUNCH_MAP.width}
           height={LAUNCH_MAP.height}
-          onNodeClick={(n) => {
-            if (n.id === 'ready') {
-              setInspecting(null);
-              setOpen(true);
-            } else setInspecting(n.id);
-          }}
+          onNodeClick={(n) => openNode(n.id)}
         />
       </MapCanvas>
     </AppShell>

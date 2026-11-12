@@ -67,13 +67,9 @@ export function renameSwaps(drawn: Branch[], branches: Branch[]): Swap[] {
   return pairs;
 }
 
-/** The run data with drawn forks renamed; a renamed Tasks chip drops Figma's pinned width so the name fits. */
+/** The run data with drawn forks renamed. */
 export function renameRun(data: RunData, pairs: Swap[]): RunData {
-  if (!pairs.length) return data;
-  const next = swapText(data, pairs);
-  return next.tasksChip
-    ? { ...next, tasksChip: { ...next.tasksChip, width: undefined } }
-    : next;
+  return pairs.length ? swapText(data, pairs) : data;
 }
 
 // ---- A lane for a fork no frame draws ---------------------------------------------------------------------

@@ -1,9 +1,18 @@
-import clsx from 'clsx';
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import type { ReactNode } from 'react';
 
 import { AgentAvatar, type AgentState } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
-import { useAdded, useChangedFrom, useGlide } from '@/lib/motion';
+import {
+  EASE_OUT,
+  transitions,
+  useAdded,
+  useChangedFrom,
+  useGlide,
+  useMotionOn,
+  useTransition,
+  variants,
+} from '@/lib/motion';
 import { useAppState } from '@/state/store';
 
 import { FORK_COLOR, type ForkNumber } from './forks';
@@ -92,8 +101,10 @@ export type MapOverlay = {
 
 const BLOCKED_STROKE = 1.84455;
 
-// Motion (CLAUDE.md "Motion"): connectors interpolate to a new route; ports glide with them.
-const routed = (d: string) => ({ d: `path("${d}")` }) as CSSProperties;
+// Motion (CLAUDE.md "Motion"): connectors interpolate to a new route and ports move with them, in step with the
+// cards' glide; the flow pulse is FLOW_LEN of the line.
+const REROUTE = { duration: 0.42, ease: EASE_OUT } as const;
+const FLOW_LEN = 0.16;
 const isWorking = (n: MapNode) =>
   n.state === 'working' || n.avatar?.state === 'working';
 
@@ -175,7 +186,9 @@ export function FlowMap({
       e.status !== 'blocked' &&
       b.state !== 'done' &&
       (isWorking(a) ||
-        (e.status === 'passed' && a.state !== 'waiting' && b.state === 'waiting'));
+        (e.status === 'passed' &&
+          a.state !== 'waiting' &&
+          b.state === 'waiting'));
     return [
       {
         e,
@@ -270,17 +283,7 @@ export function FlowMap({
           />
         ))}
         {[...ports.entries()].map(([key, p]) => (
-          <circle
-            key={key}
-            cx={p.x}
-            cy={p.y}
-            className="pf-reroute"
-            style={{ cx: p.x, cy: p.y } as CSSProperties}
-            r={PORT_R}
-            fill="white"
-            stroke={p.color}
-            strokeWidth={STROKE}
-          />
+          <Port key={key} x={p.x} y={p.y} color={p.color} />
         ))}
       </svg>
       {nodes.map((n) => (
@@ -357,10 +360,9 @@ export function FlowMap({
   );
 }
 
-// A connector. Pending lines stay still; a line out of a working step carries a travelling accent pulse (in the
-// fork's colour on a fork lane); a handoff that completes while you watch draws from source to target; a new line
-// fades in and a re-routed one interpolates to its new path. All of it is CSS (src/index.css), off under reduced
-// motion.
+// A connector (framer-motion). Pending lines stay still; a line out of a working step carries a travelling accent
+// pulse (in the fork's colour on a fork lane); a handoff that completes while you watch draws from source to target
+// (pathLength); a new line fades in and a re-routed one interpolates its path (`d`). Off under reduced motion.
 function Connector({
   scope,
   edge: e,
@@ -376,41 +378,76 @@ function Connector({
   flow: boolean;
   isNew: boolean;
 }) {
+  const on = useMotionOn();
   const key = `${scope}:edge:${e.from}>${e.to}`;
   const status = e.status ?? 'passed';
   const from = useChangedFrom(key, status);
-  const draw = status === 'passed' && from !== undefined;
+  const draw = on && status === 'passed' && from !== undefined;
   const width = e.status === 'blocked' ? BLOCKED_STROKE : STROKE;
   return (
     <>
-      <path
+      <motion.path
         key={draw ? 'drawn' : 'line'}
-        d={d}
-        style={routed(d)}
-        className={clsx('pf-reroute', draw ? 'pf-draw' : isNew && 'pf-fade')}
-        pathLength={draw ? 1 : undefined}
+        initial={
+          draw ? { pathLength: 0, d } : on && isNew ? { opacity: 0, d } : false
+        }
+        animate={draw ? { pathLength: 1, d } : { opacity: 1, d }}
+        transition={
+          on
+            ? {
+                pathLength: transitions.draw,
+                opacity: transitions.base,
+                d: REROUTE,
+              }
+            : transitions.instant
+        }
         stroke={color}
         strokeWidth={width}
         strokeDasharray={e.status === 'pending' ? `${DASH} ${DASH}` : undefined}
         strokeDashoffset={e.status === 'pending' ? DASH / 2 : undefined}
       />
-      {flow && (
-        <path
+      {flow && on && (
+        <motion.path
           d={d}
-          style={routed(d)}
-          className="pf-flow pf-reroute"
-          pathLength={1}
           stroke={e.fork ? FORK_COLOR[e.fork] : '#2457d6'}
           strokeWidth={width * 1.4}
           strokeLinecap="round"
+          initial={{
+            pathLength: FLOW_LEN,
+            pathSpacing: 2,
+            pathOffset: -FLOW_LEN,
+          }}
+          animate={{ pathOffset: [-FLOW_LEN, 1, 1] }}
+          transition={{
+            duration: 2.2,
+            times: [0, 0.7, 1],
+            ease: 'easeInOut',
+            repeat: Infinity,
+          }}
         />
       )}
     </>
   );
 }
 
-// A step card on the map: its state cross-fades when it changes, a step inserted while you watch rises in, and a
-// card that moves (a column added before it) glides to its new place.
+// A port: moves with its line when a card glides.
+function Port({ x, y, color }: { x: number; y: number; color: string }) {
+  const t = useTransition(REROUTE);
+  return (
+    <motion.circle
+      initial={false}
+      animate={{ cx: x, cy: y }}
+      transition={t}
+      r={PORT_R}
+      fill="white"
+      stroke={color}
+      strokeWidth={STROKE}
+    />
+  );
+}
+
+// A step card on the map: its state cross-fades when it changes (NodeCard), a step inserted while you watch rises in,
+// and a card that moves (a column added before it) glides to its new place on a spring.
 function MapCard({
   scope,
   node: n,
@@ -424,22 +461,29 @@ function MapCard({
   onClick?: () => void;
   onRerun?: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useGlide(ref, n.x, n.y);
+  const on = useMotionOn();
+  const glide = useGlide(n.x, n.y);
   return (
-    <NodeCard
-      {...n}
-      ref={ref}
-      motionKey={`${scope}:state:${n.id}`}
-      className={clsx('absolute!', isNew && 'pf-rise')}
-      onClick={onClick}
-      onRerun={onRerun}
-      style={{ left: n.x, top: n.y }}
-    />
+    <motion.div
+      className="absolute"
+      style={{ left: n.x, top: n.y, ...glide }}
+      variants={variants.rise}
+      initial={on && isNew ? 'hidden' : false}
+      animate="shown"
+      transition={transitions.slow}
+    >
+      <NodeCard
+        {...n}
+        motionKey={`${scope}:state:${n.id}`}
+        onClick={onClick}
+        onRerun={onRerun}
+      />
+    </motion.div>
   );
 }
 
-// A step's helper over its card: thinking while it works, bouncing once when it raises its hand.
+// A step's helper over its card: thinking while it works, bouncing once when it raises its hand; one that appears
+// pops in.
 function MapAvatar({
   scope,
   node: n,
@@ -453,19 +497,25 @@ function MapAvatar({
   x: number;
   y: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useGlide(ref, x, y);
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
   return (
-    <AgentAvatar
-      ref={ref}
-      motionKey={`${scope}:avatar-state:${n.id}`}
-      appeared={isNew}
-      agent={n.avatar!.agent}
-      state={n.avatar!.state}
-      size={n.avatar!.at?.size ?? AVATAR}
-      className={clsx('absolute!', isNew && 'pf-pop')}
-      style={{ left: x, top: y }}
-    />
+    <motion.div
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      variants={variants.pop}
+      initial={on && isNew ? 'hidden' : false}
+      animate="shown"
+      transition={transitions.pop}
+    >
+      <AgentAvatar
+        motionKey={`${scope}:avatar-state:${n.id}`}
+        appeared={isNew}
+        agent={n.avatar!.agent}
+        state={n.avatar!.state}
+        size={n.avatar!.at?.size ?? AVATAR}
+      />
+    </motion.div>
   );
 }
 
@@ -481,19 +531,25 @@ function MapMarker({
   x: number;
   y: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useGlide(ref, x, y);
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
   const m = e.marker!;
   const from = useChangedFrom(`${scope}:marker:${e.from}>${e.to}`, m.status);
   return (
-    <HandoffMarker
+    <motion.div
       key={m.status}
-      ref={ref}
-      status={m.status}
-      dimmed={m.dimmed}
-      size={m.size ?? MARKER}
-      className={clsx('absolute', from !== undefined && 'pf-pop')}
-      style={{ left: x, top: y, ['--pf-delay' as string]: '260ms' }}
-    />
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      variants={variants.pop}
+      initial={on && from !== undefined ? 'hidden' : false}
+      animate="shown"
+      transition={{ ...transitions.pop, delay: 0.26 }}
+    >
+      <HandoffMarker
+        status={m.status}
+        dimmed={m.dimmed}
+        size={m.size ?? MARKER}
+      />
+    </motion.div>
   );
 }

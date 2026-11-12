@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import checkBadge from '@/assets/icons/check-badge.svg';
 import lockAmber from '@/assets/icons/lock-amber-10.svg';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
-import { TaskProgressChip } from '@/components/map/CanvasControls';
 import { FlowMap } from '@/components/map/FlowMap';
 import { MapCanvas } from '@/components/map/MapCanvas';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
@@ -13,7 +12,7 @@ import { SidePanel } from '@/components/panels/SidePanel';
 import { useConnectTool } from '@/components/planning/useConnectTool';
 import { InspectorPanel } from '@/components/run/InspectorPanel';
 import { inspectorFromNode } from '@/components/run/RunScreenLayout';
-import { TasksOverlay } from '@/components/run/TasksOverlay';
+import { TasksDropdown } from '@/components/run/TasksDropdown';
 import { AppShell } from '@/components/shell/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -56,7 +55,6 @@ export default function ApprovalScreen() {
   const [panelOpen, setPanelOpen] = useState(true);
   // A map card other than "Ready to post" opens its own (read-only) inspector instead of the approval panel.
   const [inspecting, setInspecting] = useState<string | null>(null);
-  const [tasksOpen, setTasksOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -72,10 +70,16 @@ export default function ApprovalScreen() {
   const pill = approvalWaiting(wf);
   const cost = money(runCost(wf));
   const publisher = wf.helpers.publisher?.name ?? 'Publisher';
-  const done = run.tasks.filter((t) => t.state === 'done').length;
   const inspected = inspecting
     ? run.map.nodes.find((n) => n.id === inspecting)
     : undefined;
+  // A map card or its Tasks row: "Ready to post" opens the approval panel, any other step its inspector.
+  const openNode = (id: string) => {
+    if (id === 'ready') {
+      setInspecting(null);
+      setPanelOpen(true);
+    } else setInspecting(id);
+  };
   const launch = () => {
     for (const i of items)
       if (stateOf(i.id) === 'waiting')
@@ -257,26 +261,19 @@ export default function ApprovalScreen() {
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
-            <TaskProgressChip
-              done={wf.asDrawn ? 9 : done}
-              total={wf.asDrawn ? 10 : run.tasks.length}
-              open={tasksOpen}
-              onClick={() => setTasksOpen((o) => !o)}
-              className="absolute top-4 left-4 w-[208px]"
+            <TasksDropdown
+              motionKey={`run:${app.activeId}:tasks`}
+              tasks={run.tasks}
+              note={run.tasksSummary}
+              done={wf.asDrawn ? 9 : undefined}
+              total={wf.asDrawn ? 10 : undefined}
+              onSelectTask={(t) => t.id && openNode(t.id)}
             />
             <CompletedAgents
               agents={run.completed}
               names={names}
               className="absolute bottom-4 left-4 max-md:right-4"
             />
-            {tasksOpen && (
-              <TasksOverlay
-                tasks={run.tasks}
-                summary={run.tasksSummary}
-                onClose={() => setTasksOpen(false)}
-                onSelect={() => setTasksOpen(false)}
-              />
-            )}
           </>
         }
       >
@@ -289,12 +286,7 @@ export default function ApprovalScreen() {
             edges={run.map.edges}
             width={LAUNCH_MAP.width}
             height={LAUNCH_MAP.height}
-            onNodeClick={(n) => {
-              if (n.id === 'ready') {
-                setInspecting(null);
-                setPanelOpen(true);
-              } else setInspecting(n.id);
-            }}
+            onNodeClick={(n) => openNode(n.id)}
           />
         </div>
       </MapCanvas>

@@ -6,7 +6,7 @@ import type { InspectorData } from '@/components/run/InspectorPanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
 import type { RunChatMessage } from '@/components/run/RunSidePanel';
 import type { SandboxSection } from '@/components/run/SandboxPanel';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 
 // The AI Coach launch run map as Figma draws it in 3.2 "Running" (FlowMap frame 2362:24759, 1282×581
 // placed at 45,83 on the 1362×830 canvas). Other run/rerun/fork frames start from these and override

@@ -1,6 +1,13 @@
 import clsx from 'clsx';
+import { AnimatePresence, motion } from 'framer-motion';
 
-import { useAdded, useChangedFrom } from '@/lib/motion';
+import { TickText } from '@/components/motion/Motion';
+import {
+  transitions,
+  useAdded,
+  useChangedFrom,
+  useMotionOn,
+} from '@/lib/motion';
 
 import { AgentAvatar } from './AgentAvatar';
 import type { AgentName } from './characters';
@@ -25,16 +32,21 @@ export function DoneAgent({
 }: {
   agent: AgentName;
   name?: string;
-  /** Motion: it just finished, so it slides into the tray. */
+  /** Motion: it just finished, so it slides into the tray (from the map above it). */
   isNew?: boolean;
 }) {
+  const on = useMotionOn();
   return (
-    <div
-      className={clsx(
-        'flex shrink-0 flex-col items-center gap-0.5',
-        isNew && 'pf-tray-in'
-      )}
+    <motion.div
+      layout="position"
+      className="flex shrink-0 flex-col items-center gap-0.5"
       style={{ minWidth: DONE_AGENT_W[agent] }}
+      initial={
+        on && isNew ? { opacity: 0, x: -10, y: -14, scale: 0.85 } : false
+      }
+      animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.85 }}
+      transition={on ? transitions.slow : transitions.instant}
     >
       <AgentAvatar
         agent={agent}
@@ -47,7 +59,7 @@ export function DoneAgent({
       >
         {name ?? agent}
       </p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -83,19 +95,14 @@ export function CompletedAgents({
       )}
     >
       <p className="min-w-[83px] shrink-0 text-[12px] leading-[18px] font-semibold tracking-[-0.0503px] whitespace-nowrap text-ink">
-        <span key={text} className={textFrom !== undefined ? 'pf-tick' : undefined}>
-          {text}
-        </span>
+        <TickText text={text} play={textFrom !== undefined} />
       </p>
       <div className="h-7 w-px shrink-0 bg-line" />
-      {agents.map((a) => (
-        <DoneAgent
-          key={a}
-          agent={a}
-          name={names?.[a]}
-          isNew={added.has(a)}
-        />
-      ))}
+      <AnimatePresence initial={false}>
+        {agents.map((a) => (
+          <DoneAgent key={a} agent={a} name={names?.[a]} isNew={added.has(a)} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

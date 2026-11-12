@@ -1,9 +1,12 @@
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 import { AgentArt } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
+import { ThinkingDots } from '@/components/motion/Motion';
 import { PathfinderAvatar } from '@/components/ui/Avatar';
+import { transitions, useEnter, variants } from '@/lib/motion';
 
 // One set of chat components for every chat surface: the plan's main-column chat (2.1 → 2.2, 2362:23566,
 // `density="main"`) and the side panel's Chat (plan 2.3–2.8, 2362:23715; the run Chat tab: `density="panel"`).
@@ -52,21 +55,33 @@ export function Message({
   children,
   className,
   bubbleClassName,
+  enter,
 }: {
+  /** Motion: a message that arrives while you watch rises in (450ms; never on a first paint). */
+  enter?: boolean;
   from: 'assistant' | 'user';
   text: ReactNode;
   density?: ChatDensity;
   /** Assistant only: under the text (inside the bubble in the panel, under it in the main column). */
   children?: ReactNode;
-  /** On the message row (motion classes such as `pf-rise`). */
+  /** On the message row. */
   className?: string;
   /** On the bubble (2.2 rings the brief the launch facts came from). */
   bubbleClassName?: string;
 }) {
   const s = STYLE[density];
+  const rise = {
+    variants: variants.rise,
+    initial: useEnter(!!enter) ? ('hidden' as const) : false,
+    animate: 'shown',
+    transition: transitions.slow,
+  };
   if (from === 'user')
     return (
-      <div className={clsx('flex w-full shrink-0 justify-end', className)}>
+      <motion.div
+        {...rise}
+        className={clsx('flex w-full shrink-0 justify-end', className)}
+      >
         <div
           className={clsx(
             'min-w-0 rounded-[10px] bg-well',
@@ -76,11 +91,12 @@ export function Message({
         >
           <p className={clsx(TEXT, s.userText)}>{text}</p>
         </div>
-      </div>
+      </motion.div>
     );
   const inside = density === 'panel';
   return (
-    <div
+    <motion.div
+      {...rise}
       className={clsx(
         'flex w-full shrink-0 flex-col items-start gap-4',
         className
@@ -108,7 +124,7 @@ export function Message({
           {children}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -144,8 +160,8 @@ export function Thread({
 }
 
 // The helper working right now, at the foot of a thread (the run Chat tab): its character in the avatar's place,
-// then a panel-style bubble with three dots that pulse in turn (`pf-dots`, still under reduced motion) and
-// "<Name> is working". Keyed by the screen on the agent, so it changes as the run moves on.
+// then a panel-style bubble with three dots that pulse in turn (ThinkingDots; still under reduced motion) and
+// "<Name> is working". Keyed by the screen on the agent, so it changes (and rises in) as the run moves on.
 export function TypingRow({
   agent,
   name,
@@ -155,22 +171,26 @@ export function TypingRow({
   name: string;
   className?: string;
 }) {
+  const enter = useEnter();
   return (
-    <div
+    <motion.div
       className={clsx('flex w-full shrink-0 items-center gap-2', className)}
       role="status"
+      variants={variants.rise}
+      initial={enter ? 'hidden' : false}
+      animate="shown"
+      transition={transitions.slow}
     >
       <AgentArt agent={agent} size={STYLE.panel.avatar} />
       <div className="flex min-w-0 items-center gap-2 rounded-[10px] rounded-tl-[5px] border border-line bg-white px-3 py-2">
-        <span aria-hidden className="pf-dots flex shrink-0 items-center gap-[3px]">
-          <span className="size-1 rounded-full bg-muted" />
-          <span className="size-1 rounded-full bg-muted" />
-          <span className="size-1 rounded-full bg-muted" />
-        </span>
+        <ThinkingDots
+          className="flex shrink-0 items-center gap-[3px]"
+          dotClassName="size-1 rounded-full bg-muted"
+        />
         <span className="truncate text-[12px] leading-[18px] text-muted">
           {name} is working
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }

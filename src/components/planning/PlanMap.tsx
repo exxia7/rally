@@ -1,8 +1,15 @@
-import clsx from 'clsx';
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { useState, type ReactNode } from 'react';
 
 import { edgePath } from '@/components/map/connectors';
-import { useAdded, useGlide } from '@/lib/motion';
+import {
+  EASE_OUT,
+  transitions,
+  useAdded,
+  useGlide,
+  useMotionOn,
+  useTransition,
+} from '@/lib/motion';
 import { useAppState } from '@/state/store';
 
 import { HelperCard, type HelperCardData } from './HelperCard';
@@ -222,16 +229,13 @@ export function PlanMap({
             />
           ))}
         {[...ports.entries()].map(([key, p]) => (
-          <circle
+          <PlanPort
             key={key}
-            cx={p.x}
-            cy={p.y}
-            className="pf-reroute"
-            style={{ cx: p.x, cy: p.y } as CSSProperties}
+            x={p.x}
+            y={p.y}
             r={PORT_R * k}
-            fill="white"
-            stroke={p.color}
-            strokeWidth={STROKE * k}
+            color={p.color}
+            width={STROKE * k}
           />
         ))}
       </svg>
@@ -302,6 +306,10 @@ export function PlanMap({
   );
 }
 
+// Motion (framer-motion, CLAUDE.md "Motion"): after an edit, cards and gates glide on a spring, lines and ports
+// interpolate to their new route in step, and anything added rises or fades in. A first paint is still.
+const REROUTE = { duration: 0.42, ease: EASE_OUT } as const;
+
 // A free-placed card or gate: glides when an edit moves it; one added after the map was on screen rises in.
 function Placed({
   isNew,
@@ -316,20 +324,22 @@ function Placed({
   opacity?: number;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useGlide(ref, x, y);
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
   return (
-    <div
-      ref={ref}
-      className={clsx('absolute', isNew && 'pf-rise')}
-      style={{ left: x, top: y, opacity }}
+    <motion.div
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      initial={on && isNew ? { opacity: 0, y: 6 } : false}
+      animate={{ opacity: opacity ?? 1, y: 0 }}
+      transition={on ? transitions.slow : transitions.instant}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
-// A connector: re-routes by interpolating its path (CSS `d`, where supported); a new one fades in.
+// A connector: re-routes by interpolating its path (`d`); a new one fades in.
 function PlanLine({
   isNew,
   d,
@@ -341,11 +351,42 @@ function PlanLine({
   color: string;
   width: number;
 }) {
+  const on = useMotionOn();
   return (
-    <path
-      d={d}
-      style={{ d: `path("${d}")` } as CSSProperties}
-      className={clsx('pf-reroute', isNew && 'pf-fade')}
+    <motion.path
+      initial={on && isNew ? { opacity: 0, d } : false}
+      animate={{ opacity: 1, d }}
+      transition={
+        on ? { d: REROUTE, opacity: transitions.base } : transitions.instant
+      }
+      stroke={color}
+      strokeWidth={width}
+    />
+  );
+}
+
+// A port: moves with its line.
+function PlanPort({
+  x,
+  y,
+  r,
+  color,
+  width,
+}: {
+  x: number;
+  y: number;
+  r: number;
+  color: string;
+  width: number;
+}) {
+  const t = useTransition(REROUTE);
+  return (
+    <motion.circle
+      initial={false}
+      animate={{ cx: x, cy: y }}
+      transition={t}
+      r={r}
+      fill="white"
       stroke={color}
       strokeWidth={width}
     />

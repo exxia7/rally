@@ -2,7 +2,7 @@ import type { AgentName } from '@/components/agents/characters';
 import type { MapEdge, MapNode } from '@/components/map/FlowMap';
 import type { HandRaiseData } from '@/components/run/HandRaisePanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 import { patchById } from '@/lib/patchById';
 import {
   AI_COACH_EDGES,
@@ -229,7 +229,6 @@ export const RERUN_RUN: RunData = {
   tasks: RERUN_TASKS,
   tasksSummary: 'Only affected work is redone · about 40 sec',
   tasksChip: { label: 'Rerunning', progress: null },
-  tasksOverlay: { showClose: true, showProgress: false },
 };
 
 // ---- 4.3 Price mismatch (2362:25290) --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import type { AgentName } from '@/components/agents/characters';
 import type { MapEdge, MapNode } from '@/components/map/FlowMap';
 import type { RunData } from '@/components/run/RunScreenLayout';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 import {
   AI_COACH_EDGES,
   AI_COACH_MAP,

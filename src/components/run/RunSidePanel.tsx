@@ -288,7 +288,7 @@ function RunChat({
               from={m.from}
               text={m.text}
               // Messages that arrive while you watch rise in (motion only).
-              className={i >= initial.length ? 'pf-rise' : undefined}
+              enter={i >= initial.length}
             />
           ))}
           {typing && <TypingRow key={typing.agent} {...typing} />}

@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   useEffect,
   useState,
@@ -12,7 +13,12 @@ import diamond from '@/assets/icons/diamond.svg';
 import liveDot from '@/assets/icons/live-dot.svg';
 import lock from '@/assets/icons/lock-amber.svg';
 import { Button } from '@/components/ui/Button';
-import { reducedMotion, useChangedFrom } from '@/lib/motion';
+import {
+  reducedMotion,
+  transitions,
+  useChangedFrom,
+  useMotionOn,
+} from '@/lib/motion';
 
 import { FORK_COLOR, type ForkNumber } from './forks';
 import { type NodeKindName, NodeKindTile } from './NodeKind';
@@ -127,7 +133,10 @@ const SUBSTEPS: Record<string, string[]> = {
   'Comparing apps': ['Reading competitor pages', 'Comparing pricing'],
   'Reading the survey': ['Sorting the answers', 'Finding what people want'],
   'Deciding who it’s for': ['Weighing the research', 'Picking the audience'],
-  'Drafting the post': ['Reading the launch copy', 'Matching the server’s tone'],
+  'Drafting the post': [
+    'Reading the launch copy',
+    'Matching the server’s tone',
+  ],
   Scheduling: ['Checking the launch date', 'Lining up the posts'],
   Redoing: ['Rereading the handoff', 'Redoing the step'],
   Working: ['Reading the handoff', 'Working on it'],
@@ -163,20 +172,58 @@ function StatusLine({
 }) {
   const tone = status.tone ?? 'muted';
   const { shown, moved } = useSubstep(status.text, tone === 'live');
+  const on = useMotionOn();
   if (tone === 'live') {
+    // Working (motion only): the live dot pulses, a sub-step fades in, and an ellipsis types after the text in a
+    // zero-width box, so the line never rewraps.
     return (
       <div className="flex w-full flex-col gap-[5px] overflow-clip">
         <div className="flex w-full items-center gap-[5px]">
-          <img src={liveDot} alt="" className="pf-live-dot size-1.5 shrink-0" />
+          <motion.img
+            src={liveDot}
+            alt=""
+            className="size-1.5 shrink-0"
+            animate={
+              on ? { opacity: [1, 0.4, 1], scale: [1, 0.75, 1] } : undefined
+            }
+            transition={
+              on
+                ? { duration: 1.8, ease: 'easeInOut', repeat: Infinity }
+                : undefined
+            }
+          />
           <p className={clsx(line, 'min-w-px flex-1 font-medium text-accent')}>
-            <span key={shown} className={moved ? 'pf-fade' : undefined}>
+            <motion.span
+              key={shown}
+              initial={on && moved ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              transition={transitions.base}
+            >
               {shown}
-            </span>
-            <span aria-hidden className="pf-ellipsis">
-              <span>.</span>
-              <span>.</span>
-              <span>.</span>
-            </span>
+            </motion.span>
+            {on && (
+              <span
+                aria-hidden
+                className="inline-block w-0 overflow-visible whitespace-nowrap"
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
+                    transition={{
+                      duration: 1.6,
+                      times: [0, 0.15, 0.35, 0.75, 0.95, 1],
+                      ease: 'easeOut',
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  >
+                    .
+                  </motion.span>
+                ))}
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -236,6 +283,7 @@ export function NodeCard({
   style?: CSSProperties;
 }) {
   const live = status?.tone === 'live';
+  const on = useMotionOn();
   const changedFrom = useChangedFrom(motionKey, state);
   const compact = !lead && !preview && !note && kind !== 'decision';
   const onKey = (e: KeyboardEvent) => {
@@ -275,9 +323,8 @@ export function NodeCard({
               : state === 'working'
                 ? 'border-[0.922px] border-solid border-accent-line'
                 : 'border-[0.922px] border-solid border-line-2',
+        'relative',
         onClick && 'cursor-pointer',
-        // Working: a soft accent halo breathes around the card (an overlay; motion only).
-        state === 'working' && 'pf-glow relative',
         className
       )}
       style={{
@@ -294,111 +341,135 @@ export function NodeCard({
         ...style,
       }}
     >
-      <div
-        // A new state cross-fades in (only after a change the viewer saw).
-        key={state}
-        className={clsx(
-          'flex w-full flex-col',
-          state === 'waiting' && 'opacity-50',
-          changedFrom !== undefined && 'pf-crossfade'
-        )}
-        style={padY ? { paddingBlock: padY } : undefined}
-      >
-        <div
-          className={clsx(
-            'flex w-full flex-col gap-[3.7px] border-b-[0.922px] border-solid border-line px-[9.221px]',
-            kind === 'decision' ? 'h-[64.382px] py-[7.378px]' : 'py-[7.4px]'
-          )}
+      {state === 'working' && on && (
+        // Working: a soft accent halo breathes around the card (outside it, so the border and layout never change).
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute -inset-px rounded-[inherit] shadow-[0_0_0_2.5px_rgba(36,87,214,0.14),0_0_10px_0_rgba(36,87,214,0.18)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2.8, ease: 'easeInOut', repeat: Infinity }}
+        />
+      )}
+      {/* A new state cross-fades with the old one (only after a change the viewer saw); popLayout lifts the old
+          content out of the flow while it fades. */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={state}
+          className="flex w-full flex-col"
+          initial={on && changedFrom !== undefined ? { opacity: 0 } : false}
+          animate={{ opacity: state === 'waiting' ? 0.5 : 1 }}
+          exit={{
+            opacity: 0,
+            transition: on ? transitions.fast : transitions.instant,
+          }}
+          transition={on ? transitions.slow : transitions.instant}
+          style={padY ? { paddingBlock: padY } : undefined}
         >
-          <div className="flex w-full items-center gap-[3.689px]">
-            {kind === 'decision' &&
-              (state === 'needs-you' ? (
-                <img
-                  src={diamondLg}
-                  alt=""
-                  className="size-[7.378px] shrink-0"
-                />
-              ) : (
-                <img src={diamond} alt="" className="size-[5.03px] shrink-0" />
-              ))}
-            <p className={meta}>{KIND_LABEL[kind]}</p>
-            {agent && <p className={meta}>· {agent}</p>}
-            <div className="flex min-h-[14.8px] min-w-px flex-1 items-center justify-end gap-[3.7px] overflow-clip">
-              {flag && <Flag {...flag} />}
-              {asksYouFirst && <YourOkFlag />}
+          <div
+            className={clsx(
+              'flex w-full flex-col gap-[3.7px] border-b-[0.922px] border-solid border-line px-[9.221px]',
+              kind === 'decision' ? 'h-[64.382px] py-[7.378px]' : 'py-[7.4px]'
+            )}
+          >
+            <div className="flex w-full items-center gap-[3.689px]">
+              {kind === 'decision' &&
+                (state === 'needs-you' ? (
+                  <img
+                    src={diamondLg}
+                    alt=""
+                    className="size-[7.378px] shrink-0"
+                  />
+                ) : (
+                  <img
+                    src={diamond}
+                    alt=""
+                    className="size-[5.03px] shrink-0"
+                  />
+                ))}
+              <p className={meta}>{KIND_LABEL[kind]}</p>
+              {agent && (
+                <p title={agent} className={clsx(meta, 'min-w-0 truncate')}>
+                  · {agent}
+                </p>
+              )}
+              <div className="flex min-h-[14.8px] min-w-fit flex-1 items-center justify-end gap-[3.7px] overflow-clip">
+                {flag && <Flag {...flag} />}
+                {asksYouFirst && <YourOkFlag />}
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-[7.378px] overflow-clip">
+              <NodeKindTile
+                kind={kind}
+                emphasis={kind === 'decision' && state === 'needs-you'}
+                glyphSize={tile?.glyph}
+                radius={tile?.radius}
+              />
+              <p className="min-w-px flex-1 text-[11.99px] leading-[14.987px] font-semibold tracking-[-0.1199px] text-ink">
+                {title}
+              </p>
             </div>
           </div>
-          <div className="flex w-full items-center gap-[7.378px] overflow-clip">
-            <NodeKindTile
-              kind={kind}
-              emphasis={kind === 'decision' && state === 'needs-you'}
-              glyphSize={tile?.glyph}
-              radius={tile?.radius}
-            />
-            <p className="min-w-px flex-1 text-[11.99px] leading-[14.987px] font-semibold tracking-[-0.1199px] text-ink">
-              {title}
-            </p>
-          </div>
-        </div>
-        {compact ? (
-          // Will rerun's header flag row is a Badge, not the 14.8px Flags slot; Figma's body grows to 33.198px.
-          <div
-            className={clsx(
-              'flex w-full items-center p-[9.221px]',
-              state === 'will-rerun' || state === 'done'
-                ? 'h-[33.198px]'
-                : 'h-[30.757px]'
-            )}
-          >
-            {status && <StatusLine status={status} />}
-          </div>
-        ) : (
-          <div
-            className={clsx(
-              'flex w-full flex-col items-start px-[9.221px] pt-[9.221px]',
-              live ? 'gap-2 pb-2.5' : 'gap-[5.534px] pb-[9.221px]'
-            )}
-          >
-            {note && (
-              <p className="w-full text-[10.15px] leading-[normal] text-muted">
-                {note}
-              </p>
-            )}
-            {lead && (
-              <p className="w-full px-[1.845px] text-[11.068px] leading-[15.218px] font-medium tracking-[-0.0738px] text-ink">
-                {lead}
-              </p>
-            )}
-            {preview && (
-              <div className="flex w-full flex-col items-start rounded-[5.534px] border-[0.922px] border-solid border-line bg-well px-[7.378px] py-[5.534px]">
-                <p className="min-h-3.5 w-full text-[8.762px] leading-[13.143px] font-medium tracking-[-0.0738px] text-muted">
-                  {preview.label}
-                </p>
-                <p className="w-full pt-[1.845px] text-[10.145px] leading-[13.95px] tracking-[-0.0738px] text-ink">
-                  {preview.text}
-                </p>
-              </div>
-            )}
-            {status && (
-              <StatusLine status={status} inset={kind !== 'decision'} />
-            )}
-          </div>
-        )}
-        {showRerun && (
-          <div className="flex w-full items-center justify-end overflow-clip px-[9.221px] pb-[9.221px]">
-            <Button
-              size="sm"
-              className="min-w-px flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRerun?.();
-              }}
+          {compact ? (
+            // Will rerun's header flag row is a Badge, not the 14.8px Flags slot; Figma's body grows to 33.198px.
+            <div
+              className={clsx(
+                'flex w-full items-center p-[9.221px]',
+                state === 'will-rerun' || state === 'done'
+                  ? 'h-[33.198px]'
+                  : 'h-[30.757px]'
+              )}
             >
-              Rerun
-            </Button>
-          </div>
-        )}
-      </div>
+              {status && <StatusLine status={status} />}
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                'flex w-full flex-col items-start px-[9.221px] pt-[9.221px]',
+                live ? 'gap-2 pb-2.5' : 'gap-[5.534px] pb-[9.221px]'
+              )}
+            >
+              {note && (
+                <p className="w-full text-[10.15px] leading-[normal] text-muted">
+                  {note}
+                </p>
+              )}
+              {lead && (
+                <p className="w-full px-[1.845px] text-[11.068px] leading-[15.218px] font-medium tracking-[-0.0738px] text-ink">
+                  {lead}
+                </p>
+              )}
+              {preview && (
+                <div className="flex w-full flex-col items-start rounded-[5.534px] border-[0.922px] border-solid border-line bg-well px-[7.378px] py-[5.534px]">
+                  <p className="min-h-3.5 w-full text-[8.762px] leading-[13.143px] font-medium tracking-[-0.0738px] text-muted">
+                    {preview.label}
+                  </p>
+                  <p className="w-full pt-[1.845px] text-[10.145px] leading-[13.95px] tracking-[-0.0738px] text-ink">
+                    {preview.text}
+                  </p>
+                </div>
+              )}
+              {status && (
+                <StatusLine status={status} inset={kind !== 'decision'} />
+              )}
+            </div>
+          )}
+          {showRerun && (
+            <div className="flex w-full items-center justify-end overflow-clip px-[9.221px] pb-[9.221px]">
+              <Button
+                size="sm"
+                className="min-w-px flex-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRerun?.();
+                }}
+              >
+                Rerun
+              </Button>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { useState, type ReactNode } from 'react';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
@@ -9,7 +8,6 @@ import type { AgentName } from '@/components/agents/characters';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
 import type { Branch } from '@/components/fork/branches';
 import { useForkRunView } from '@/components/fork/useForkRunView';
-import { TaskProgressChip } from '@/components/map/CanvasControls';
 import {
   FlowMap,
   type ForkLine,
@@ -41,7 +39,7 @@ import {
   type SandboxStep,
 } from './RunSidePanel';
 import type { SandboxSection } from './SandboxPanel';
-import { TasksOverlay, type TaskItem } from './TasksOverlay';
+import { TasksDropdown, type TaskItem } from './TasksDropdown';
 
 export type RunMap = {
   nodes: MapNode[];
@@ -76,16 +74,13 @@ export type RunData = {
   inspectors?: Record<string, InspectorData>;
   /** A helper raised its hand (4.1, 4.3): the side panel's hand-raise content. */
   handRaise?: HandRaiseData;
-  /** Tasks chip text and bar during a rerun ("Rerunning", no bar); `width` pins Figma's chip width. */
+  /** Tasks header text and bar during a rerun ("Rerunning", no bar). */
   tasksChip?: {
     label?: string;
     progress?: number | null;
-    width?: number;
     /** On a fork the bar takes the fork's colour (6.5: "Vs Penny · 1 of 3 done"). */
     fork?: ForkNumber;
   };
-  /** Tasks overlay variant (4.2-tasks: a Close link, no progress bar). */
-  tasksOverlay?: { showClose?: boolean; showProgress?: boolean };
 };
 
 export type RunPanel =
@@ -190,7 +185,6 @@ export function RunScreenLayout({
     inline: !onInspectorFork,
   });
   const data = forks.data;
-  const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
   // Motion memory for this workflow's run (src/lib/motion.ts): a hand raised while you watch slides its panel in.
   const scope = `run:${useAppState().activeId}`;
   const asideFrom = useChangedFrom(`${scope}:aside`, panel?.kind ?? 'none');
@@ -233,11 +227,8 @@ export function RunScreenLayout({
     aside = (
       <HandRaisePanel
         data={data.handRaise}
-        className={
-          asideFrom !== undefined && asideFrom !== 'hand-raise'
-            ? 'pf-slide-in'
-            : undefined
-        }
+        // A hand raised while you watch slides its panel in, even over another open panel.
+        enter={asideFrom !== undefined && asideFrom !== 'hand-raise'}
         onClose={() => setPanel(null)}
         onConfirm={confirmHandRaise}
       />
@@ -355,24 +346,20 @@ export function RunScreenLayout({
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
-            <TaskProgressChip
+            <TasksDropdown
               motionKey={`${scope}:tasks`}
-              done={data.tasks.filter((t) => t.state === 'done').length}
-              total={data.tasks.length}
+              tasks={data.tasks}
+              note={data.tasksSummary}
               label={data.tasksChip?.label}
               progress={data.tasksChip?.progress}
               fork={data.tasksChip?.fork}
-              open={tasksOpen}
-              onClick={() => setTasksOpen((o) => !o)}
-              className={clsx(
-                'absolute top-4 left-4',
-                !data.tasksChip && 'w-[208px]'
-              )}
-              style={
-                data.tasksChip?.width
-                  ? { width: data.tasksChip.width }
-                  : undefined
-              }
+              // Under 1280px an open panel covers the canvas, so a `*-tasks` frame with a panel opens the panel alone.
+              defaultOpen={initialTasksOpen && (xl || !initialPanel)}
+              // A row does what clicking its card does (inspector, hand-raise panel, a fork's approval).
+              onSelectTask={(t) => {
+                const node = map.nodes.find((n) => n.id === t.id);
+                if (node) onNodeClick(node);
+              }}
             />
             <CompletedAgents
               motionKey={`${scope}:done`}
@@ -384,19 +371,6 @@ export function RunScreenLayout({
               ? canvasOverlay(panel)
               : canvasOverlay}
             {forks.overlay}
-            {tasksOpen && (
-              <TasksOverlay
-                tasks={data.tasks}
-                summary={data.tasksSummary}
-                showClose={data.tasksOverlay?.showClose}
-                showProgress={data.tasksOverlay?.showProgress}
-                onClose={() => setTasksOpen(false)}
-                onSelect={(t) => {
-                  setTasksOpen(false);
-                  if (t.id) inspect(t.id);
-                }}
-              />
-            )}
           </>
         }
       >

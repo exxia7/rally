@@ -1,3 +1,4 @@
+import type { MiniMap } from '@/components/home/WorkflowCard';
 import { insertStep } from '@/components/planning/planEdit';
 import type { PlanEdge, PlanLayout } from '@/components/planning/PlanMap';
 import {
@@ -48,9 +49,9 @@ export function bridgeEdges<E extends { from: string; to: string }>(
 export type PlanVariant = 'full' | 'compact' | 'wide';
 
 /**
- * The plan map for this workflow: the Figma layout for its team (with Community, it's 2.5's), your inserted steps
- * (planEdit.insertStep shifts the columns), and removed helpers taken out with their lines reconnected. Card content
- * comes from the helpers: pass `wf.helpers` to `planNodes` as the team.
+ * The plan map for this workflow: the Figma layout for its team (with Community, it's 2.5's), every helper you added
+ * (`withAdded`), and removed helpers taken out with their lines reconnected. Card content comes from the helpers: pass
+ * `wf.helpers` to `planNodes` as the team.
  */
 export function planLayout(wf: Workflow, variant: PlanVariant): PlanLayout {
   const community = !!wf.helpers.community;
@@ -64,13 +65,7 @@ export function planLayout(wf: Workflow, variant: PlanVariant): PlanLayout {
         : community
           ? COMMUNITY_PLAN
           : AI_COACH_PLAN;
-  const inserted = withCopies(
-    wf,
-    wf.planSteps.reduce(
-      (plan, st) => insertStep(plan, st.edge, st.step, st.id),
-      base
-    )
-  );
+  const inserted = withAdded(wf, base);
   // Helpers the base layout draws but this team doesn't have (Community on the 2.4c layout) go too.
   const gone = new Set([
     ...wf.removed,
@@ -89,40 +84,154 @@ export function planLayout(wf: Workflow, variant: PlanVariant): PlanLayout {
 }
 
 /**
- * Duplicated helpers (3i, permissions/settings agent): each copy sits in its original's column, under the lowest card
- * there, with the original's lines in and out.
+ * Draws every helper you added that the base layout doesn't (helper/add, plan/insertStep):
+ * - a step added on a line (planEdit.insertStep shifts the columns), once that line is on the map: a line into or out
+ *   of a duplicate or another added step exists only after that one is placed, so edits are replayed until none is
+ *   left that can go;
+ * - a duplicate (3i, permissions/settings agent) in its original's column, under the lowest card there, with the
+ *   original's lines in and out;
+ * - anything else (Community on the 2.4c layout, a step whose line is gone) beside the helper that follows it in the
+ *   team order (else the one before), the same way.
  */
-function withCopies(wf: Workflow, plan: PlanLayout): PlanLayout {
-  const copies = wf.helperOrder.filter(
-    (h) => wf.helpers[h]?.copyOf && !plan.nodes.some((n) => n.id === h)
-  );
-  if (!copies.length) return plan;
-  let nodes = plan.nodes;
-  let edges = plan.edges;
+function withAdded(wf: Workflow, base: PlanLayout): PlanLayout {
+  let plan = base;
+  const drawn = (id: string) => plan.nodes.some((n) => n.id === id);
+  const hasEdge = (e: Pick<PlanEdge, 'from' | 'to'>) =>
+    plan.edges.some((x) => x.from === e.from && x.to === e.to);
+  let steps = wf.planSteps;
+  let copies = wf.helperOrder.filter((h) => wf.helpers[h]?.copyOf && !drawn(h));
+  for (;;) {
+    const st = steps.find((x) => hasEdge(x.edge));
+    if (st) {
+      plan = insertStep(plan, st.edge, st.step, st.id);
+      steps = steps.filter((x) => x !== st);
+      continue;
+    }
+    const copy = copies.find((h) => drawn(wf.helpers[h].copyOf!));
+    if (copy) {
+      plan = beside(wf, plan, copy, wf.helpers[copy].copyOf!);
+      copies = copies.filter((h) => h !== copy);
+      continue;
+    }
+    break;
+  }
+  const order = wf.helperOrder;
+  const live = (h: string) => drawn(h) && !wf.removed.includes(h);
+  for (const [i, id] of order.entries()) {
+    if (!wf.helpers[id] || wf.removed.includes(id) || drawn(id)) continue;
+    const sibling =
+      order.slice(i + 1).find(live) ?? order.slice(0, i).reverse().find(live);
+    if (sibling) plan = beside(wf, plan, id, sibling);
+  }
+  return plan;
+}
+
+/** Adds helper `id` in `of`'s column, under the lowest card there, with `of`'s lines in and out. */
+function beside(
+  wf: Workflow,
+  plan: PlanLayout,
+  id: string,
+  ofId: string
+): PlanLayout {
+  const of = plan.nodes.find((n) => n.id === ofId);
+  if (!of) return plan;
   const s = plan.scale;
-  const height = (id: string) =>
-    (81.3 + 21.87 * helperCard(wf.helpers[id] ?? AI_COACH_TEAM.writer).settings.length) * s;
-  for (const id of copies) {
-    const of = nodes.find((n) => n.id === wf.helpers[id].copyOf);
-    if (!of) continue;
-    const column = nodes.filter((n) => Math.abs(n.x - of.x) < 1);
-    const bottom = Math.max(...column.map((n) => n.y + height(n.id)));
-    nodes = [
-      ...nodes,
+  const height = (h: string) =>
+    (81.3 +
+      21.87 *
+        helperCard(wf.helpers[h] ?? AI_COACH_TEAM.writer).settings.length) *
+    s;
+  const column = plan.nodes.filter((n) => Math.abs(n.x - of.x) < 1);
+  const bottom = Math.max(...column.map((n) => n.y + height(n.id)));
+  return {
+    ...plan,
+    nodes: [
+      ...plan.nodes,
       { ...of, ...helperCard(wf.helpers[id]), id, y: bottom + 24 * s },
-    ];
-    edges = [
-      ...edges,
-      ...edges
+    ],
+    edges: [
+      ...plan.edges,
+      ...plan.edges
         .filter((e) => e.from === of.id || e.to === of.id)
         .map((e) => ({
           from: e.from === of.id ? id : e.from,
           to: e.to === of.id ? id : e.to,
           color: e.color,
         })),
-    ];
-  }
-  return { ...plan, nodes, edges };
+    ],
+  };
+}
+
+/**
+ * Home's card preview of this workflow's own plan (a draft, a duplicate): its helpers as small boxes in their map
+ * columns, with the lines between them, fitted to the 290×108 preview. An approval gate is where its lines meet.
+ */
+export function planMiniMap(wf: Workflow): MiniMap {
+  const W = 290;
+  const H = 108;
+  const PAD = 12;
+  const plan = planLayout(wf, 'full');
+  // Columns: card x positions, merged when within a few px of each other.
+  const xs = plan.nodes.map((n) => n.x).sort((a, b) => a - b);
+  const columns: number[] = [];
+  for (const x of xs)
+    if (!columns.length || x - columns[columns.length - 1] > 4) columns.push(x);
+  const column = (x: number) =>
+    columns.reduce(
+      (best, c, i) =>
+        Math.abs(c - x) < Math.abs(columns[best] - x) ? i : best,
+      0
+    );
+  const n = Math.max(1, columns.length);
+  const perColumn = Math.max(
+    1,
+    ...columns.map(
+      (_, i) => plan.nodes.filter((nd) => column(nd.x) === i).length
+    )
+  );
+  const w = Math.min(44, (W - 2 * PAD - (n - 1) * 16) / n);
+  const h = Math.min(18, (H - 2 * PAD) / perColumn - 4);
+  const ys = plan.nodes.map((nd) => nd.y);
+  const top = Math.min(...ys);
+  const span = Math.max(...ys) - top;
+  const cx = (i: number) =>
+    n === 1 ? W / 2 : PAD + w / 2 + (i * (W - 2 * PAD - w)) / (n - 1);
+  const cy = (y: number) =>
+    span < 1 ? H / 2 : PAD + h / 2 + ((y - top) * (H - 2 * PAD - h)) / span;
+  const at = new Map(
+    plan.nodes.map((nd) => [nd.id, { x: cx(column(nd.x)), y: cy(nd.y) }])
+  );
+  // Ports: a box's right ('out') or left ('in') edge; a gate is a point between the boxes on either side of it.
+  const port = (id: string, side: 'in' | 'out') => {
+    const b = at.get(id);
+    if (b) return { x: b.x + (side === 'out' ? w / 2 : -w / 2), y: b.y };
+    if (!plan.gates?.some((g) => g.id === id)) return null;
+    const ins = plan.edges.flatMap((e) =>
+      e.to === id ? [at.get(e.from)] : []
+    );
+    const outs = plan.edges.flatMap((e) =>
+      e.from === id ? [at.get(e.to)] : []
+    );
+    const left = Math.max(...ins.map((p) => (p ? p.x + w / 2 : -Infinity)));
+    const right = Math.min(...outs.map((p) => (p ? p.x - w / 2 : Infinity)));
+    if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+    const near = [...ins, ...outs].filter((p) => !!p);
+    return {
+      x: (left + right) / 2,
+      y: near.reduce((sum, p) => sum + p.y, 0) / near.length,
+    };
+  };
+  return {
+    boxWidth: w,
+    boxHeight: h,
+    boxes: plan.nodes.map((nd) => ({ id: nd.id, ...at.get(nd.id)! })),
+    lines: plan.edges.flatMap((e) => {
+      const a = port(e.from, 'out');
+      const b = port(e.to, 'in');
+      if (!a || !b || b.x <= a.x) return [];
+      return [{ x1: a.x, y1: a.y, x2: b.x, y2: b.y }];
+    }),
+  };
 }
 
 /** What a set of helpers costs per run before the multiplier (the drawer's rates: Haiku $0.005/k, Opus $0.01/k). */

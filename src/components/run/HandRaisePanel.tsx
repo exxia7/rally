@@ -58,12 +58,14 @@ export function HandRaisePanel({
   onClose,
   onConfirm,
   className,
+  enter,
 }: {
   data: HandRaiseData;
   onClose: () => void;
   onConfirm: (choices: number[], other: string) => void;
-  /** Motion: `pf-slide-in` when a hand goes up while you watch. */
   className?: string;
+  /** Motion: slide in on mount (a hand goes up while you watch); see SidePanel. */
+  enter?: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [choices, setChoices] = useState<number[]>(() =>
@@ -85,6 +87,7 @@ export function HandRaisePanel({
       sheet="half"
       onClose={onClose}
       className={className}
+      enter={enter}
       bodyRef={body}
       bodyClassName="px-6 max-md:px-4"
       footer={

@@ -5,7 +5,7 @@ import type { MapEdge, MapNode } from '@/components/map/FlowMap';
 import type { Decision } from '@/components/panels/DecisionLog';
 import type { HandRaiseData } from '@/components/run/HandRaisePanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 import { UserAvatar } from '@/components/ui/Avatar';
 import type { RunState as PillState } from '@/components/ui/RunStatus';
 import {
@@ -525,24 +525,39 @@ function applyOverrides(d: RunData, wf: Workflow): RunData {
 /** One run-map column (Figma's columns are 230.6px apart at map scale). */
 const COLUMN = 230.6;
 
-/** Helpers the run frames don't draw: steps you inserted on a line (2.4c) and duplicates, with where they go. */
+/**
+ * Helpers the run frames don't draw, with where they go: steps you inserted on a line (2.4c), duplicates, and any
+ * other helper you added (beside the helper that follows it in the team order, as the plan map draws it).
+ */
 type ExtraHelper = {
   id: string;
   helper: Helper;
   /** An inserted step: the plan line it was added on. */
   edge?: { from: string; to: string };
-  /** A duplicate: the helper it copies. */
+  /** A duplicate: the helper it copies (or, for any other added helper, the one it sits beside). */
   copyOf?: string;
 };
 
 function extraHelpers(wf: Workflow): ExtraHelper[] {
-  return wf.helperOrder.flatMap((id): ExtraHelper[] => {
+  const order = wf.helperOrder;
+  return order.flatMap((id, i): ExtraHelper[] => {
     if (STEP_OF_HELPER[id] || !isLive(wf, id)) return [];
     const helper = wf.helpers[id];
     const edit = wf.planSteps.find((p) => p.id === id);
     if (edit) return [{ id, helper, edge: edit.edge }];
-    if (helper.copyOf) return [{ id, helper, copyOf: helper.copyOf }];
-    return [];
+    if (helper.copyOf) {
+      // A copy of a step you added and then removed goes on that step's line.
+      const of = wf.planSteps.find((p) => p.id === helper.copyOf);
+      return [
+        of && !isLive(wf, of.id)
+          ? { id, helper, edge: of.edge }
+          : { id, helper, copyOf: helper.copyOf },
+      ];
+    }
+    const live = (h: string) => isLive(wf, h);
+    const sibling =
+      order.slice(i + 1).find(live) ?? order.slice(0, i).reverse().find(live);
+    return sibling ? [{ id, helper, copyOf: sibling }] : [];
   });
 }
 
@@ -574,29 +589,53 @@ function applyExtraSteps(d: RunData, wf: Workflow): RunData {
   const succs = (id: string) =>
     edges.filter((e) => e.from === id).map((e) => e.to);
 
-  for (const x of extras) {
-    let up: string[];
-    let down: string[];
-    let at: number;
-    let y: number;
+  /** Where `x` goes once what it hangs off is on the map (a line into a duplicate or another added step only
+   *  exists once that one is placed); `last` puts what never resolves in a column before Ready to post. */
+  const place = (x: ExtraHelper, last: boolean) => {
     if (x.edge) {
       const from = runOf(x.edge.from);
       const to = runOf(x.edge.to);
-      up = from ? [from] : to ? preds(to) : [];
-      down = to ? [to] : from ? succs(from) : [];
-      if (!up.length || !down.length) continue;
-      const downNodes = nodes.filter((n) => down.includes(n.id));
-      at = Math.min(...downNodes.map((n) => n.x));
-      y = downNodes.reduce((sum, n) => sum + n.y, 0) / downNodes.length;
+      const up = from ? [from] : to ? preds(to) : [];
+      const down = to ? [to] : from ? succs(from) : [];
+      if (up.length && down.length) {
+        const downNodes = nodes.filter((n) => down.includes(n.id));
+        const at = Math.min(...downNodes.map((n) => n.x));
+        const y = downNodes.reduce((sum, n) => sum + n.y, 0) / downNodes.length;
+        return { up, down, at, y };
+      }
     } else {
       const of = runOf(x.copyOf!);
       const src = of && nodes.find((n) => n.id === of);
-      if (!src) continue;
-      up = preds(src.id);
-      down = succs(src.id);
-      at = src.x + COLUMN;
-      y = src.y;
+      if (src)
+        return {
+          up: preds(src.id),
+          down: succs(src.id),
+          at: src.x + COLUMN,
+          y: src.y,
+        };
     }
+    if (!last) return null;
+    const end =
+      nodes.find((n) => n.id === 'ready') ??
+      nodes.reduce<MapNode | undefined>(
+        (a, n) => (!a || n.x > a.x ? n : a),
+        undefined
+      );
+    if (!end) return null;
+    return { up: preds(end.id), down: [end.id], at: end.x, y: end.y };
+  };
+
+  let pending = extras;
+  for (let last = false; pending.length;) {
+    const i = pending.findIndex((p) => place(p, last));
+    if (i < 0) {
+      if (last) break;
+      last = true;
+      continue;
+    }
+    const x = pending[i];
+    pending = pending.filter((_, j) => j !== i);
+    const { up, down, at, y } = place(x, last)!;
     // Make room: a new column at `at`.
     const shift = (v: number) => (v >= at - 1 ? v + COLUMN : v);
     nodes = nodes.map((n) => ({ ...n, x: shift(n.x) }));
@@ -944,7 +983,7 @@ export function branchApprovals(
 /** Run steps after `from` (itself included), on the original graph: what a fork from that step redoes. */
 function stepsAfter(from: string): Set<string> {
   const ids = new Set([from.replace(/-f\d$/, '')]);
-  for (let grew = true; grew; ) {
+  for (let grew = true; grew;) {
     grew = false;
     for (const e of AI_COACH_EDGES)
       if (ids.has(e.from) && !ids.has(e.to)) {

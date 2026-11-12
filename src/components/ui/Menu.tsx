@@ -1,6 +1,8 @@
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 import { useRef, useState, type ReactNode, type Ref } from 'react';
 
+import { transitions, useEnter, useTransition, variants } from '@/lib/motion';
 import { useFitInView } from '@/lib/useFitInView';
 
 import { Icon } from './Icon';
@@ -34,8 +36,17 @@ export function Menu({
   const [active, setActive] = useState(0);
   const own = useRef<HTMLDivElement>(null);
   useFitInView(own, [items.length]);
+  // Motion: opened while you watch, it scales up from 97% at its top and fades in (150ms). useFitInView shifts it
+  // with `translate`, which the transform doesn't touch.
+  const enter = useEnter();
+  const t = useTransition(transitions.fast);
   return (
-    <div
+    <motion.div
+      variants={variants.scaleIn}
+      initial={enter ? 'hidden' : false}
+      animate="shown"
+      transition={t}
+      style={{ transformOrigin: 'top' }}
       ref={(el) => {
         own.current = el;
         if (typeof ref === 'function') ref(el);
@@ -62,7 +73,7 @@ export function Menu({
           }}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }
 

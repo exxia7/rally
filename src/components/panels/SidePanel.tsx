@@ -1,8 +1,16 @@
 import clsx from 'clsx';
-import { useEffect, type ReactNode, type Ref } from 'react';
+import { motion } from 'framer-motion';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react';
 
 import close from '@/assets/icons/close.svg';
 import { IconButton } from '@/components/ui/IconButton';
+import { PanelEnter, reducedMotion, transitions, variants } from '@/lib/motion';
 
 import { ScrollArea } from './ScrollArea';
 
@@ -33,7 +41,10 @@ export function SidePanel({
   bodyClassName,
   scroll = true,
   bodyRef,
+  enter,
 }: {
+  /** Motion: slide in on mount. Default: when the panel slot opens while you watch (AppShell's PanelEnter). */
+  enter?: boolean;
   sheet?: 'full' | 'half';
   title?: ReactNode;
   tabs?: ReactNode;
@@ -61,14 +72,40 @@ export function SidePanel({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
+  // Motion (framer-motion): it slides in from the right (24px + fade, 240ms; on phones the sheet rises from the
+  // bottom) when it opens while you watch, and out when it closes. Docked on desktop it leaves at once, so the map
+  // never sits beside an empty slot. The scrim fades. Nothing plays on a first paint or under reduced motion.
+  const fromShell = useContext(PanelEnter);
+  const [play] = useState(() => (enter ?? fromShell) && !reducedMotion());
+  const [media] = useState(() =>
+    typeof window === 'undefined'
+      ? { phone: false, docked: true }
+      : {
+          phone: window.matchMedia('(max-width: 767.98px)').matches,
+          docked: window.matchMedia('(min-width: 1280px)').matches,
+        }
+  );
+  const slide = media.phone ? variants.sheetUp : variants.slideInRight;
+  const leaves = !media.docked && !reducedMotion();
   return (
     <>
-      <div
+      <motion.div
         aria-hidden
         onClick={onClose}
         className="absolute inset-0 z-30 hidden bg-[rgba(29,30,34,0.24)] max-xl:block"
+        variants={variants.fadeIn}
+        initial={play ? 'hidden' : false}
+        animate="shown"
+        exit={leaves ? 'hidden' : undefined}
+        transition={transitions.base}
       />
-      <aside
+      <motion.aside
+        variants={slide}
+        initial={play ? 'hidden' : false}
+        animate="shown"
+        exit={leaves ? 'hidden' : undefined}
+        transition={transitions.base}
+        data-side-panel
         className={clsx(
           'flex h-full w-[400px] shrink-0 flex-col items-start overflow-clip rounded-card border border-line bg-white',
           'max-xl:absolute max-xl:inset-y-2 max-xl:right-2 max-xl:z-40 max-xl:h-auto max-xl:max-w-[calc(100%-16px)] max-xl:shadow-[0px_8px_32px_0px_rgba(0,0,0,0.16)]',
@@ -126,7 +163,7 @@ export function SidePanel({
           </div>
         )}
         {footer}
-      </aside>
+      </motion.aside>
     </>
   );
 }

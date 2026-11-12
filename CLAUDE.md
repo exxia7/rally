@@ -15,7 +15,9 @@ Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
   It must `export const screenId = '3.2'` (or `['3.2', '3.2-tasks']`) and default-export the component.
   `App.tsx` picks it up automatically through `import.meta.glob`; never edit App.tsx to register a screen.
 - `src/components/ui`: primitives (Button, Badge, ChoiceChip, Avatar, Icon, …).
-- `src/components/shell`: AppShell (1440×900 frame, sidebar, main panel) and TopBar.
+- `src/components/shell`: AppShell (1440×900 frame: sidebar + main panel), TopBar, and Sidebar (Figma-file-browser
+  style: workspace menu → 1.2, search, Home, Needs you, the Workflows list, New workflow, account menu with Reset demo
+  and All screens; its collapse/drawer state is in `sidebarUi.ts`). The wireframes' 52px rail is the collapsed state.
 - `src/components/<area>`: shared composites (map, panels, planning, agents, …).
 - `src/assets/icons`, `src/assets/art`: SVG/PNG downloaded from Figma. Never reference figma.com URLs at runtime.
 - `design/ref/<id>.png`: Figma render of each frame (1440×900). `design/notes.md`: notes from the canvas.
@@ -179,7 +181,9 @@ pixel-exact at 1440×900, so:
 - Screen containers never use fixed 1440/900/884 sizes. AppShell fills the viewport (`h-dvh w-full`), and
   content uses `flex-1`, `min-w-0`, `min-h-0`, `max-w-[…]`, `w-full`. Fixed sizes on cards, map nodes and
   controls are fine.
-- AppShell: under 768px the sidebar is a bottom tab bar (56px) and the main panel is full-bleed.
+- AppShell: the sidebar is docked at 240px from 1280px (collapsible to a 52px rail, remembered in localStorage), a
+  52px rail at 768–1279px (expanding opens it over the content), and under 768px a slide-out drawer opened from the
+  menu button TopBar adds on phones; the main panel is full-bleed there. No bottom bar, so nothing offsets for one.
 - Side panel (Chat/Sandbox/Decisions), drawers, inspector: docked beside the content at ≥1280px; under 1280px
   they overlay the content from the right with a scrim and ×; under 768px they're full-screen sheets.
 - Map canvas: a pannable viewport (overflow-auto plus drag-to-pan) holding the map at design size. Zoom

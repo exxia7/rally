@@ -1,12 +1,8 @@
-import clsx from 'clsx';
 import { useState, type ReactNode } from 'react';
 
-import chevronDown from '@/assets/icons/chevron-down-14.svg';
-import chevronUp from '@/assets/icons/chevron-up.svg';
-import nodeKindOutput14 from '@/assets/icons/node-kind-output-glyph-14.svg';
 import { MapCanvas } from '@/components/map/MapCanvas';
 import { OutputsCard, type OutputItem } from '@/components/panels/OutputsCard';
-import { Icon } from '@/components/ui/Icon';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 
 import {
   PlanMap,
@@ -21,7 +17,7 @@ import { PlanLegend } from './PlanMapParts';
 // The planning canvas of the 2.x frames ("ZoomStage", e.g. 2362:23662): the plan map on the pannable canvas, with
 // the kind legend and zoom controls pinned bottom-left and "What goes out" bottom-right, 16px in. At 1440×900
 // with the side panel open the stage is 954×830, exactly the Figma canvas. Under 1280px "What goes out" folds
-// into a chip (above the zoom controls on phones), so it doesn't cover the map or a popover opened on it.
+// into its header (above the zoom controls on phones), so it doesn't cover the map or a popover opened on it.
 export function PlanCanvas({
   layout,
   nodes = layout.nodes,
@@ -61,6 +57,7 @@ export function PlanCanvas({
   /** Extra canvas-pinned overlays. */
   children?: ReactNode;
 }) {
+  const xl = useMediaQuery('(min-width: 1280px)');
   const [outputsOpen, setOutputsOpen] = useState(false);
   return (
     <MapCanvas
@@ -75,27 +72,16 @@ export function PlanCanvas({
       overlay={
         <>
           <PlanLegend className="absolute bottom-[70px] left-5 max-md:hidden" />
+          {/* Docked open at ≥1280px as drawn; below that it folds into its header (open → it grows upward). Phones
+              lift it above the zoom controls. */}
           <OutputsCard
             key={outputsKey}
             initial={outputs}
             onChange={onOutputsChange}
-            className={clsx(
-              'absolute right-4 bottom-4 z-10 max-xl:bottom-[60px] max-xl:max-h-[calc(100%-76px)] max-xl:max-w-[calc(100%-32px)] max-xl:overflow-y-auto',
-              !outputsOpen && 'max-xl:hidden'
-            )}
+            open={xl || outputsOpen}
+            onOpenChange={xl ? undefined : setOutputsOpen}
+            className="absolute right-4 bottom-4 max-h-[calc(100%-32px)] max-md:bottom-[60px] max-md:max-h-[calc(100%-76px)]"
           />
-          <button
-            type="button"
-            aria-expanded={outputsOpen}
-            onClick={() => setOutputsOpen((o) => !o)}
-            className="absolute right-4 bottom-4 hidden h-9 items-center gap-2 rounded-[10px] border border-line bg-white px-3 shadow-[0px_1px_1px_rgba(16,18,24,0.04)] max-xl:flex"
-          >
-            <Icon src={nodeKindOutput14} size={14.264} />
-            <span className="text-[13px] leading-5 font-medium whitespace-nowrap text-ink">
-              What goes out
-            </span>
-            <Icon src={outputsOpen ? chevronUp : chevronDown} size={14} />
-          </button>
           {children}
         </>
       }

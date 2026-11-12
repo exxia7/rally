@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 
-import { useChangedFrom } from '@/lib/motion';
+import { motion } from 'framer-motion';
+
+import { useChangedFrom, useMotionOn } from '@/lib/motion';
 
 // Figma "Run status" (2362:28658): run state in the top bar. 28px pill with a coloured dot, soft fill, no border,
 // so it never reads as a button. Under 1280px it shrinks to a 28px dot; the label stays for screen readers
@@ -32,14 +34,21 @@ export function RunStatus({
 }) {
   // Motion: the pill pulses once when the run comes to need you while you watch (one top bar at a time, so one key).
   const from = useChangedFrom('run-status', state);
+  const pulse = useMotionOn() && state === 'waiting' && from !== undefined;
   return (
-    <div
-      key={state === 'waiting' && from !== undefined ? 'needs-you' : 'pill'}
+    <motion.div
+      key={pulse ? 'needs-you' : 'pill'}
+      initial={pulse ? { scale: 1 } : false}
+      animate={pulse ? { scale: [1, 1.08, 0.98, 1] } : { scale: 1 }}
+      transition={{
+        duration: 0.64,
+        times: [0, 0.35, 0.65, 1],
+        ease: 'easeOut',
+      }}
       role="status"
       title={label ?? defaults[state]}
       className={clsx(
         'flex h-7 shrink-0 items-center gap-1.5 rounded-[14px] bg-chip px-2.5 max-xl:w-7 max-xl:justify-center max-xl:px-0',
-        state === 'waiting' && from !== undefined && 'pf-attn',
         className
       )}
     >
@@ -47,6 +56,6 @@ export function RunStatus({
       <span className="text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink max-xl:sr-only">
         {label ?? defaults[state]}
       </span>
-    </div>
+    </motion.div>
   );
 }

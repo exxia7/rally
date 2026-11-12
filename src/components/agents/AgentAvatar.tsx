@@ -1,17 +1,20 @@
 import clsx from 'clsx';
 import type { CSSProperties, Ref } from 'react';
 
-import { useChangedFrom } from '@/lib/motion';
+import {
+  motion,
+  type TargetAndTransition,
+  type Transition,
+} from 'framer-motion';
+
+import { ThinkingDots } from '@/components/motion/Motion';
+import { useChangedFrom, useMotionOn } from '@/lib/motion';
 
 import { FittedArt } from './Character';
 import { AGENT_ART, type AgentName } from './characters';
 
 export type AgentState =
-  | 'idle'
-  | 'working'
-  | 'hand-raised'
-  | 'done'
-  | 'waiting';
+  'idle' | 'working' | 'hand-raised' | 'done' | 'waiting';
 
 // Figma "Agent art / <Helper>": the helper's character fitted into a square.
 export function AgentArt({
@@ -64,9 +67,34 @@ export function AgentAvatar({
   style?: CSSProperties;
 }) {
   const k = size / 30;
+  const on = useMotionOn();
   const changedFrom = useChangedFrom(motionKey, state);
   const raised =
-    state === 'hand-raised' && (changedFrom !== undefined || !!appeared);
+    on && state === 'hand-raised' && (changedFrom !== undefined || !!appeared);
+  // Thinking: a working helper breathes (2.8s loop); a hand raised while you watch bounces once.
+  const body: { animate: TargetAndTransition; transition: Transition } =
+    on && state === 'working'
+      ? {
+          animate: { y: [0, -0.03 * size, 0], scale: [1, 1.035, 1] },
+          transition: {
+            duration: 2.8,
+            ease: 'easeInOut',
+            repeat: Infinity,
+          },
+        }
+      : raised
+        ? {
+            animate: {
+              y: [0, -0.22 * size, 0, -0.07 * size, 0, 0],
+              scale: 1,
+            },
+            transition: {
+              duration: 0.7,
+              times: [0, 0.25, 0.5, 0.7, 0.85, 1],
+              ease: 'easeOut',
+            },
+          }
+        : { animate: { y: 0, scale: 1 }, transition: { duration: 0 } };
   const glyph: CSSProperties = {
     fontSize: badgeText?.size ?? 6.75 * k,
     lineHeight: `${badgeText?.leading ?? 6.75 * k}px`,
@@ -84,17 +112,22 @@ export function AgentAvatar({
       className={clsx('relative shrink-0', className)}
       style={{ width: size, height: size, ...style }}
     >
-      <AgentArt
-        agent={agent}
-        size={size}
-        className={clsx(
-          'absolute! inset-0',
-          state === 'waiting' && 'opacity-45',
-          // Thinking: a working helper breathes; a hand raised while you watch bounces once.
-          state === 'working' && 'pf-breathe',
-          raised && 'pf-bounce'
-        )}
-      />
+      <motion.div
+        className="absolute inset-0"
+        style={{ originX: 0.5, originY: 0.85 }}
+        initial={false}
+        animate={body.animate}
+        transition={body.transition}
+      >
+        <AgentArt
+          agent={agent}
+          size={size}
+          className={clsx(
+            'absolute! inset-0',
+            state === 'waiting' && 'opacity-45'
+          )}
+        />
+      </motion.div>
       {(state === 'working' || state === 'done') && (
         <div
           className="absolute top-0 right-0 flex items-center justify-center rounded-full border-solid border-line-2 bg-white"
@@ -104,25 +137,21 @@ export function AgentAvatar({
             {state === 'done' ? (
               'z'
             ) : (
-              // Thinking: with motion the dots pulse in turn (three spans); still, the drawn "···" glyph run.
-              <>
-                <span className="pf-still">···</span>
-                <span aria-hidden className="pf-dots pf-moving">
-                  <span>·</span>
-                  <span>·</span>
-                  <span>·</span>
-                </span>
-              </>
+              // Thinking: with motion the dots pulse in turn; still, the drawn "···" glyph run.
+              <ThinkingDots char="·" still="···" />
             )}
           </p>
         </div>
       )}
       {raised && (
         // Its "!" sends out a ring three times.
-        <span
+        <motion.span
           aria-hidden
-          className="pf-ring absolute top-0 right-0"
+          className="pointer-events-none absolute top-0 right-0 rounded-full border border-problem"
           style={{ width: 11.25 * k, height: 11.25 * k }}
+          initial={{ opacity: 0.6, scale: 1 }}
+          animate={{ opacity: 0, scale: 2.6 }}
+          transition={{ duration: 1.2, ease: 'easeOut', repeat: 2 }}
         />
       )}
       {state === 'hand-raised' && (
