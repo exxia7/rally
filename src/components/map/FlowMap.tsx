@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import {
   type ReactNode,
   type RefObject,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -413,6 +414,40 @@ const boxes = (root: HTMLElement, selector: string): Box[] =>
     h: el.offsetHeight,
   }));
 
+/**
+ * The y that centres a w×h box at `x` in the empty stretch between [top, bottom] that the things around it leave:
+ * the gap nearest `want` (a centre y) that fits it, or null when none does.
+ */
+function centerInGap(
+  obstacles: Box[],
+  x: number,
+  w: number,
+  h: number,
+  top: number,
+  bottom: number,
+  want: number
+): number | null {
+  const blocks = obstacles
+    .filter((b) => x < b.x + b.w + PILL_GAP && b.x < x + w + PILL_GAP)
+    .map((b) => [b.y, b.y + b.h] as const)
+    .sort((p, q) => p[0] - q[0]);
+  const gaps: [number, number][] = [];
+  let from = top;
+  for (const [y0, y1] of blocks) {
+    if (y0 > from) gaps.push([from, Math.min(y0, bottom)]);
+    from = Math.max(from, y1);
+    if (from >= bottom) break;
+  }
+  if (from < bottom) gaps.push([from, bottom]);
+  const fits = gaps.filter(([a, b]) => b - a >= h + PILL_GAP * 2);
+  if (!fits.length) return null;
+  const mid = ([a, b]: [number, number]) => (a + b) / 2;
+  const best = fits.reduce((p, q) =>
+    Math.abs(mid(q) - want) < Math.abs(mid(p) - want) ? q : p
+  );
+  return mid(best) - h / 2;
+}
+
 function useForkPillPlacement(
   rootRef: RefObject<HTMLDivElement | null>,
   nodes: MapNode[],
@@ -420,6 +455,24 @@ function useForkPillPlacement(
   forkLines: ForkLine[] | undefined
 ) {
   const [at, setAt] = useState<Record<string, { x: number; y: number }>>({});
+  // Measure again once web fonts load and whenever a card, helper or mark changes size.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    let live = true;
+    const bump = () => live && setTick((t) => t + 1);
+    void document.fonts?.ready.then(bump);
+    const ro = new ResizeObserver(bump);
+    for (const el of root.querySelectorAll(
+      '[data-map-card], [data-map-avatar], [data-overlay]'
+    ))
+      ro.observe(el);
+    return () => {
+      live = false;
+      ro.disconnect();
+    };
+  }, [rootRef, nodes, overlays]);
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -454,32 +507,24 @@ function useForkPillPlacement(
       const sz = m && size(o);
       if (!m || !sz) continue;
       const { w, h } = sz;
-      const clear = (x: number, y: number) =>
-        clearOf(obstacles, { x, y, w, h });
-      if (clear(o.x, o.y)) continue;
       const line = forkLines?.find((f) => f.fork === Number(m[1]));
-      // The stretch of the fork line the pill can sit on: from where it leaves the path down to its lane.
+      // The stretch of the fork line the pill sits on: from where it leaves the path down to its lane.
       const ends = line?.to.flatMap((id) => {
         const n = byId.get(id);
         return n ? [n.y + (n.portDy ?? DEFAULT_PORT_DY)] : [];
       });
-      const top = line ? line.y + PILL_GAP : o.y - 200;
-      const bottom =
-        (ends?.length ? Math.max(...ends) : o.y + 200) - h - PILL_GAP;
-      const ys: number[] = [];
-      for (let d = 0; d <= Math.max(o.y - top, bottom - o.y); d += 2) {
-        if (o.y + d <= bottom) ys.push(o.y + d);
-        if (d && o.y - d >= top) ys.push(o.y - d);
-      }
+      const top = line ? line.y : o.y - 200;
+      const bottom = ends?.length ? Math.max(...ends) : o.y + h + 200;
+      const want = o.y + h / 2;
       // Same side of the line first, then the pill's right edge just left of the line.
       const xs = line ? [o.x, line.x - w - PILL_GAP * 2] : [o.x];
-      found: for (const x of xs)
-        for (const y of ys)
-          if (clear(x, y)) {
-            next[o.id] = { x, y };
-            obstacles.push({ x, y, w, h });
-            break found;
-          }
+      for (const x of xs) {
+        const y = centerInGap(obstacles, x, w, h, top, bottom, want);
+        if (y === null) continue;
+        next[o.id] = { x, y };
+        obstacles.push({ x, y, w, h });
+        break;
+      }
     }
 
     setAt((prev) => {
@@ -494,7 +539,7 @@ function useForkPillPlacement(
           return next;
       return prev;
     });
-  }, [rootRef, nodes, overlays, forkLines]);
+  }, [rootRef, nodes, overlays, forkLines, tick]);
   return at;
 }
 
