@@ -9,6 +9,7 @@ import {
   BrowserRouter,
   Link,
   MemoryRouter,
+  Navigate,
   Route,
   Routes,
   useLocation,
@@ -16,28 +17,17 @@ import {
   useParams,
 } from 'react-router-dom';
 
-import { Button } from '@/components/ui/Button';
-import { SCREENS, screenPath } from '@/screens/registry';
-import { CARRY, isCarried } from '@/state/nav';
+import { frameOfPage, SCREENS, screenPath } from '@/screens/registry';
+import { resumeTarget } from '@/state/nav';
 import { sceneFor } from '@/state/scenes';
-import { resetDemo, store } from '@/state/store';
+import { dispatch, store, useAppState } from '@/state/store';
 
 // The hosted build (VITE_HOSTED=1, published as a claude.ai Artifact) can only carry a plain `#name` in its
-// link, never a path, so it routes in memory and mirrors the current screen into the hash:
-// `/s/3.2-tasks` ⇄ `#s-3_2-tasks`, `/screens` ⇄ `#screens`, `/` ⇄ no hash. Local dev keeps real URLs.
+// link, never a path, so it routes in memory and mirrors the current URL into the hash:
+// `/w/ai-coach/run` ⇄ `#w_ai-coach_run`, `/settings` ⇄ `#settings`, `/` ⇄ no hash. Local dev keeps real URLs.
 const HOSTED = import.meta.env.VITE_HOSTED === '1';
-const pathToHash = (path: string) =>
-  path === '/screens'
-    ? 'screens'
-    : path.startsWith('/s/')
-      ? `s-${path.slice(3).replace(/\./g, '_')}`
-      : '';
-const hashToPath = (hash: string) => {
-  const name = hash.replace(/^#/, '');
-  if (name === 'screens') return '/screens';
-  if (name.startsWith('s-')) return `/s/${name.slice(2).replace(/_/g, '.')}`;
-  return '/';
-};
+const pathToHash = (path: string) => path.replace(/^\/+/, '').replace(/\//g, '_');
+const hashToPath = (hash: string) => `/${hash.replace(/^#/, '').replace(/_/g, '/')}`;
 
 function HashSync() {
   const location = useLocation();
@@ -46,8 +36,7 @@ function HashSync() {
     const name = pathToHash(location.pathname);
     try {
       window.history.replaceState(
-        // Remember that this entry carries state, so a reload restores the session instead of reseeding.
-        isCarried(location.state) ? CARRY : null,
+        null,
         '',
         name ? `#${name}` : window.location.pathname + window.location.search
       );
@@ -55,7 +44,7 @@ function HashSync() {
       // Some hosts refuse history writes; the screen still works, only the shareable hash doesn't update.
     }
     window.scrollTo(0, 0);
-  }, [location.pathname, location.state]);
+  }, [location.pathname]);
   useEffect(() => {
     const onHash = () => navigate(hashToPath(window.location.hash));
     window.addEventListener('hashchange', onHash);
@@ -67,14 +56,7 @@ function HashSync() {
 function Router({ children }: { children: ReactNode }) {
   if (!HOSTED) return <BrowserRouter>{children}</BrowserRouter>;
   return (
-    <MemoryRouter
-      initialEntries={[
-        {
-          pathname: hashToPath(window.location.hash),
-          state: isCarried(window.history.state) ? CARRY : undefined,
-        },
-      ]}
-    >
+    <MemoryRouter initialEntries={[hashToPath(window.location.hash)]}>
       <HashSync />
       {children}
     </MemoryRouter>
@@ -82,7 +64,7 @@ function Router({ children }: { children: ReactNode }) {
 }
 
 // Each screen module lives at src/screens/<chapter>/<Name>.tsx and exports `screenId` (one frame id or
-// several) plus a default component. Unbuilt ids fall back to a placeholder so every route resolves.
+// several) plus a default component.
 const modules = import.meta.glob<{
   default: ComponentType;
   screenId?: string | string[];
@@ -101,68 +83,59 @@ for (const mod of Object.values(modules)) {
 function Screen({ id }: { id: string }) {
   const Component = byId.get(id);
   if (Component) return <Component />;
-  const meta = SCREENS.find((s) => s.id === id);
+  return <Navigate to="/" replace />;
+}
+
+/** '/w/<workflow>/<page>': opens that workflow, then shows the page. Unknown workflows and pages go Home. */
+function WorkflowPage() {
+  const { wf = '', page = '' } = useParams();
+  const app = useAppState();
+  const id = frameOfPage(page);
+  const exists = !!app.workflows[wf];
+  const active = app.activeId === wf;
+  useLayoutEffect(() => {
+    if (exists && !active) dispatch({ type: 'wf/open', id: wf });
+  }, [exists, active, wf]);
+  if (!id || !exists) return <Navigate to="/" replace />;
+  return active ? <Screen key={`${wf}:${id}`} id={id} /> : null;
+}
+
+/** '/w/<workflow>': where that workflow is now (the screen it was last on). */
+function WorkflowResume() {
+  const { wf = '' } = useParams();
+  const app = useAppState();
+  const w = app.workflows[wf];
+  if (!w) return <Navigate to="/" replace />;
   return (
-    <div className="flex h-dvh w-full flex-wrap items-center justify-center bg-app px-4 text-center text-[14px] text-muted">
-      {meta ? `${meta.id} ${meta.name}: not built yet` : `No screen "${id}"`}
-      <Link to="/screens" className="ml-2 text-accent">
-        All screens
-      </Link>
-    </div>
+    <Navigate
+      to={screenPath(resumeTarget(w, app.lastScreen?.[wf]), wf)}
+      replace
+    />
   );
 }
 
-// A direct load (no carried state in the history entry) seeds the store from the frame's scene, then marks the
-// entry as carried so Back and reload keep what you do from here. In-app moves (useGo) arrive carried and render
-// the live store. Nothing renders until the store is ready, so a screen never draws a stale state first.
-function Seeded({ id }: { id: string }) {
+/** Dev only, '/s/<frame>': the frame's sample state from the Figma story (not saved; the pixel tools use it). */
+function SampleScreen() {
+  const { id = '' } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
-  const carried = isCarried(location.state) && store.isReady();
   const [seeded, setSeeded] = useState<string | null>(null);
-  const ready = carried || seeded === location.key;
   useLayoutEffect(() => {
-    if (carried || seeded === location.key) return;
+    if (seeded === location.key) return;
     store.dispatch({ type: 'seed', state: sceneFor(id) });
     setSeeded(location.key);
-  }, [carried, seeded, id, location.key]);
-  // Mark the entry as carried (after the router listens: a layout effect here would run before it does).
-  useEffect(() => {
-    if (seeded !== location.key || isCarried(location.state)) return;
-    navigate(location.pathname + location.search + location.hash, {
-      replace: true,
-      state: { ...(location.state as object | null), ...CARRY },
-    });
-  }, [seeded, location, navigate]);
-  return ready ? <Screen key={id} id={id} /> : null;
+  }, [seeded, id, location.key]);
+  return seeded === location.key ? <Screen key={id} id={id} /> : null;
 }
 
-function ScreenRoute() {
-  const { id = '' } = useParams();
-  return <Seeded id={id} />;
-}
-
+/** Dev only, '/screens': every Figma frame's sample state, for design checks. */
 function ScreenIndex() {
-  const navigate = useNavigate();
   const chapters = [...new Set(SCREENS.map((s) => s.chapter))];
   return (
     <div className="min-h-full bg-white px-12 py-10 max-md:px-4 max-md:py-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-[22px] font-semibold">Pathfinder screens</h1>
-        {/* Not in Figma: forget the session (edits, run progress) and start again from Home. */}
-        <Button
-          size="sm"
-          onClick={() => {
-            resetDemo();
-            navigate('/');
-          }}
-        >
-          Reset demo
-        </Button>
-      </div>
+      <h1 className="text-[22px] font-semibold">Pathfinder frames (dev)</h1>
       <p className="mt-1 text-[13px] text-muted">
-        Every frame from the Figma wireframes, in flow order. Start at Home to click through the whole story.
-        Each link opens its frame exactly as drawn; moving on from there carries what you do.
+        Each link opens a Figma frame with its sample state. Sample states aren't saved: reload any page to get
+        your own data back.
       </p>
       {chapters.map((c) => (
         <section key={c} className="mt-6">
@@ -170,12 +143,8 @@ function ScreenIndex() {
           <ul className="mt-2 grid grid-cols-3 gap-x-6 gap-y-1 text-[13px] max-xl:grid-cols-2 max-md:grid-cols-1">
             {SCREENS.filter((s) => s.chapter === c).map((s) => (
               <li key={s.id}>
-                <Link
-                  to={screenPath(s.id)}
-                  className={byId.has(s.id) ? 'text-accent' : 'text-muted'}
-                >
+                <Link to={`/s/${s.id}`} className="text-accent">
                   {s.id} · {s.name}
-                  {s.hidden ? ' (hidden in Figma)' : ''}
                 </Link>
               </li>
             ))}
@@ -190,9 +159,17 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Seeded id="1.1" />} />
-        <Route path="/s/:id" element={<ScreenRoute />} />
-        <Route path="/screens" element={<ScreenIndex />} />
+        <Route path="/" element={<Screen id="1.1" />} />
+        <Route path="/settings" element={<Screen id="1.2" />} />
+        <Route path="/w/:wf" element={<WorkflowResume />} />
+        <Route path="/w/:wf/:page" element={<WorkflowPage />} />
+        {import.meta.env.DEV && (
+          <>
+            <Route path="/s/:id" element={<SampleScreen />} />
+            <Route path="/screens" element={<ScreenIndex />} />
+          </>
+        )}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

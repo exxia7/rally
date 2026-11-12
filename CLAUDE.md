@@ -1,9 +1,9 @@
 # Pathfinder
 
-Clickable prototype of Pathfinder, built pixel-exact from the Figma wireframes
+Pathfinder, a working app built pixel-exact from the Figma wireframes
 (file `uL2LNYWjWvYM9rPXjwDwAr`, section `2362:50744` "emily's pass"). Vite + React 19 + TypeScript +
-Tailwind v4. No backend: data is mock, state lives in one store (`src/state`, see "App state"), every frame is a
-route.
+Tailwind v4. No backend: state lives in one store (`src/state`, see "App state") saved to localStorage; every
+screen has a real URL (`/w/<workflow>/<page>`).
 
 Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
 
@@ -16,8 +16,8 @@ Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
   `App.tsx` picks it up automatically through `import.meta.glob`; never edit App.tsx to register a screen.
 - `src/components/ui`: primitives (Button, Badge, ChoiceChip, Avatar, Icon, …).
 - `src/components/shell`: AppShell (1440×900 frame: sidebar + main panel), TopBar, and Sidebar (Figma-file-browser
-  style: workspace menu → 1.2, search, Home, Needs you, the Workflows list, New workflow, account menu with Reset demo
-  and All screens; its collapse/drawer state is in `sidebarUi.ts`). The wireframes' 52px rail is the collapsed state.
+  style: workspace menu → 1.2, search, Home, Needs you, the Workflows list, New workflow, account menu with workspace
+  settings; its collapse/drawer state is in `sidebarUi.ts`). The wireframes' 52px rail is the collapsed state.
 - `src/components/<area>`: shared composites (map, panels, planning, agents, …).
 - `src/assets/icons`, `src/assets/art`: SVG/PNG downloaded from Figma. Never reference figma.com URLs at runtime.
 - `design/ref/<id>.png`: Figma render of each frame (1440×900). `design/notes.md`: notes from the canvas.
@@ -118,7 +118,7 @@ to "show" a state: change the store and let the screen render it.
   per-step overrides), `handRaises`, `decisions` (yours), `reruns`, `approvals`, `forks` + `chosenVersion`.
 - `src/state/store.ts`: `useAppState()`, `useWorkflow()` (the active workflow), `dispatch(action)`. Every change is
   an `Action` handled in `reduce`; add a new action there rather than mutating state anywhere else. The store is
-  persisted to sessionStorage (reload and Back keep it). Additive fields are fine; give them a default in
+  saved to localStorage (`pathfinder:app`); a first visit starts from `initialState()` (Home's scene, live). Additive fields are fine; give them a default in
   `scenes.ts` so every scene sets them.
 - `src/state/scenes.ts`: `sceneFor(id)` builds the whole store state for Figma frame `id` from the screens' data
   files (`aiCoachPlan`, `communityPlan`, `aiCoachMap`, `stuck/data`, `launchMap`…). Data lives in those files;
@@ -131,15 +131,16 @@ to "show" a state: change the store and let the screen render it.
   where Figma disagrees with its own data (counts, the estimate, 4.1b's list). The first action that changes the
   workflow clears it. This is what keeps direct loads pixel-exact while live flows stay consistent.
 
-### Seeded vs carried navigation
+### URLs and navigation
 
-- A direct load (typed URL, `/`, a link from `/screens`) has no carried history state, so `Seeded` in `App.tsx` seeds
-  the store from that frame's scene, then marks the entry carried. The pixel diff therefore always sees the scene.
-- In-app moves use `useGo()` from `src/state/nav.ts`: `go('3.2')` navigates with `{ carried: true }`, so the next
-  screen renders the live store. `go(id, { returnHere: true })` pushes the current screen on the return-to stack and
-  `go.back('2.3')` pops back to it (fallback if empty). `go(id, { state })` adds history state (6.3's note). Links
-  use `state={CARRY}`. Never call `navigate(screenPath(…))` directly.
-- `/screens` has "Reset demo" (clears the session and reseeds Home).
+- Screens are still keyed by frame id internally. `src/screens/registry.ts` maps them to URLs: `/` (1.1),
+  `/settings` (1.2), `/w/<workflow id>/<page>` for the rest (`PAGE_OF`: '3.2' → `run`, '5.1' → `approve`…).
+  `/w/<id>` resumes the workflow where it was. A workflow URL opens that workflow (`wf/open`); unknown ones go Home.
+- In-app moves use `useGo()` from `src/state/nav.ts`: `go('3.2')` goes to that frame's URL for the active workflow.
+  `go(id, { returnHere: true })` pushes the current screen on the return-to stack and `go.back('2.3')` pops back to
+  it. `go(id, { state })` adds history state (6.3's note). Never call `navigate(screenPath(…))` directly.
+- Dev only: `/s/<frame>` seeds the store from `sceneFor(frame)` without saving (so the pixel tools see the frame
+  exactly and your data survives), and `/screens` lists them.
 
 ### The run timeline
 

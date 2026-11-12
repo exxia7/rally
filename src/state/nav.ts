@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { screenPath } from '@/screens/registry';
+import { parsePath, screenPath } from '@/screens/registry';
 
 import { FRAME_FAMILY, runFrame } from './runView';
 import { dispatch, store, useWorkflow } from './store';
 import type { Workflow } from './types';
 
-// Navigation that carries state. In-app moves use `useGo()`: they put `{ carried: true }` in the history entry, so
-// the next screen renders the live store. A direct load (typed URL, '/', a link from /screens) has no carried
-// state, so the route seeds the store from that frame's scene (App.tsx, `useSeed`). A reload or Back keeps the
-// history entry's state, and the store comes back from sessionStorage.
+// Navigation. Screens move by frame id with `useGo()` (`go('3.2')`), which goes to that screen's URL for the workflow
+// on screen ('/w/<id>/run'; src/screens/registry.ts). The store lives in localStorage, so any URL, a reload or Back
+// renders your saved data. `carried` in history state is only read by the dev-only '/s/<frame>' sample routes.
 
 export type Carried = { carried: true; [key: string]: unknown };
 export const CARRY: Carried = { carried: true };
 export const isCarried = (state: unknown): boolean =>
   !!state && typeof state === 'object' && (state as Carried).carried === true;
 
-/** The frame id a path shows ('/' → 1.1, '/s/3.2' → 3.2), or null (/screens). */
+/** The frame id a path shows ('/' → 1.1, '/w/<id>/run' → 3.2), or null when it's no screen. */
 export function idFromPath(pathname: string): string | null {
-  if (pathname === '/' || pathname === '') return '1.1';
-  if (pathname.startsWith('/s/')) return decodeURIComponent(pathname.slice(3));
-  return null;
+  return parsePath(pathname)?.id ?? null;
 }
+
+/** The URL of frame `id` for the workflow on screen. */
+const pathOf = (id: string) => screenPath(id, store.get().activeId);
 
 export type GoOptions = {
   replace?: boolean;
@@ -47,7 +47,7 @@ export function useGo(): Go {
   const go = useCallback(
     (id: string, opts: GoOptions = {}) => {
       if (opts.returnHere && here) dispatch({ type: 'nav/push', id: here });
-      navigate(screenPath(id), {
+      navigate(pathOf(id), {
         replace: opts.replace,
         state: { ...opts.state, carried: true },
       });
@@ -66,7 +66,7 @@ export function useGo(): Go {
       const i = s.lastIndexOf(target);
       for (let n = i < 0 ? 0 : s.length - i; n > 0; n--)
         dispatch({ type: 'nav/pop' });
-      navigate(screenPath(target), { state: CARRY });
+      navigate(pathOf(target), { state: CARRY });
     };
     return Object.assign(go, { back, backTarget });
   }, [go, navigate, here]);

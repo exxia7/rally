@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import bell from '@/assets/icons/bell.svg';
 import chevronDown from '@/assets/icons/chevron-down-14.svg';
@@ -40,7 +40,7 @@ import { focusSearch, SEARCH_ID, sidebarUi, useSidebarUi } from './sidebarUi';
 // design/non-figma-ui.md). Top to bottom: the workspace switcher (its menu opens 1.2's sections), search (filters
 // the workflow list; ⌘/Ctrl+K focuses it, Esc clears), Home and Needs you, the Workflows list (every workflow
 // that isn't archived, in Home's order, with a status dot; a row reopens the workflow where you left it), New
-// workflow, and the account row (Reset demo, All screens). Rows are 32px, 13px Inter, 8px radius, 8px insets.
+// workflow, and the account row (workspace settings). Rows are 32px, 13px Inter, 8px radius, 8px insets.
 //
 // Sizes: ≥1280px it's docked at 240px and collapses to a 52px rail (remembered). 768–1279px it's the rail, and
 // expanding opens the full sidebar over the content. Under 768px there's no rail: the top bar's menu button opens
@@ -140,26 +140,6 @@ function useWorkspaceItems(): MenuItemData[] {
       key: 'presets',
       label: 'Permission presets',
       onSelect: () => to('presets'),
-    },
-  ];
-}
-
-function useAccountItems(): MenuItemData[] {
-  const navigate = useNavigate();
-  return [
-    {
-      key: 'reset',
-      label: 'Reset demo',
-      description: 'Forget your changes and start again from Home',
-      // An uncarried load of Home reseeds the store from 1.1's scene (App.tsx `Seeded`), which is what a reset is.
-      // Resetting the store first would let a run screen follow the new store to its beat's frame before it unmounts.
-      onSelect: () => navigate('/'),
-    },
-    {
-      key: 'screens',
-      label: 'All screens',
-      description: 'Every frame from the Figma wireframes',
-      onSelect: () => navigate('/screens'),
     },
   ];
 }
@@ -317,7 +297,6 @@ function SidebarPanel({
   const openWaiting = useOpenWaiting();
   const newWorkflow = useNewWorkflow();
   const workspaceItems = useWorkspaceItems();
-  const accountItems = useAccountItems();
   const [query, setQuery] = useState('');
   const [wsMenu, setWsMenu] = useState(false);
   const [accountMenu, setAccountMenu] = useState(false);
@@ -494,7 +473,7 @@ function SidebarPanel({
         {accountMenu && (
           <Menu
             label="Account"
-            items={accountItems}
+            items={workspaceItems}
             onClose={closeAccount}
             className="absolute bottom-full left-2 mb-1 w-[224px]"
           />
@@ -704,7 +683,6 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
   const openWaiting = useOpenWaiting();
   const newWorkflow = useNewWorkflow();
   const workspaceItems = useWorkspaceItems();
-  const accountItems = useAccountItems();
   const n = d.waiting.length;
 
   return (
@@ -855,7 +833,7 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
         {(close) => (
           <Menu
             label="Account"
-            items={accountItems}
+            items={workspaceItems}
             onClose={close}
             className="absolute bottom-0 left-full ml-3 w-[224px]"
           />

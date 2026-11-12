@@ -39,8 +39,8 @@ import type {
   WorkflowId,
 } from './types';
 
-// The store: one AppState in a tiny useSyncExternalStore store (no dependencies), persisted to sessionStorage so a
-// reload or Back keeps it. Screens read it with useAppState()/useWorkflow() and change it with dispatch(action).
+// The store: one AppState in a tiny useSyncExternalStore store (no dependencies), saved to localStorage so your
+// data stays across reloads and visits. Screens read it with useAppState()/useWorkflow() and change it with dispatch(action).
 // Everything an action does is in `reduce` below. See CLAUDE.md "App state".
 //
 // Permissions/settings agent (additive): actions workspace/tool, workspace/defaultPreset, workspace/preset,
@@ -172,7 +172,7 @@ function factsFromDecision(
   return out;
 }
 
-const KEY = 'pathfinder:state';
+const KEY = 'pathfinder:app';
 
 // Actions that don't change a workflow (so a scene's frame stays "as drawn").
 const NEUTRAL = new Set([
@@ -803,10 +803,27 @@ export function reduce(s: AppState, a: Action): AppState {
 }
 
 // ---- The store ---------------------------------------------------------------------------------------------
+// Saved in localStorage: your workflows, edits and runs stay across reloads and visits. A first visit starts from
+// the workspace's starter data (`initialState`). The dev-only '/s/<frame>' sample routes seed a frame's state
+// without saving it, so they never overwrite your data.
+
+/** The starter workspace: Home's workflows, live (not frozen at Figma's literal text). */
+export function initialState(): AppState {
+  const s = sceneFor('1.1');
+  return {
+    ...s,
+    workflows: Object.fromEntries(
+      Object.entries(s.workflows).map(([id, wf]) => [
+        id,
+        { ...wf, asDrawn: undefined },
+      ])
+    ),
+  };
+}
 
 function load(): AppState | null {
   try {
-    const raw = window.sessionStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as AppState;
     return s.version === STATE_VERSION && s.workflows?.[s.activeId] ? s : null;
@@ -817,9 +834,9 @@ function load(): AppState | null {
 
 function save(s: AppState) {
   try {
-    window.sessionStorage.setItem(KEY, JSON.stringify(s));
+    window.localStorage.setItem(KEY, JSON.stringify(s));
   } catch {
-    // Private mode or a full quota: the prototype still works, it just won't survive a reload.
+    // Private mode or a full quota: the app still works, it just won't survive a reload.
   }
 }
 
@@ -832,19 +849,18 @@ const speedParam = (): Speed | null => {
   }
 };
 
-const loaded = typeof window === 'undefined' ? null : load();
-let state: AppState = loaded ?? sceneFor('1.1');
-/** True once the state is real: restored from this tab's session, or seeded by a route. */
-let ready = loaded !== null;
-const urlSpeed = typeof window === 'undefined' ? null : speedParam();
+let state: AppState =
+  (typeof window === 'undefined' ? null : load()) ?? initialState();
+/** False while a dev sample route shows seeded state: nothing is saved until a reload. */
+let persist = true;
+const urlSpeed =
+  typeof window === 'undefined' || !import.meta.env.DEV ? null : speedParam();
 if (urlSpeed) state = { ...state, speed: urlSpeed };
 
 const listeners = new Set<() => void>();
 
 export const store = {
   get: () => state,
-  /** Whether there is carried state to render (false on a first visit: the route seeds a scene). */
-  isReady: () => ready,
   subscribe(fn: () => void) {
     listeners.add(fn);
     return () => {
@@ -852,26 +868,16 @@ export const store = {
     };
   },
   dispatch(action: Action) {
+    if (action.type === 'seed') persist = false;
     const next = reduce(state, action);
-    if (action.type === 'seed' || action.type === 'reset') ready = true;
     if (next === state) return;
     state = next;
-    save(state);
+    if (persist) save(state);
     for (const fn of [...listeners]) fn();
   },
 };
 
 export const dispatch = (action: Action) => store.dispatch(action);
-
-/** Forget the demo: clears the session and starts again from Home's scene. */
-export function resetDemo() {
-  try {
-    window.sessionStorage.removeItem(KEY);
-  } catch {
-    // ignore
-  }
-  dispatch({ type: 'reset', state: sceneFor('1.1') });
-}
 
 if (typeof window !== 'undefined') installTimeline(store, extraWorkDelay);
 // Dev only: scripts (scripts/story-e2e.mjs) read and drive the store through window.__pathfinder.

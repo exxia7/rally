@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 // The sidebar's own UI state, outside React so the top bar's menu button (phones) and the sidebar share it.
 // - `collapsed`: on desktop (≥1280px), the 52px rail instead of the 240px sidebar. Remembered in localStorage (a
-//   per-browser preference, not demo state, so it isn't in the app store and Reset demo keeps it).
+//   per-browser preference, not workflow data, so it isn't in the app store).
 // - `open`: the overlay sidebar: the rail's expand under 1280px, the slide-out drawer on phones.
 
 const KEY = 'pathfinder:sidebar';
