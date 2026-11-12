@@ -34,6 +34,15 @@ export function SettingsNav<T extends string>({
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, []);
+  // Phones: keep the selected tab in view (1.2 opens on "Permission presets", fourth in the row).
+  useEffect(() => {
+    const el = row.current;
+    const tab = el?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!el || !tab || el.scrollWidth <= el.clientWidth) return;
+    const left = tab.offsetLeft - el.offsetLeft;
+    if (left < el.scrollLeft || left + tab.offsetWidth > el.scrollLeft + el.clientWidth)
+      el.scrollLeft = left - 12;
+  }, [value]);
   return (
     <aside className="flex w-[240px] max-md:relative shrink-0 flex-col items-start self-stretch border-r border-line bg-white p-4 max-md:w-full max-md:border-r-0 max-md:border-b max-md:px-3 max-md:py-2">
       <div className="flex h-[25px] w-full flex-col items-start px-2 pb-2 max-md:hidden">

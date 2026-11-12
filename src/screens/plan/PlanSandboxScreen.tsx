@@ -8,6 +8,7 @@ import {
   AdLimitValue,
   CheckLevelRadios,
   PresetChips,
+  PresetNameForm,
 } from '@/components/planning/PermissionControls';
 import { PlanCanvas } from '@/components/planning/PlanCanvas';
 import type { PlanNode } from '@/components/planning/PlanMap';
@@ -18,10 +19,8 @@ import type {
   SandboxSection,
 } from '@/components/run/SandboxPanel';
 import { AppShell } from '@/components/shell/AppShell';
-import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import type { MenuItemData } from '@/components/ui/Menu';
-import { TextInput } from '@/components/ui/TextInput';
 import { useGo } from '@/state/nav';
 import { CUSTOM, withPermissionRows } from '@/state/permissions';
 import { estimate, planLayout } from '@/state/planView';
@@ -156,6 +155,8 @@ export default function PlanSandboxScreen() {
   // The Sandbox is this frame's point, so it starts open at every size (a half-height sheet on phones).
   const [panelOpen, setPanelOpen] = useState(true);
   const [imports, setImports] = useState<string[]>([]);
+  // The "You approve" gate opens the Sandbox on Permissions (the rule that holds Publisher until you say yes).
+  const [gatePermissions, setGatePermissions] = useState(false);
   // The card that just got something from the "Add to…" menu: ringed and scrolled into view for a moment.
   const [flash, setFlash] = useState<string | null>(null);
   useEffect(() => {
@@ -266,10 +267,11 @@ export default function PlanSandboxScreen() {
       ...sec,
       open:
         sec.id === (id === '2.6' ? 'tools' : 'permissions') ||
+        (sec.id === 'permissions' && gatePermissions) ||
         (sec.id === 'assets' && imports.length > 0),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `live` reads wf
-  }, [wf, imports, id]);
+  }, [wf, imports, id, gatePermissions]);
 
   const importFile = () =>
     setImports((all) => [`Upload ${all.length + 1}.pdf`, ...all]);
@@ -372,7 +374,7 @@ export default function PlanSandboxScreen() {
                 ? { ...sec, content: <PermissionsSettings /> }
                 : sec
             )}
-            sectionsKey={imports.length}
+            sectionsKey={`${imports.length}-${gatePermissions}`}
             // Chat and Sandbox are two tabs on the same workflow: swap in place, no new history entry.
             onTabChange={(t) => t === 'chat' && go('2.3', { replace: true })}
             onImport={importFile}
@@ -413,6 +415,10 @@ export default function PlanSandboxScreen() {
         onNodeClick={(n) =>
           team[n.id] && go('2.4', { state: { drawer: n.id } })
         }
+        onGateClick={() => {
+          setGatePermissions(true);
+          setPanelOpen(true);
+        }}
         overlays={dropZones ?? flashRing}
         focus={{ x: 330, y: 300 }}
       />
@@ -428,21 +434,8 @@ const muted = 'text-[12px] leading-[18px] tracking-[-0.08px] text-muted';
 // to the workspace's presets (1.2). All of it is the workflow's permissions in the store (useWorkflowPermissions).
 function PermissionsSettings() {
   const p = useWorkflowPermissions();
-  const [naming, setNaming] = useState<string | null>(null);
+  const [naming, setNaming] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
-
-  const save = () => {
-    const name = (naming ?? '').trim();
-    if (!name) return;
-    const key = `preset-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-    dispatch({
-      type: 'workspace/preset',
-      preset: { key, name, check: p.check, adLimit: p.adLimit },
-    });
-    dispatch({ type: 'permissions/set', patch: { preset: name } });
-    setNaming(null);
-    setSaved(name);
-  };
 
   return (
     <div className="flex w-full flex-col items-start pt-2.5 pl-5">
@@ -497,36 +490,21 @@ function PermissionsSettings() {
             ? 'Custom for this workflow. Save it as a preset to use it again. A helper can still override in its Details.'
             : `Using the ${p.preset} preset from workspace settings. Change anything to make it Custom for this workflow. A helper can still override in its Details.`}
       </p>
-      {naming !== null ? (
-        // Not in Figma: name the new preset in place instead of leaving for workspace settings.
-        <form
-          className="flex w-full items-center gap-2 pt-2 pr-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save();
+      {naming ? (
+        <PresetNameForm
+          className="pt-2 pr-5"
+          onSave={(name) => {
+            p.saveAsPreset(name);
+            setNaming(false);
+            setSaved(name);
           }}
-        >
-          <TextInput
-            autoFocus
-            aria-label="New preset name"
-            placeholder="Preset name"
-            className="h-8 flex-1"
-            value={naming}
-            onChange={(e) => setNaming(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && setNaming(null)}
-          />
-          <Button type="submit" variant="primary" size="sm">
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setNaming(null)}>
-            Cancel
-          </Button>
-        </form>
+          onCancel={() => setNaming(false)}
+        />
       ) : (
         <div className="flex w-full items-start pt-2">
           <button
             type="button"
-            onClick={() => setNaming('')}
+            onClick={() => setNaming(true)}
             className="text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink hover:text-accent"
           >
             Save as a new preset

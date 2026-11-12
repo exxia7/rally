@@ -4,6 +4,8 @@
 // Home → New workflow → brief (2.1) → chat (2.2) → team (2.3: remove Designer, rename Writer → Copywriter) →
 // Start launch → the run plays on its own (?speed=fast) → Strategist's hand (4.1: Mar 14, leave pricing out) →
 // rerun (4.1b, 4.2) → Writer's hand (4.3: $15/mo) → approval (5.1: Don't post the X post) → summary (5.2) → Home.
+// Also: a Fact-checker added on the line Strategist → Copywriter (2.3) runs as its own step, and on 4.3 a fork of
+// Schedule launch ("Post at noon") is chosen with "Use this version", so 5.1, 5.2 and Home follow that version.
 import { chromium } from '@playwright/test'
 
 const BASE = 'http://localhost:5173'
@@ -74,6 +76,31 @@ try {
   }
   wf = await state()
   check('Designer removed, Writer renamed', wf.removed.includes('designer') && wf.helpers.writer.name === 'Copywriter')
+  // 2.3: add a Fact-checker on the line Strategist → Copywriter (2.4c's add-step), through the UI when it can.
+  try {
+    const plus = page.getByRole('button', { name: 'Add a step between Strategist and Copywriter' })
+    await plus.focus({ timeout: 3000 })
+    await plus.click({ force: true, timeout: 3000 })
+    await page.getByRole('button', { name: /Fact-checker/ }).first().click({ timeout: 3000 })
+  } catch {}
+  if (!(await state()).planSteps.length) {
+    console.log('     (add-step not reachable: inserting the Fact-checker with the store action)')
+    await dispatch({
+      type: 'plan/insertStep',
+      edit: {
+        edge: { from: 'strategist', to: 'writer' },
+        step: { type: 'helper', name: 'Fact-checker', description: 'Checks claims before anything is written' },
+        id: 'step-1',
+      },
+      helper: {
+        name: 'Fact-checker', kind: 'action', description: 'Checks claims before anything is written', state: 'new',
+        model: 'Haiku 5.5', tokensK: 2, skills: [], files: [], getsFrom: 'Strategist', passesTo: 'Copywriter',
+        passes: 'Its checked work', checks: 'Team default · when unsure',
+      },
+    })
+  }
+  const inserted = (await state()).planSteps[0]?.id
+  check('Fact-checker inserted on the plan', !!inserted, inserted)
   const estimate = await page.getByText(/^About \d+ min · \$/).first().textContent().catch(() => '')
   check('estimate recalculated', estimate && estimate !== 'About 9 min · $0.30', estimate)
 
@@ -81,8 +108,13 @@ try {
   await page.getByRole('button', { name: /Start launch|^Start$/ }).first().click()
   await waitPath('/s/3.2')
   await page.getByRole('status').first().waitFor()
+  await page.getByRole('button', { name: 'Pause' }).waitFor()
   check('Start launch opens the running run', (await text()).includes('Running'))
   await noDesigner('3.2')
+  // The inserted helper is a run step between Strategist's decision and Copywriter's Launch copy, with a task row.
+  const factNode = page.getByRole('button', { name: /Fact-checker/ })
+  check('Fact-checker is a step on the run map', (await factNode.count()) > 0)
+
 
   // The timeline plays until the Strategist raises its hand: 4.1 opens in place with Needs you
   await waitPath('/s/4.1')
@@ -113,6 +145,26 @@ try {
   await waitPath('/s/4.3')
   await page.getByText('Copywriter raised its hand').waitFor()
   check('second hand raise is the renamed Copywriter', true)
+  await page.getByRole('button', { name: /^Tasks/ }).first().click()
+  check('Fact-checker has a task row', (await page.getByText('Fact-checker', { exact: true }).count()) > 1)
+  await page.mouse.click(600, 760) // the overlay's backdrop closes it
+  // Fork Schedule launch in place (no detour via 6.1), name it from the instruction, and choose it.
+  await page.getByRole('button', { name: /Schedule launch/ }).first().click()
+  await page.getByRole('button', { name: /Fork from here/ }).click()
+  await page.getByLabel('What the fork should try').fill('Post at noon: lunch-break scrollers')
+  await page.getByRole('button', { name: 'Create fork' }).click()
+  const row = page.getByRole('group', { name: 'Branches' })
+  await row.waitFor()
+  check('fork named from the input, in the Branches row', (await row.innerText()).includes('Post at noon'))
+  check('status pill counts the fork', /Post at noon · \$/.test(await text()))
+  await page.getByRole('button', { name: /Ready to post/ }).last().click()
+  await page.getByRole('button', { name: 'Use this version' }).click()
+  wf = await state()
+  const fork = wf.forks[0]
+  check('Use this version chooses the fork', fork && wf.chosenVersion === fork.id && fork.name === 'Post at noon', fork?.name)
+  check('Chosen version marked on the map', (await page.getByText('Chosen version').count()) > 0)
+  check('Fact-checker done by 4.3', (await state()).run.beat === 'handRaise2' && (await page.getByRole('button', { name: /Fact-checker/ }).first().innerText()).includes('Done'))
+  await page.getByRole('button', { name: 'Resume' }).click()
   await page.getByRole('radio', { name: /Change the launch fact to \$15\/mo/ }).click()
   await page.getByRole('button', { name: 'Confirm' }).click()
 
@@ -125,8 +177,11 @@ try {
   const xItem = page.locator('div', { has: page.getByText('X post', { exact: true }) }).filter({ has: page.getByRole('button', { name: "Don't post" }) }).last()
   await xItem.getByRole('button', { name: "Don't post" }).click()
   wf = await state()
-  check('Don\'t post is stored', wf.approvals.x === 'wont-post')
-  const waiting = Object.values(wf.approvals).filter((v) => v === 'waiting').length
+  // 5.1 approves the chosen version: the fork's own approvals.
+  const chosen = wf.forks.find((f) => f.id === wf.chosenVersion)
+  check('5.1 shows the chosen version', t.includes('Post at noon'))
+  check('Don\'t post is stored on the chosen version', chosen?.approvals.x === 'wont-post' && wf.approvals.x !== 'wont-post')
+  const waiting = Object.values(chosen.approvals).filter((v) => v === 'waiting').length
   check('pill counts what is waiting', t.length > 0 && (await text()).includes(`${waiting} waiting for your OK`), `${waiting} waiting`)
   await page.getByRole('button', { name: /^Approve all \d+$/ }).click()
 
@@ -142,7 +197,9 @@ try {
   const chip = t.match(/(\d+) of (\d+) done/)
   const agents = t.match(/(\d+) agents done/)
   check('counts consistent at the end', chip && chip[1] === chip[2] && agents && Number(agents[1]) === 6, `${chip?.[0]}, ${agents?.[0]}`)
-  check('skipped post noted', t.includes('You skipped 1 post today'))
+  // LinkedIn held back by the rules (not connected) says why and isn't counted: you skipped only the X post.
+  check('skipped post noted', t.includes('You skipped 1 post today'), t.match(/You skipped \d+ posts?/)?.[0])
+  check('5.2 says which version went out', t.includes('What went out · Post at noon'))
 
   // Done → Home: the card says Done · Launched Mar 14
   await page.getByRole('button', { name: 'Done', exact: true }).click()
@@ -151,6 +208,7 @@ try {
   const card = page.getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
   const cardText = await card.first().innerText()
   check('Home card shows Done · Launched Mar 14', /Done/.test(cardText) && cardText.includes('Launched Mar 14'), cardText.replace(/\n/g, ' · '))
+  check('Home card names the chosen version', cardText.includes('Post at noon'))
   await noDesigner('Home')
 
   // Reload keeps state

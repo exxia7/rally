@@ -130,30 +130,6 @@ export function PiecesModal({
   );
 }
 
-// What each hand-raise's handoff carried besides the problems on its Fix steps (the problems are added from the
-// panel's own steps, so the list always shows them). STATE: these should come from the store's handoff cards once
-// handoffs are modelled; keyed here by the helper that raised its hand.
-const HANDOFF_PASSED: Record<
-  string,
-  { from: string; items: [string, string][] }
-> = {
-  Strategist: {
-    from: 'Scout',
-    items: [
-      ['Competitor scan', '6 budgeting apps compared on features and coaching'],
-      ['Feature comparison', 'Budgets, alerts and coaching across the 6 apps'],
-    ],
-  },
-  Writer: {
-    from: 'Strategist',
-    items: [
-      ['Audience', 'People who already budget'],
-      ['Message', 'Lead with coaching, not tracking'],
-      ['Launch date', 'Mar 12, 9am'],
-    ],
-  },
-};
-
 /** "See the full handoff": everything the handoff carried, with what passed and what's wrong. */
 export function HandoffModal({
   open,
@@ -164,14 +140,16 @@ export function HandoffModal({
   onClose: () => void;
   data: HandRaiseData;
 }) {
-  const to = data.eyebrow.split(' ')[0];
-  const passed = HANDOFF_PASSED[to] ?? { from: 'The step before', items: [] };
-  const total = passed.items.length + data.steps.length;
+  // Who passed what comes from the store (runView.handoffOf); without it, only the Fix steps' problems show.
+  const to = data.handoff?.to ?? data.eyebrow.split(' ')[0];
+  const from = data.handoff?.from ?? 'The step before';
+  const passed = data.handoff?.passed ?? [];
+  const total = passed.length + data.steps.length;
   return (
     <DetailModal
       open={open}
       onClose={onClose}
-      title={`${passed.from}’s handoff to ${to}`}
+      title={`${from}’s handoff to ${to}`}
       intro={`${total} items. ${to} checks each handoff before it starts; the red ones are what stopped it.`}
     >
       {data.steps.map((s) => (
@@ -182,12 +160,12 @@ export function HandoffModal({
           body={s.problem.title}
         />
       ))}
-      {passed.items.map(([title, body]) => (
+      {passed.map((p) => (
         <DetailCard
-          key={title}
-          title={title}
+          key={p.title}
+          title={p.title}
           badge={<Badge tone="green">Passed</Badge>}
-          body={body}
+          body={p.detail}
         />
       ))}
     </DetailModal>

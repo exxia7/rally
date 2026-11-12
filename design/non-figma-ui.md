@@ -23,23 +23,45 @@ Small additions a flow needs, built only from existing components and tokens. Ad
 | 3.5, 4.5, 6.5, 6.6 (and any run inspector) | "Fork from here" opens the Fork card in place (6.4's state) for every step that can fork; steps other than Launch copy start with no chips (typed instruction), note and helper badges from the steps after it | 3g / 1e: no second "Fork from here" via 6.1, and forking a fork forks. |
 | 3.x, 6.5, 6.6 | A fork no frame draws gets its own lane: the forked step and the steps after it copied below the map in the fork's colour (Fork 3 violet), with its fork line, Fork pill and Fork label; the map redraws smaller to fit | 1e: Create fork creates the next colour where you are. |
 | 4.5, 6.5, 6.6 | A fork you named shows under your name everywhere the frame names it (lane pill and label, Tasks chip, status pill, inspector brief); the Tasks chip drops Figma's pinned width so the name fits | 2g: the fork's name and brief come from your chip or text. |
-- 1.2: "Manage" menu on a connected tool (Disconnect), from the existing Menu — the button looked clickable and did nothing (4d).
-- 1.2, 2.8: white fade on the right edge of the phone tab row while more tabs are offscreen — nothing hinted the row scrolls (5d).
-- 1.2: transparent 40px hit area around the 16px Brand kit "More" button on phones (look unchanged) — 16×16 tap target (5d).
-- 2.8: confirm dialogs (ConfirmDialog) for "Duplicate or save as template" (with a Name field) and "Archive" (Archive ↔ Restore), each followed by a toast — the side-nav items only highlighted (4d).
-- 2.8: "Back to run" replaces "Start launch" when settings were opened from a run or approval — Start launch made no sense mid-run (4i).
-- all screens: Toast (Menu surface: white, line-2 border, 12px radius, soft shadow; optional ghost action such as Undo), bottom-centre, 4s — confirms actions with no other visible result.
-- 2.1, 2.2: attachment chips under the composer (2.1's chips, now the shared AttachmentChips) — 2.2's attach menu posted text into the chat instead of attaching (4e).
-- 2.2: sent attachments appear as extra "Resources used" cards — so an attachment has a visible home after sending (4e).
-- 2.2: Launch brief "Open" and "Brand guide.pdf" open a Modal with the brief's fields / what the Planner took from the guide; "Your answers in this chat" scrolls the chat to your answers (4d).
-- 3.3 (all run screens' Sandbox): "Add to <step>…" menu on a row (steps that haven't started), "+" imports into that section, row checkboxes tick (solid Checkbox look) — rows looked actionable and did nothing (4f).
-- 2.6, 2.7: the "Add to <helper>" row menu now also opens on desktop click, and row checkboxes tick (4g).
-- 3.4 (all run screens' Decisions): "Change" opens Chat with "Change: <decision> → " typed and focused; sending it rewrites the entry ("Changed by you", "Just now") (4h).
-- 3.5, 6.1: "See all N pieces" opens a Modal listing Writer's pieces (written vs not started) (4d).
-- 6.3: "See previous version" opens the same Modal as the last finished copy, with your rerun note (4d).
-- 4.1, 4.3: "See the full handoff (4 items)" opens a Modal listing the handoff's items, problems marked red and the rest "Passed" (4d).
-- 5.1: inline edit on an approval item (Text area + Save / Cancel) — Edit used to jump to the mid-run inspector (4a).
-- 5.1, 5.2: a non-"Ready to post" map card opens a read-only inspector (no Fork / Rerun / footer); "Ready to post" opens the approval panel / summary (4b, 4c).
-- 4.1, 4.3, 5.1, 4.4, 6.5 (every hand-raise, inspector and approval panel), 2.6/2.7 Sandbox: on phones a bottom sheet 56% tall with a rounded top, so the status pill and the card stay visible above it (5b, 5a).
-- all workflow screens: on phones the Planning / Flowchart control reads "Plan" / "Run" so the title isn't cut to "AI …", and the title chevron gets a transparent 40px hit area (5c).
-- 5.2: on phones "Next time" sits right under the summary header so its buttons are above the fold (5e).
+| 1.2 | "Manage" on a connected tool opens a small Menu: Disconnect | 4d: the button looked clickable and did nothing. |
+| 1.2, 2.8 (phones) | White fade on the right edge of the settings tab row while more tabs are offscreen | 5d: nothing hinted that the row scrolls. |
+| 1.2 (phones) | Transparent 40px hit area around the 16px Brand kit "More" button (look unchanged) | 5d: 16×16 tap target. |
+| 2.8 | "Duplicate or save as template" and "Archive" open a ConfirmDialog (Duplicate has a Name field; Archive becomes Restore once archived), then a Toast (Duplicate's has Open; Archive's has Undo). The copy is a draft first on Home; an archived workflow leaves Home and the bell, its run paused | 4d: the side-nav items only highlighted. |
+| 2.8 | Opened from a run or approval: "Back to run" replaces "Start launch", and Back / the settings toggle / Flowchart return there | 4i: Start launch and "Back to the map → 2.3" made no sense mid-run. |
+| Any screen | Toast: Menu surface (white, line-2 border, 12px radius, soft shadow), 13px Medium ink, optional ghost action; bottom-centre, above the phone tab bar, hides after 4s | Confirms an action whose result isn't otherwise visible. |
+| 2.1, 2.2 | Attachment chips under the composer (2.1's chips, now the shared AttachmentChips) | 4e: 2.2's attach menu posted its label into the chat instead of attaching. |
+| 2.2 | Sent attachments join "Resources used" as extra cards | 4e: an attachment needs a visible home after sending. |
+| 2.2 | Launch brief "Open" and "Brand guide.pdf" open a Modal (the brief's fields / what the Planner took from the guide); "Your answers in this chat" scrolls the chat to your answers | 4d: card-looking buttons that did nothing. |
+| 3.3 (every run Sandbox) | Row click opens an "Add to <step>…" Menu (steps that haven't started; the row's "used by" updates); a section's "+" imports into it; row checkboxes tick (solid Checkbox look) | 4f: rows looked actionable and nothing happened. |
+| 2.6, 2.7 | The "Add to <helper>" row menu also opens on a desktop click; row checkboxes tick | 4g: a click on a drag-only row did nothing. |
+| 3.4 (every run Decisions tab) | "Change" opens Chat with "Change: <decision> → " typed and focused; sending it rewrites the entry ("Changed by you", "Just now") and the reply says so | 4h: Change only switched tabs and typed changes got a generic reply. |
+| 3.5, 6.1 | "See all N pieces" opens a Modal listing Writer's pieces (written vs not started yet) | 4d. |
+| 6.3 | "See previous version" opens the same Modal as the last finished copy, with your rerun note | 4d. |
+| 4.1, 4.3 | "See the full handoff (4 items)" opens a Modal listing the handoff: the problems in red, the rest "Passed" | 4d. |
+| 5.1 | Approval item "Edit" edits the text in place (Text area + Save / Cancel) | 4a: Edit jumped to the mid-run Writer inspector. |
+| 5.1, 5.2 | A map card other than "Ready to post" opens a read-only inspector (no Fork / Rerun / footer); "Ready to post" opens the approval panel / summary | 4b, 4c: every card opened the same panel. |
+| 4.1, 4.3, 5.1, 4.4, 6.5, 2.6, 2.7 (phones) | Hand-raise, inspector, approval and plan Sandbox panels are a bottom sheet 56% tall with a rounded top; the run map opens with the card in the band above it; 2.6/2.7 start with the Sandbox open | 5b, 5a: full-screen sheets hid the map and the status pill. |
+| 2.3–2.7 (phones) | The plan map opens at 1.2× instead of 0.8× | 5a: plan cards read at ~7px. |
+| Every workflow screen (phones) | Planning / Flowchart reads "Plan" / "Run"; transparent 40px hit area around the title chevron (look unchanged) | 5c: the title was cut to "AI …" and the chevron was a 14px target. |
+| 5.2 (phones) | "Next time" sits right under the summary header | 5e: its Allow / Keep asking buttons were below the fold. |
+| 2.3 | The "You approve" gate opens Publisher's drawer (its "Checks with you") | 4d: the gate looked clickable and did nothing. |
+| 2.3–2.5 (helper drawer) | "Checks with you" menu has four choices: "Team default · <the team's level>", "Always · before …", "Only when it spends money", "Never · run on its own" | 2i: the drawer, 2.4e's picker and 5.2's "Next time" are one setting; the drawer needs 2.4e's middle choice too. |
+| 2.3–2.5 | A poster's Posts / Ads row opens its 2.4e "Before … runs" picker (the card itself opens the drawer) | 2d / 2i: every card opens that helper; the picker stays one click away. |
+| 2.3–2.5 | Duplicate adds "<Name> copy" (New card, dashed) under the original in its column with the original's lines, opens its drawer, and the chat says so | 3i. |
+| 2.3–2.5, 2.4b | After the first edit, a tool the workspace hasn't connected reads "LinkedIn (not connected)" on its card and "Not connected" in the tool rows (direct loads keep Figma's text) | 3d: one connection status everywhere. |
+| 2.3–2.5, 2.8, 1.2 | Connect step: Modal "Connect a tool" (workspace tools with Connected badges / Connect) or "Connect <tool>" (Account field, Cancel / Connect). Opens from the drawer's and tool picker's "Connect a tool", 2.8's LinkedIn toggle and 1.2's Connect; closing returns where you were (the drawer gets the tool) | 3j, 3d, 1g. |
+| 2.7, 2.8 | "Save as a new preset" / "Save these as a new preset" opens an inline name field (Text input + Save / Cancel); the preset joins 1.2's list and the chips | 1g: it used to leave for workspace settings. |
+| 2.7, 2.8 | The ad limit ("$50") is clickable and turns into a small number field (Enter saves) | 3e: "Change rule" needs a rule you can change. |
+| 2.8 | "Check with you" shows "Changed here" (blue, like the ad limit) when it differs from the preset; the ad limit shows "From preset" when it matches | 2i: badges follow the shared setting. |
+| 2.8 | Spending cap reads "Used $<live run cost> so far" | 3e. |
+| 2.8 | The back button names where it returns: "Back to the map" / "Back to the run" / "Back to approvals" / "Back to the summary" | 1g: settings return to the screen that opened them. |
+| 1.2 | Preset "Edit" and "New preset" open a preset editor Modal (Name, 2.7's check-level radios, ad limit, the rules line it will show) | 1g: preset editing stays in workspace settings. |
+| 1.2 | "Back to <workflow>" (Secondary Small, 2.8's style) above the title when a workflow opened workspace settings | 1g. |
+| 2.3–2.8 (mid-run) | A 36px accent-soft strip under the top bar: "The run is live. Changes apply to steps that haven't started."; the main action reads "Back to run" | 3h. |
+| 3.x run map | A poster set to post on its own loses "Your OK"; "Ready to post" reads "Posts on its own" when nobody asks; the run Sandbox's Permissions rows follow the rules and the ad limit | 2i. |
+| 5.2 | An item you edited on 5.1 shows "Your edit: “…”" under its "What went out" row (the row grows to fit) | 4a: the edited text has to be visible where the summary lists what went out. |
+| 5.1 | When you chose a fork ("Use this version"): the header's branch dot and name in that fork's colour, and the items, counts and approvals are that version's | 1f: you approve the version that goes out. |
+| 5.2 | "What went out · <fork name>" when a fork was chosen; its rows are that version's outputs and approvals | 1f. |
+| Home | Card line ends "· <fork name>" when the chosen version isn't the original ("Launched Mar 14 · Post at noon") | 1f. |
+| Run screens with forks | Status pill counts forks: "Running · <fork> · $x" for one, "<n> forks · $x" for more; each fork no frame draws adds $0.015 per lane step | 2g / 3e: the pill shouldn't say "2 forks" after a third. |
+| 3.x–5.1 run maps | A helper you added on a line (2.4c) or duplicated is its own run step: a new column between the steps its line joined (later columns move right, the map draws smaller), lines reconnected through it, a task row, "Waits for <helper>" → "Working" → "Done"; the beat it works in runs 2.5s longer | 2b: plan edits reach the run. |

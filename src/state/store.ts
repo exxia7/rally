@@ -8,7 +8,14 @@ import {
   needsYourOk,
   presetRules,
 } from './permissions';
-import { approvalItems, fixEffects, rerunScope } from './runView';
+import {
+  approvalItems,
+  branchApprovals,
+  chosenBranch,
+  extraWorkDelay,
+  fixEffects,
+  rerunScope,
+} from './runView';
 import { newWorkflow, sceneFor, STATE_VERSION } from './scenes';
 import { BEATS, installTimeline, nextBeat, playableBeat } from './timeline';
 import type {
@@ -33,7 +40,7 @@ import type {
 // Everything an action does is in `reduce` below. See CLAUDE.md "App state".
 //
 // Permissions/settings agent (additive): actions workspace/tool, workspace/defaultPreset, workspace/preset,
-// permissions/set, helper/delete; permissions/nextTime also sets that helper's own rule; withBeat('approval') auto-approves
+// permissions/set, helper/delete, facts/set; permissions/nextTime also sets that helper's own rule; withBeat('approval') auto-approves
 // items whose helper posts without your OK and skips straight to launched when none wait (src/state/permissions.ts).
 
 export type Action =
@@ -81,13 +88,62 @@ export type Action =
     }
   | { type: 'workspace/tool'; name: string; connected: boolean; account?: string }
   | { type: 'workspace/defaultPreset'; name: string }
+  /** 2.8 Launch facts edits. */
+  | { type: 'facts/set'; patch: Partial<Workflow['resources']['facts']> }
   | {
       type: 'workspace/preset';
       /** Adds the preset, or updates the one with this key. */
       preset: { key: string; name: string; check: CheckLevel; adLimit: number };
     }
   | { type: 'fork/create'; fork: Fork }
-  | { type: 'fork/choose'; id: string };
+  | { type: 'fork/choose'; id: string }
+  /** Fork-scoped approval: one output of one branch ('original' writes `approvals`, a fork its own). */
+  | { type: 'fork/approval'; branch: string; output: string; value: ApprovalValue }
+  /** A fork's copy or name changed (its lane's copy, kept when you choose it). */
+  | { type: 'fork/update'; id: string; patch: Partial<Omit<Fork, 'id' | 'n'>> }
+  // Controls agent (additive, audit 4d/4f/4h/4a): 2.8 Duplicate and Archive, the run Sandbox's "Add to <step>" and
+  // "+", a decision's Change, and 5.1's inline edit.
+  /** 2.8 "Duplicate": a draft copy (same team, settings and facts; no run, decisions or approvals), first on Home. */
+  | { type: 'wf/duplicate'; title: string; from?: WorkflowId }
+  /** 2.8 "Archive" / "Restore": hidden from Home, run paused. */
+  | { type: 'wf/archive'; archived: boolean }
+  /** Run Sandbox "Add to <step>": the resource joins that helper's files, skills or tools. */
+  | {
+      type: 'sandbox/give';
+      section: SandboxResource;
+      name: string;
+      helper: HelperId;
+    }
+  /** Run Sandbox Import / a section's "+": a new resource nobody uses yet. */
+  | { type: 'sandbox/import'; section: SandboxResource; name: string }
+  /** A decision's "Change" (3.4): `id` is the decision changed, `from` its old title. */
+  | { type: 'decision/change'; id: string; from: string; title: string }
+  /** 5.1 inline edit of an approval item's text (the chosen version's). */
+  /** `branch`: a fork-scoped approval panel's branch (default: the chosen version, as on 5.1). */
+  | { type: 'approval/edit'; output: string; text: string; branch?: string };
+
+export type SandboxResource = 'assets' | 'skills' | 'tools';
+
+/**
+ * Launch facts a changed decision states ("Launch Mar 14 at 10am · $400 budget", "Audience: students"), so the
+ * steps that haven't run yet pick them up through the facts pass (dates and prices in the copy and approvals).
+ */
+function factsFromDecision(text: string): Partial<Workflow['resources']['facts']> {
+  const out: Partial<Workflow['resources']['facts']> = {};
+  const date =
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? (\d{1,2})\b/i.exec(text);
+  if (date)
+    out.date = `${date[1][0].toUpperCase()}${date[1].slice(1, 3).toLowerCase()} ${date[2]}`;
+  const time = /\b(\d{1,2}(?::\d{2})?\s?(?:am|pm))\b/i.exec(text);
+  if (time) out.time = time[1].replace(/\s/g, '').toLowerCase();
+  const budget = /(\$[\d,]+)\s+budget/i.exec(text);
+  if (budget) out.budget = budget[1];
+  const price = /(\$\d+(?:\.\d{2})?\/mo)\b/i.exec(text);
+  if (price) out.price = price[1];
+  const audience = /^audience:\s*(.+)$/i.exec(text.trim());
+  if (audience) out.audience = audience[1][0].toUpperCase() + audience[1].slice(1);
+  return out;
+}
 
 const KEY = 'pathfinder:state';
 
@@ -127,25 +183,39 @@ export function titleFromBrief(text: string) {
   return out ? out[0].toUpperCase() + out.slice(1) : 'New workflow';
 }
 
+/** Writes one branch's approvals: 'original' is `approvals`, a fork its own (a fork id not in the store is ignored). */
+function setBranchApprovals(
+  wf: Workflow,
+  branch: string,
+  approvals: Record<string, ApprovalValue>
+): Workflow {
+  if (branch === 'original') return { ...wf, approvals };
+  return {
+    ...wf,
+    forks: wf.forks.map((f) => (f.id === branch ? { ...f, approvals } : f)),
+  };
+}
+
 function withBeat(wf: Workflow, beat: BeatId): Workflow {
   const phase = BEATS[beat].phase;
   const run = { ...wf.run, beat, phase, beatAt: now(), pausedAt: undefined };
-  let approvals = wf.approvals;
   if (beat === 'approval') {
-    approvals = { ...approvals };
+    // The chosen version's items wait for your OK (the original's until you choose a fork).
+    const branch = chosenBranch(wf);
+    const approvals = { ...branchApprovals(wf, branch) };
     const items = approvalItems(wf);
     for (const item of items)
       approvals[item.id] =
         approvals[item.id] ??
         // A helper set to post without asking (2.4e "Just go", 5.2 "Allow") doesn't wait for your OK.
         (needsYourOk(wf, item.owner) ? 'waiting' : 'approved');
+    wf = setBranchApprovals(wf, branch, approvals);
     if (items.length && items.every((i) => approvals[i.id] !== 'waiting'))
-      return withBeat({ ...wf, approvals }, 'launched');
+      return withBeat(wf, 'launched');
   }
   return {
     ...wf,
     run,
-    approvals,
     status:
       phase === 'notStarted'
         ? 'draft'
@@ -384,14 +454,21 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
       };
       return wf.run.beat === beat ? withBeat(next, nextBeat(next, beat)) : next;
     }
-    case 'approval/set':
-      return { ...wf, approvals: { ...wf.approvals, [a.output]: a.value } };
+    // 5.1's approvals are the chosen version's (the original's until you choose a fork).
+    case 'approval/set': {
+      const branch = chosenBranch(wf);
+      return setBranchApprovals(wf, branch, {
+        ...branchApprovals(wf, branch),
+        [a.output]: a.value,
+      });
+    }
     case 'approval/launch': {
-      const approvals = { ...wf.approvals };
+      const branch = chosenBranch(wf);
+      const approvals = { ...branchApprovals(wf, branch) };
       for (const item of approvalItems(wf))
         if ((approvals[item.id] ?? 'waiting') === 'waiting')
           approvals[item.id] = 'approved';
-      return withBeat({ ...wf, approvals }, 'launched');
+      return withBeat(setBranchApprovals(wf, branch, approvals), 'launched');
     }
     case 'permissions/nextTime': {
       const nextTime = { ...wf.permissions.nextTime };
@@ -418,6 +495,14 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
         permissions: { ...wf.permissions, nextTime },
       };
     }
+    case 'facts/set':
+      return {
+        ...wf,
+        resources: {
+          ...wf.resources,
+          facts: { ...wf.resources.facts, ...a.patch },
+        },
+      };
     case 'permissions/set':
       return { ...wf, permissions: { ...wf.permissions, ...a.patch } };
     case 'fork/create':
@@ -428,6 +513,92 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
         chosenVersion: a.id,
         forks: wf.forks.map((f) => ({ ...f, chosen: f.id === a.id })),
       };
+    case 'fork/approval':
+      return setBranchApprovals(wf, a.branch, {
+        ...branchApprovals(wf, a.branch),
+        [a.output]: a.value,
+      });
+    case 'fork/update':
+      return {
+        ...wf,
+        forks: wf.forks.map((f) => (f.id === a.id ? { ...f, ...a.patch } : f)),
+      };
+    // ---- Controls agent (additive) ----
+    case 'wf/archive':
+      if (!!wf.archived === a.archived) return wf;
+      return {
+        ...wf,
+        archived: a.archived || undefined,
+        // Archiving stops the run (paused, so the timeline holds); Restore leaves it paused for you to resume.
+        run:
+          a.archived && !wf.run.paused
+            ? { ...wf.run, paused: true, pausedAt: now() }
+            : wf.run,
+      };
+    case 'sandbox/give': {
+      const h = wf.helpers[a.helper];
+      if (!h) return wf;
+      const key =
+        a.section === 'skills' ? 'skills' : a.section === 'tools' ? 'tools' : 'files';
+      const has = h[key] ?? [];
+      const res = wf.resources[a.section];
+      const found = res.some((r) => r.name === a.name);
+      return {
+        ...wf,
+        helpers: has.includes(a.name)
+          ? wf.helpers
+          : { ...wf.helpers, [a.helper]: { ...h, [key]: [...has, a.name] } },
+        resources: {
+          ...wf.resources,
+          [a.section]: found
+            ? res.map((r) =>
+                r.name === a.name && !r.usedBy.includes(a.helper)
+                  ? { ...r, usedBy: [...r.usedBy, a.helper] }
+                  : r
+              )
+            : [...res, { name: a.name, usedBy: [a.helper] }],
+        },
+      };
+    }
+    case 'sandbox/import': {
+      const res = wf.resources[a.section];
+      if (res.some((r) => r.name === a.name)) return wf;
+      return {
+        ...wf,
+        resources: {
+          ...wf.resources,
+          [a.section]: [
+            { name: a.name, usedBy: [], source: 'New · not used yet' },
+            ...res,
+          ],
+        },
+      };
+    }
+    case 'decision/change': {
+      const title = a.title.trim();
+      if (!title) return wf;
+      const entry = {
+        id: `change-${a.id}`,
+        title,
+        basis: `You changed it from “${a.from}”`,
+        time: clock(),
+        replaces: a.id,
+      };
+      return {
+        ...wf,
+        decisions: [entry, ...wf.decisions.filter((d) => d.replaces !== a.id)],
+        resources: {
+          ...wf.resources,
+          facts: { ...wf.resources.facts, ...factsFromDecision(title) },
+        },
+      };
+    }
+    case 'approval/edit': {
+      const key = `${a.branch ?? chosenBranch(wf)}:${a.output}`;
+      const text = a.text.trim();
+      if (!text || wf.approvalText?.[key] === text) return wf;
+      return { ...wf, approvalText: { ...wf.approvalText, [key]: text } };
+    }
     default:
       return wf;
   }
@@ -526,6 +697,36 @@ export function reduce(s: AppState, a: Action): AppState {
           : s.workflows,
       };
     }
+    case 'wf/duplicate': {
+      const src = s.workflows[a.from ?? s.activeId];
+      if (!src) return s;
+      const id = `wf-${now().toString(36)}`;
+      const copy: Workflow = {
+        ...src,
+        id,
+        title: a.title.trim() || `${src.title} copy`,
+        status: 'draft',
+        card: undefined,
+        isNew: false,
+        asDrawn: undefined,
+        archived: undefined,
+        planStage: src.planStage === 'brief' ? 'brief' : 'team',
+        run: { phase: 'notStarted', beat: 'idle', paused: false, steps: {} },
+        handRaises: [],
+        decisions: [],
+        reruns: [],
+        approvals: {},
+        approvalText: undefined,
+        forks: [],
+        chosenVersion: undefined,
+        launchedOn: undefined,
+      };
+      return {
+        ...s,
+        workflows: { ...s.workflows, [id]: copy },
+        order: [id, ...s.order],
+      };
+    }
     case 'wf/new': {
       const id = `wf-${now().toString(36)}`;
       return {
@@ -617,7 +818,7 @@ export function resetDemo() {
   dispatch({ type: 'reset', state: sceneFor('1.1') });
 }
 
-if (typeof window !== 'undefined') installTimeline(store);
+if (typeof window !== 'undefined') installTimeline(store, extraWorkDelay);
 // Dev only: scripts (scripts/story-e2e.mjs) read and drive the store through window.__pathfinder.
 if (typeof window !== 'undefined' && import.meta.env.DEV)
   (window as unknown as { __pathfinder: unknown }).__pathfinder = {

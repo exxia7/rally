@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Modal } from '@/components/ui/Modal';
 import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
+import { blockedOutput } from '@/state/permissions';
 import {
   agentNames,
   money,
@@ -22,7 +23,7 @@ import {
   runData,
   summaryView,
 } from '@/state/runView';
-import { dispatch, useWorkflow } from '@/state/store';
+import { dispatch, useAppState, useWorkflow } from '@/state/store';
 
 import { LAUNCH_MAP } from './launchMap';
 
@@ -48,7 +49,12 @@ export default function LaunchSummaryScreen() {
   const run = useMemo(() => runData(wf), [wf]);
   const names = useMemo(() => agentNames(wf), [wf]);
   // What went out, what you fixed and the "Next time" rule follow your approvals and hand-raise answers.
-  const summary = useMemo(() => summaryView(wf), [wf]);
+  // An output your connections held back (LinkedIn) says why, and isn't one you skipped.
+  const app = useAppState();
+  const summary = useMemo(
+    () => summaryView(wf, (id) => blockedOutput(app, wf, id)),
+    [wf, app]
+  );
   const WENT_OUT = summary.wentOut;
   const FIXED = summary.fixed;
   const rules: Partial<Record<string, 'allow' | 'keep'>> = wf.permissions.nextTime;
@@ -137,10 +143,23 @@ export default function LaunchSummaryScreen() {
                     </p>
                   </div>
                 </div>
-                <p className={`${heading} h-[42px] pt-6`}>What went out</p>
+                <p className={`${heading} h-[42px] pt-6`}>
+                  {/* The version you chose with "Use this version"; the others were kept, not posted. */}
+                  {summary.version
+                    ? `What went out · ${summary.version}`
+                    : 'What went out'}
+                </p>
                 <div className="flex w-full shrink-0 flex-col items-start pt-1">
                   {WENT_OUT.map((r) => (
-                    <div key={r.label} className={rowClass}>
+                    <div
+                      key={r.label}
+                      // An item you edited on 5.1 shows your text under its row (the row grows to fit).
+                      className={
+                        'edited' in r && r.edited
+                          ? `${rowClass} h-auto min-h-10 py-2`
+                          : rowClass
+                      }
+                    >
                       {r.skipped ? (
                         // Declined on 5.1: drawn like the ad test that didn't run.
                         <p className="w-3.5 shrink-0 text-center text-[13px] leading-[19.5px] tracking-[-0.08px] text-muted">
@@ -149,11 +168,18 @@ export default function LaunchSummaryScreen() {
                       ) : (
                         <Icon src={checkDark} size={7.545} />
                       )}
-                      <p
-                        className={`min-w-px flex-1 truncate text-[13px] leading-[19.5px] tracking-[-0.08px] ${r.skipped ? 'text-muted' : 'text-ink'}`}
-                      >
-                        {r.label}
-                      </p>
+                      <div className="flex min-w-px flex-1 flex-col">
+                        <p
+                          className={`min-w-px truncate text-[13px] leading-[19.5px] tracking-[-0.08px] ${r.skipped ? 'text-muted' : 'text-ink'}`}
+                        >
+                          {r.label}
+                        </p>
+                        {'edited' in r && r.edited && (
+                          <p className="text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
+                            Your edit: “{r.edited}”
+                          </p>
+                        )}
+                      </div>
                       <p className={status}>{r.status}</p>
                     </div>
                   ))}

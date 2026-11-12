@@ -6,6 +6,8 @@ import { AssistantMessage, UserMessage } from '@/components/panels/ChatMessage';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
+import { helperOfStep } from '@/state/runView';
+import { dispatch } from '@/state/store';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import type { MenuItemData } from '@/components/ui/Menu';
@@ -52,12 +54,19 @@ export function RunSidePanel({
 }) {
   const [sections, setSections] = useState(sandbox);
   const [imports, setImports] = useState(0);
-  // Import adds to Assets; a section's "+" imports into that section (Skills get a skill, others a file).
+  // Import adds to Assets; a section's "+" imports into that section (Skills get a skill, others a file). The
+  // panel shows it at once; the store keeps it (`sandbox/import`), so the next visit and the plan see it too.
   const importFile = (into?: SandboxSection) => {
-    const n = imports + 1;
-    setImports(n);
+    setImports((n) => n + 1);
     const target = into?.id === 'skills' ? into.id : sections[0]?.id;
-    const name = target === 'skills' ? `New skill ${n}` : `Upload ${n}.pdf`;
+    const taken = sections.flatMap((s) => s.items.map((i) => i.name));
+    const nameFor = (k: number) =>
+      target === 'skills' ? `New skill ${k}` : `Upload ${k}.pdf`;
+    let n = 1;
+    while (taken.includes(nameFor(n))) n++;
+    const name = nameFor(n);
+    if (target === 'assets' || target === 'skills')
+      dispatch({ type: 'sandbox/import', section: target, name });
     setSections((prev) =>
       prev.map((s) =>
         s.id === target
@@ -74,10 +83,15 @@ export function RunSidePanel({
     );
   };
 
-  // "Add to <step>…" on a row: only steps that haven't started take new items (the Sandbox note says so).
-  // STATE: the store should add the resource to that helper's skills/files/tools so its inspector, the plan
-  // drawer and the step's run read it; here only the row's "used by" line changes.
-  const addTo = (item: SandboxItem, section: SandboxSection, step: SandboxStep) =>
+  // "Add to <step>…" on a row: only steps that haven't started take new items (the Sandbox note says so). The
+  // store gives it to that step's helper (`sandbox/give`: its files, skills or tools); the row updates at once.
+  const addTo = (item: SandboxItem, section: SandboxSection, step: SandboxStep) => {
+    const helper = helperOfStep(step.id);
+    if (
+      helper &&
+      (section.id === 'assets' || section.id === 'skills' || section.id === 'tools')
+    )
+      dispatch({ type: 'sandbox/give', section: section.id, name: item.name, helper });
     setSections((prev) =>
       prev.map((s) =>
         s.id === section.id
@@ -99,6 +113,7 @@ export function RunSidePanel({
           : s
       )
     );
+  };
   const rowMenu = (
     item: SandboxItem,
     section: SandboxSection
@@ -138,8 +153,12 @@ export function RunSidePanel({
       : text.replace(/^change:?/i, '').trim();
     if (!to) return null;
     const old = changing.title;
-    // STATE: the store's decisions[] should record this (changedByYou), and the helpers whose steps haven't
-    // started should read the new value (launch facts, approval copy).
+    // The store records it in decisions[] (`decision/change`); a date, time, price or budget in it becomes the
+    // launch fact the steps that haven't run read. The log here updates at once.
+    dispatch({ type: 'decision/change', id: changing.id, from: old, title: to });
+    const time = new Date()
+      .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      .toLowerCase();
     setLog((all) =>
       all.map((d) =>
         d.id === changing.id
@@ -148,7 +167,7 @@ export function RunSidePanel({
               title: to,
               basis: `You changed it from “${old}”`,
               tag: 'Changed by you',
-              time: 'Just now',
+              time,
             }
           : d
       )

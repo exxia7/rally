@@ -313,8 +313,9 @@ export function RunScreenLayout({
         onViewChange={(v) => v === 'planning' && go(planningTarget)}
         status={status?.state ?? (paused ? 'paused' : 'running')}
         statusLabel={
-          status?.label ??
-          `${paused ? 'Paused' : 'Running'} · ${forks.swap(cost)}`
+          forks.costLabel(
+            status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
+          )
         }
         onSettings={() => go('2.8', { returnHere: true })}
         panelOpen={panel !== null}

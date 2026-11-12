@@ -46,7 +46,8 @@ export default function HomeScreen() {
     () =>
       app.order
         .map((id) => app.workflows[id])
-        .filter(Boolean)
+        // Archived workflows (2.8 Archive) leave the list until restored.
+        .filter((wf) => wf && !wf.archived)
         .map((wf) => ({ wf, ...homeCard(wf) })),
     [app]
   );

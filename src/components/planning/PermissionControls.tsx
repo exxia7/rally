@@ -2,8 +2,10 @@ import clsx from 'clsx';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Radio } from '@/components/ui/Radio';
+import { TextInput } from '@/components/ui/TextInput';
 import { CHECK_LONG, type CheckLevel, CUSTOM } from '@/state/permissions';
 
 // The pieces every permission editor shares (audit 2i: one model, one set of controls): the preset chips (2.7, 2.8),
@@ -135,7 +137,46 @@ export function AdLimitValue({
       onClick={() => setEditing(String(value))}
       className={clsx('cursor-text hover:text-accent', className)}
     >
-      ${value}
+      {/* One text node: "$" + {value} would split it and shift Chrome's glyph antialiasing. */}
+      {`$${value}`}
     </button>
+  );
+}
+
+/** Not in Figma: name a new preset in place ("Save as a new preset") instead of leaving for workspace settings. */
+export function PresetNameForm({
+  onSave,
+  onCancel,
+  className,
+}: {
+  onSave: (name: string) => void;
+  onCancel: () => void;
+  className?: string;
+}) {
+  const [name, setName] = useState('');
+  return (
+    <form
+      className={clsx('flex w-full items-center gap-2', className)}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (name.trim()) onSave(name.trim());
+      }}
+    >
+      <TextInput
+        autoFocus
+        aria-label="New preset name"
+        placeholder="Preset name"
+        className="h-8 min-w-0 flex-1"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Escape' && onCancel()}
+      />
+      <Button type="submit" variant="primary" size="sm">
+        Save
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onCancel}>
+        Cancel
+      </Button>
+    </form>
   );
 }

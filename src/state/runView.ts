@@ -20,6 +20,7 @@ import { AI_COACH_TEAM, type Helper } from '@/screens/plan/aiCoachPlan';
 import { COMMUNITY } from '@/screens/plan/communityPlan';
 import {
   AI_COACH_DECIDING_RUN,
+  AI_COACH_EDGES,
   AI_COACH_LAUNCH_RUN,
   AI_COACH_NODES,
   AI_COACH_RUN,
@@ -37,9 +38,17 @@ import {
   RERUN_RUN,
 } from '@/screens/stuck/data';
 
+import { needsYourOk } from './permissions';
 import { bridgeEdges, rawCost } from './planView';
 import { BEATS } from './timeline';
-import type { BeatId, HandRaiseId, Workflow, WorkflowStatus } from './types';
+import type {
+  ApprovalValue,
+  BeatId,
+  Fork,
+  HandRaiseId,
+  Workflow,
+  WorkflowStatus,
+} from './types';
 
 // Selectors for the run: everything a run screen draws, derived from the live workflow. The frame data files
 // (aiCoachMap, stuck/data, launchMap) give each beat its Figma look; on top of that this applies what you did:
@@ -330,6 +339,56 @@ function applyGone(d: RunData, wf: Workflow): RunData {
   };
 }
 
+/**
+ * Permissions (permissions/settings agent, audit 2i): a poster set to post on its own ("Just go" in 2.4e, the drawer
+ * or 5.2's "Allow") loses its "Your OK" flag, "Ready to post" stops waiting when nobody asks, and the run Sandbox's
+ * Permissions rows follow the helpers' rules and the ad limit.
+ */
+function applyPermissions(d: RunData, wf: Workflow): RunData {
+  const asks = (step: string) => {
+    const h = HELPER_OF_STEP[step];
+    return h ? needsYourOk(wf, h) : true;
+  };
+  const posters = ['discord', 'schedule'].filter((st) =>
+    isLive(wf, HELPER_OF_STEP[st])
+  );
+  const anyAsks = posters.some(asks);
+  const rule = (step: string) => (asks(step) ? 'Asks you first' : 'Allowed');
+  return {
+    ...d,
+    map: {
+      ...d.map,
+      nodes: d.map.nodes.map((n) => {
+        if (n.asksYouFirst !== undefined && posters.includes(n.id))
+          return { ...n, asksYouFirst: asks(n.id) };
+        if (
+          n.id === 'ready' &&
+          !anyAsks &&
+          n.status?.text === 'Waits for your OK'
+        )
+          return { ...n, status: { text: 'Posts on its own' } };
+        return n;
+      }),
+    },
+    sandbox: d.sandbox.map((sec) =>
+      sec.id !== 'permissions'
+        ? sec
+        : {
+            ...sec,
+            items: sec.items.map((i) =>
+              i.name === 'Post to Discord'
+                ? { ...i, source: rule('discord') }
+                : i.name === 'Schedule on X'
+                  ? { ...i, source: rule('schedule') }
+                  : i.name === 'Spend on ads'
+                    ? { ...i, source: `Up to $${wf.permissions.adLimit}` }
+                    : i
+            ),
+          }
+    ),
+  };
+}
+
 const FINISHED = new Set(['done', 'reused']);
 
 /** Counts from the steps: agents done, the Tasks summary; plus your own decisions in the log. */
@@ -359,7 +418,7 @@ function applyCounts(d: RunData, wf: Workflow): RunData {
           : beat === 'launched'
             ? `All ${total} done`
             : `${done} of ${total} done · about ${minsLeft[beat] ?? 1} min left`;
-  const yours: Decision[] = wf.decisions.map((x) => ({
+  const yours: Decision[] = wf.decisions.filter((x) => !x.replaces).map((x) => ({
     id: x.id,
     art: createElement(UserAvatar, { className: 'size-5! text-[9px]!' }),
     who: 'You',
@@ -372,7 +431,53 @@ function applyCounts(d: RunData, wf: Workflow): RunData {
     ...d,
     completed,
     tasksSummary,
-    decisions: [...yours, ...d.decisions],
+    decisions: applyDecisionChanges([...yours, ...d.decisions], wf),
+  };
+}
+
+/** A decision you changed (3.4 "Change") shows your text in its place, marked "Changed by you". */
+function applyDecisionChanges(log: Decision[], wf: Workflow): Decision[] {
+  const changes = new Map(
+    wf.decisions.filter((x) => x.replaces).map((x) => [x.replaces!, x])
+  );
+  if (!changes.size) return log;
+  return log.map((x) => {
+    const c = changes.get(x.id);
+    return c
+      ? { ...x, title: c.title, basis: c.basis, time: c.time, tag: 'Changed by you' }
+      : x;
+  });
+}
+
+/**
+ * The run Sandbox from the store: resources you imported (Import, a section's "+") join their section, and a
+ * row's "used by" names every helper you gave it to ("Add to <step>").
+ */
+function applySandbox(d: RunData, wf: Workflow): RunData {
+  const name = (h: string) => wf.helpers[h]?.name ?? h;
+  return {
+    ...d,
+    sandbox: d.sandbox.map((sec) => {
+      if (sec.id !== 'assets' && sec.id !== 'skills' && sec.id !== 'tools')
+        return sec;
+      const res = wf.resources[sec.id];
+      const added = res
+        .filter((r) => !sec.items.some((i) => i.name === r.name))
+        .map((r) => ({ name: r.name, source: r.source ?? 'New · not used yet' }));
+      const items = [...added, ...sec.items].map((i) => {
+        const users = (res.find((r) => r.name === i.name)?.usedBy ?? [])
+          .map(name)
+          .filter((n) => !i.source.includes(n));
+        if (!users.length) return i;
+        return {
+          ...i,
+          source: /^(New|Not used)/.test(i.source)
+            ? users.join(', ')
+            : `${i.source}, ${users.join(', ')}`,
+        };
+      });
+      return { ...sec, items, open: sec.open || added.length > 0 };
+    }),
   };
 }
 
@@ -396,6 +501,161 @@ function applyOverrides(d: RunData, wf: Workflow): RunData {
   };
 }
 
+// ---- Steps you added on the plan --------------------------------------------------------------------------------
+
+/** One run-map column (Figma's columns are 230.6px apart at map scale). */
+const COLUMN = 230.6;
+
+/** Helpers the run frames don't draw: steps you inserted on a line (2.4c) and duplicates, with where they go. */
+type ExtraHelper = {
+  id: string;
+  helper: Helper;
+  /** An inserted step: the plan line it was added on. */
+  edge?: { from: string; to: string };
+  /** A duplicate: the helper it copies. */
+  copyOf?: string;
+};
+
+function extraHelpers(wf: Workflow): ExtraHelper[] {
+  return wf.helperOrder.flatMap((id): ExtraHelper[] => {
+    if (STEP_OF_HELPER[id] || !isLive(wf, id)) return [];
+    const helper = wf.helpers[id];
+    const edit = wf.planSteps.find((p) => p.id === id);
+    if (edit) return [{ id, helper, edge: edit.edge }];
+    if (helper.copyOf) return [{ id, helper, copyOf: helper.copyOf }];
+    return [];
+  });
+}
+
+const FINISHED_TASK = new Set(['done', 'reused']);
+const STARTED_TASK = new Set(['running', 'approval', 'done', 'reused']);
+
+/**
+ * Adds a run step for each helper you added on the plan: a new column between the steps its line joined (the
+ * columns after it move right and the map is drawn smaller to fit), its lines reconnected through it, and a task row.
+ * It works once the steps before it are done and is done once the steps after it have started (a duplicate follows
+ * the step it copies); `extraWorkDelay` gives the timeline a beat for it.
+ */
+function applyExtraSteps(d: RunData, wf: Workflow): RunData {
+  const extras = extraHelpers(wf);
+  if (!extras.length) return d;
+  let { nodes, edges } = d.map;
+  let { overlays, forkLines } = d.map;
+  let tasks = d.tasks;
+  let width = d.map.width;
+  const full = d.map.full ?? { x: d.map.x, y: d.map.y, width: d.map.width };
+  const taskState = (id: string) => tasks.find((t) => t.id === id)?.state;
+  const has = (id: string) => nodes.some((n) => n.id === id);
+  const runOf = (planId: string) => {
+    const id = STEP_OF_HELPER[planId] ?? planId;
+    return has(id) ? id : null;
+  };
+  const preds = (id: string) => edges.filter((e) => e.to === id).map((e) => e.from);
+  const succs = (id: string) => edges.filter((e) => e.from === id).map((e) => e.to);
+
+  for (const x of extras) {
+    let up: string[];
+    let down: string[];
+    let at: number;
+    let y: number;
+    if (x.edge) {
+      const from = runOf(x.edge.from);
+      const to = runOf(x.edge.to);
+      up = from ? [from] : to ? preds(to) : [];
+      down = to ? [to] : from ? succs(from) : [];
+      if (!up.length || !down.length) continue;
+      const downNodes = nodes.filter((n) => down.includes(n.id));
+      at = Math.min(...downNodes.map((n) => n.x));
+      y = downNodes.reduce((sum, n) => sum + n.y, 0) / downNodes.length;
+    } else {
+      const of = runOf(x.copyOf!);
+      const src = of && nodes.find((n) => n.id === of);
+      if (!src) continue;
+      up = preds(src.id);
+      down = succs(src.id);
+      at = src.x + COLUMN;
+      y = src.y;
+    }
+    // Make room: a new column at `at`.
+    const shift = (v: number) => (v >= at - 1 ? v + COLUMN : v);
+    nodes = nodes.map((n) => ({ ...n, x: shift(n.x) }));
+    edges = edges.map((e) =>
+      e.lane === undefined ? e : { ...e, lane: shift(e.lane) }
+    );
+    overlays = overlays?.map((o) => ({ ...o, x: shift(o.x) }));
+    forkLines = forkLines?.map((f) => ({ ...f, x: shift(f.x) }));
+    width += COLUMN;
+
+    const copied = x.copyOf ? STEP_OF_HELPER[x.copyOf] : undefined;
+    const state = copied
+      ? taskState(copied)
+      : down.some((s) => STARTED_TASK.has(taskState(s) ?? ''))
+        ? 'done'
+        : up.every((s) => FINISHED_TASK.has(taskState(s) ?? ''))
+          ? 'running'
+          : 'waiting';
+    const done = state === 'done' || state === 'reused';
+    const working = state === 'running';
+    const firstUp = up[0] && nameOfStep(wf, up[0]);
+    const agent = x.helper.agent as AgentName | undefined;
+    const node: MapNode = {
+      id: x.id,
+      x: at,
+      y,
+      kind: x.helper.kind ?? 'action',
+      title: x.helper.name,
+      agent: agent && agent !== x.helper.name ? x.helper.name : undefined,
+      state: done ? 'done' : working ? 'working' : 'waiting',
+      status: done
+        ? { text: 'Done' }
+        : working
+          ? { text: 'Working', tone: 'live' }
+          : { text: firstUp ? `Waits for ${firstUp}` : 'Waiting' },
+      avatar: working && agent ? { agent, state: 'working' } : undefined,
+    };
+    const status = (passed: boolean): MapEdge['status'] =>
+      passed ? 'passed' : 'pending';
+    const keep = x.copyOf
+      ? edges
+      : edges.filter((e) => !(up.includes(e.from) && down.includes(e.to)));
+    edges = [
+      ...keep,
+      ...up.map((u) => ({
+        from: u,
+        to: x.id,
+        status: status(done || working),
+      })),
+      ...down.map((t) => ({ from: x.id, to: t, status: status(done) })),
+    ];
+    nodes = [...nodes, node];
+    const row: TaskItem = {
+      id: x.id,
+      title: x.helper.name,
+      state: state ?? 'waiting',
+    };
+    const before = tasks.findIndex((t) => t.id && down.includes(t.id));
+    tasks =
+      before < 0
+        ? [...tasks, row]
+        : [...tasks.slice(0, before), row, ...tasks.slice(before)];
+  }
+  return {
+    ...d,
+    map: { ...d.map, nodes, edges, overlays, forkLines, width, full },
+    tasks,
+  };
+}
+
+/** How much longer the current beat runs while steps you added work in it (the timeline's beat for them). */
+export function extraWorkDelay(wf: Workflow) {
+  if (wf.asDrawn || !extraHelpers(wf).length) return 0;
+  const ids = new Set(extraHelpers(wf).map((x) => x.id));
+  const working = runData(wf).map.nodes.filter(
+    (n) => ids.has(n.id) && n.state === 'working'
+  ).length;
+  return working * 2500;
+}
+
 /** Everything RunScreenLayout draws for this workflow's current beat. `confirm`: 4.1b's variant of the panel. */
 export function runData(
   wf: Workflow,
@@ -410,6 +670,7 @@ export function runData(
     d = { ...d, handRaise: handRaiseData(wf, opts) };
   if (wf.asDrawn) return d;
   if (beat === 'rerun') d = applyRerun(d, wf);
+  d = applyExtraSteps(d, wf);
   const facts = factsPass(wf);
   if (facts)
     d = {
@@ -419,7 +680,9 @@ export function runData(
       inspectors: d.inspectors && mapText(d.inspectors, facts),
     };
   d = applyGone(d, wf);
+  d = applyPermissions(d, wf);
   d = applyOverrides(d, wf);
+  d = applySandbox(d, wf);
   if (beat === 'approval') {
     const n = approvalWaiting(wf);
     d = {
@@ -469,10 +732,12 @@ export function handRaiseData(
       : opts.confirm
         ? HAND_RAISED_RUN_CONFIRM.handRaise!
         : HAND_RAISE_MISSING;
-  if (wf.asDrawn) return base;
+  const handoff = handoffOf(wf, id);
+  if (wf.asDrawn) return { ...base, handoff };
   const gone = goneSteps(wf);
   const data: HandRaiseData = {
     ...base,
+    handoff,
     steps: base.steps.map((s, i) => ({
       ...s,
       options: s.options.map((o, j) => {
@@ -488,6 +753,42 @@ export function handRaiseData(
   };
   const rename = renamer(wf);
   return rename ? mapText(data, rename) : data;
+}
+
+/**
+ * "See the full handoff" (4.1, 4.3): what the handoff into the step that raised its hand carried besides the
+ * problems on its Fix steps. Names and facts come from the workflow (renamed helpers, your launch date).
+ */
+export function handoffOf(
+  wf: Workflow,
+  id: HandRaiseId
+): NonNullable<HandRaiseData['handoff']> {
+  const f = wf.resources.facts;
+  const nm = (h: string, fallback: string) => wf.helpers[h]?.name ?? fallback;
+  return id === 'missing'
+    ? {
+        from: nm('scout', 'Scout'),
+        to: nm('strategist', 'Strategist'),
+        passed: [
+          {
+            title: 'Competitor scan',
+            detail: '6 budgeting apps compared on features and coaching',
+          },
+          {
+            title: 'Feature comparison',
+            detail: 'Budgets, alerts and coaching across the 6 apps',
+          },
+        ],
+      }
+    : {
+        from: nm('strategist', 'Strategist'),
+        to: nm('writer', 'Writer'),
+        passed: [
+          { title: 'Audience', detail: f.audience },
+          { title: 'Message', detail: 'Lead with coaching, not tracking' },
+          { title: 'Launch date', detail: `${f.date}, ${f.time}` },
+        ],
+      };
 }
 
 /** 4.1b "Rerun confirm": who reruns for these choices. Figma's list while the frame is as drawn. */
@@ -575,8 +876,8 @@ export const FRAME_FAMILY: Record<string, string> = {
 
 // ---- Approval and summary ----------------------------------------------------------------------------------
 
-/** 5.1's items for this team and these answers (dates, copy). */
-export function approvalItems(wf: Workflow) {
+/** The original's items for this team and these answers (dates, copy). */
+function originalItems(wf: Workflow) {
   const facts = wf.asDrawn ? null : factsPass(wf);
   return APPROVAL_ITEMS.filter((i) => isLive(wf, i.owner)).map((i) =>
     facts
@@ -590,17 +891,112 @@ export function approvalItems(wf: Workflow) {
   );
 }
 
+// ---- Versions (forks) ---------------------------------------------------------------------------------------
+
+/** The version that goes out: the fork you chose with "Use this version", else the original. */
+export function chosenBranch(wf: Workflow): string {
+  const id = wf.chosenVersion;
+  return id && wf.forks.some((f) => f.id === id) ? id : 'original';
+}
+
+/** The chosen fork, when it isn't the original. */
+export function chosenFork(wf: Workflow): Fork | undefined {
+  return wf.forks.find((f) => f.id === chosenBranch(wf));
+}
+
+/** One branch's approvals ('original' or a fork id). */
+export function branchApprovals(
+  wf: Workflow,
+  branch: string
+): Record<string, ApprovalValue> {
+  if (branch === 'original') return wf.approvals;
+  return wf.forks.find((f) => f.id === branch)?.approvals ?? {};
+}
+
+/** Run steps after `from` (itself included), on the original graph: what a fork from that step redoes. */
+function stepsAfter(from: string): Set<string> {
+  const ids = new Set([from.replace(/-f\d$/, '')]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const e of AI_COACH_EDGES)
+      if (ids.has(e.from) && !ids.has(e.to)) {
+        ids.add(e.to);
+        grew = true;
+      }
+  }
+  return ids;
+}
+
+/**
+ * A branch's items: the original's, or a fork's (the outputs of the helpers it redoes, with its own copy where it
+ * has some). `fork` can be a fork the store doesn't have yet (a frame's drawn fork).
+ */
+export function branchItems(
+  wf: Workflow,
+  fork?: Pick<Fork, 'from' | 'copy'>
+) {
+  const all = originalItems(wf);
+  if (!fork) return all;
+  const owners = new Set(
+    [...stepsAfter(fork.from)].map((s) => HELPER_OF_STEP[s]).filter(Boolean)
+  );
+  const scoped = all.filter((i) => owners.has(i.owner));
+  return (scoped.length ? scoped : all).map((i) =>
+    fork.copy?.[i.id] ? { ...i, body: fork.copy[i.id] } : i
+  );
+}
+
+/** A branch's items with the text you edited in place ("Edit" on 5.1 or a fork's approval panel, `edited` set). */
+export function withEditedText<T extends { id: string; body: string }>(
+  wf: Workflow,
+  branch: string,
+  items: T[]
+): (T & { edited?: boolean })[] {
+  const text = wf.approvalText;
+  if (!text) return items;
+  return items.map((i) => {
+    const t = text[`${branch}:${i.id}`];
+    return t ? { ...i, body: t, edited: true } : i;
+  });
+}
+
+/** 5.1's items: the chosen version's, with the text you edited in place (5.1 "Edit", `edited` set). */
+export function approvalItems(wf: Workflow) {
+  return withEditedText(
+    wf,
+    chosenBranch(wf),
+    branchItems(wf, chosenFork(wf))
+  );
+}
+
+/** 5.1's approvals: the chosen version's. */
+export function approvalsOf(wf: Workflow) {
+  return branchApprovals(wf, chosenBranch(wf));
+}
+
 export function approvalWaiting(wf: Workflow) {
+  const approvals = approvalsOf(wf);
   const n = approvalItems(wf).filter(
-    (i) => (wf.approvals[i.id] ?? 'waiting') === 'waiting'
+    (i) => (approvals[i.id] ?? 'waiting') === 'waiting'
   ).length;
   // Figma's 5.1 counts the blocked ad test too.
   return wf.asDrawn ? n + 1 : n;
 }
 
-export function summaryView(wf: Workflow) {
+/**
+ * 5.2 for the chosen version. `blocked` says why an output couldn't go out (permissions.blockedOutput): such an item
+ * reads "Not posted · <why>" and isn't counted among the posts you skipped.
+ */
+export function summaryView(
+  wf: Workflow,
+  blocked: (output: string) => string | undefined = () => undefined
+) {
   const items = approvalItems(wf);
-  const skipped = items.filter((i) => wf.approvals[i.id] === 'wont-post');
+  const approvals = approvalsOf(wf);
+  const skipped = items.filter(
+    (i) => approvals[i.id] === 'wont-post' && !blocked(i.id)
+  );
+  const fork = chosenFork(wf);
   if (wf.asDrawn)
     return {
       line: LAUNCH_SUMMARY_LINE,
@@ -610,6 +1006,7 @@ export function summaryView(wf: Workflow) {
       askAbout: 'Let Community post to Discord without asking?',
       rule: 'community-discord',
       ruleHelper: 'Community',
+      version: undefined,
     };
   const fixed: string[] = [];
   for (const id of ['missing', 'price'] as HandRaiseId[]) {
@@ -628,14 +1025,21 @@ export function summaryView(wf: Workflow) {
     : (wf.helpers.publisher?.name ?? 'Publisher');
   return {
     line: `${wf.title} · ${wf.resources.facts.date} · ${mins} min · ${money(runCost(wf))}`,
+    /** The version that went out, when you chose a fork ("Vs Penny"); the others were kept, not posted. */
+    version: fork?.name,
     wentOut: items.map((i) =>
-      wf.approvals[i.id] === 'wont-post'
+      approvals[i.id] === 'wont-post'
         ? {
             label: i.summary.label,
-            status: 'Not posted · you skipped it',
+            status: `Not posted · ${blocked(i.id) ?? 'you skipped it'}`,
             skipped: true,
           }
-        : { ...i.summary, skipped: false }
+        : {
+            ...i.summary,
+            skipped: false,
+            /** Your edited text (5.1 "Edit"): 5.2 shows it under the row. */
+            edited: 'edited' in i && i.edited ? i.body : undefined,
+          }
     ),
     fixed,
     skipped: skipped.length,
@@ -665,10 +1069,14 @@ export function workflowCard(wf: Workflow): {
   if (wf.card && wf.status !== 'running' && wf.status !== 'needsYou')
     return { ...wf.card, needsYou: false };
   const st: WorkflowStatus = wf.status;
+  // The version you chose, when it isn't the original ("Launched Mar 14 · Vs Penny").
+  const version = chosenFork(wf)?.name;
+  const withVersion = (meta: string) =>
+    version ? `${meta} · ${version}` : meta;
   if (st === 'done')
     return {
       status: 'Done',
-      meta: `Launched ${wf.launchedOn ?? wf.resources.facts.date}`,
+      meta: withVersion(`Launched ${wf.launchedOn ?? wf.resources.facts.date}`),
       needsYou: false,
     };
   if (st === 'draft')
@@ -676,7 +1084,7 @@ export function workflowCard(wf: Workflow): {
   if (wf.run.phase === 'awaitingApproval')
     return {
       status: 'Running',
-      meta: `${approvalWaiting(wf)} to approve`,
+      meta: withVersion(`${approvalWaiting(wf)} to approve`),
       needsYou: true,
     };
   if (st === 'needsYou')

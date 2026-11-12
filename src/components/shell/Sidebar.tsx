@@ -22,7 +22,8 @@ export function Sidebar({
   const app = useAppState();
   const waiting = app.order
     .map((id) => app.workflows[id])
-    .find((wf) => wf && workflowCard(wf).needsYou);
+    // An archived workflow (2.8 Archive) doesn't ring the bell.
+    .find((wf) => wf && !wf.archived && workflowCard(wf).needsYou);
   return (
     <nav className="flex h-full w-[52px] shrink-0 flex-col items-center gap-1.5 rounded-card border border-line bg-white pt-2 pb-3 max-md:h-14 max-md:w-full max-md:flex-row max-md:justify-around max-md:gap-0 max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:px-4 max-md:py-0 max-md:pb-[env(safe-area-inset-bottom)]">
       <div className="pb-2 max-md:hidden">

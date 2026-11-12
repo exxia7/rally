@@ -118,8 +118,14 @@ type Store = {
   dispatch: (action: { type: 'run/advance'; wf: string; from: BeatId }) => void;
 };
 
-/** Drives the active workflow's run: one timer for its current beat, rescheduled whenever the run changes. */
-export function installTimeline(store: Store) {
+/**
+ * Drives the active workflow's run: one timer for its current beat, rescheduled whenever the run changes.
+ * `extraDelay` lengthens a beat while steps Figma doesn't draw (helpers you inserted) work in it.
+ */
+export function installTimeline(
+  store: Store,
+  extraDelay: (wf: Workflow) => number = () => 0
+) {
   let key = '';
   let timer: number | undefined;
   const schedule = () => {
@@ -134,7 +140,7 @@ export function installTimeline(store: Store) {
     window.clearTimeout(timer);
     timer = undefined;
     if (!beat.next || run.paused || run.hold || s.speed === 'hold') return;
-    const delay = (beat.delay ?? 3000) * SPEED[s.speed];
+    const delay = ((beat.delay ?? 3000) + extraDelay(wf)) * SPEED[s.speed];
     const elapsed = run.beatAt ? Date.now() - run.beatAt : 0;
     timer = window.setTimeout(
       () => store.dispatch({ type: 'run/advance', wf: wf.id, from: run.beat }),

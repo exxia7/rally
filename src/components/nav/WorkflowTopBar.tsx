@@ -88,8 +88,8 @@ export function WorkflowTopBar({
       label: 'Permissions',
       onSelect: () =>
         view === 'flowchart'
-          ? go('2.8', { returnHere: true })
-          : go('2.7'),
+          ? go('2.8', { returnHere: true, state: { section: 'permissions' } })
+          : go('2.7', { returnHere: true }),
     },
   ];
   const moreItems: MenuItemData[] = [

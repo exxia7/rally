@@ -46,5 +46,26 @@ export function useWorkflowPermissions() {
     setAdLimit(adLimit: number) {
       dispatch({ type: 'permissions/set', patch: { adLimit } });
     },
+    /** "Save as a new preset": adds these rules to the workspace's presets (1.2) and uses it here. */
+    saveAsPreset(name: string) {
+      const n = name.trim();
+      if (!n) return;
+      const existing = presetByName(s, n);
+      dispatch({
+        type: 'workspace/preset',
+        preset: {
+          key:
+            existing?.key ??
+            `preset-${n.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          name: existing?.name ?? n,
+          check: view.check,
+          adLimit: wf.permissions.adLimit,
+        },
+      });
+      dispatch({
+        type: 'permissions/set',
+        patch: { preset: existing?.name ?? n },
+      });
+    },
   };
 }

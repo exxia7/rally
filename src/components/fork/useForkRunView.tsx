@@ -6,7 +6,11 @@ import type { ApprovalState } from '@/components/panels/Cards';
 import { FORK_CARD_OPTIONS } from '@/components/panels/forkCardOptions';
 import type { InspectorData } from '@/components/run/InspectorPanel';
 import type { RunData, RunPanel } from '@/components/run/RunScreenLayout';
-import { approvalItems } from '@/state/runView';
+import {
+  branchApprovals,
+  branchItems,
+  withEditedText,
+} from '@/state/runView';
 import { dispatch, useWorkflow } from '@/state/store';
 
 import {
@@ -83,6 +87,9 @@ export function useCreateFork() {
   };
 }
 
+/** What one step of a fork lane spends (6.5's four-step Vs Penny lane: $0.06). */
+const LANE_STEP_COST = 0.015;
+
 const forkNumbers = (nodes: MapNode[]) => [
   ...new Set(nodes.map((n) => n.fork).filter((f): f is ForkNumber => !!f)),
 ];
@@ -105,14 +112,6 @@ export function useForkRunView({
   const wf = useWorkflow();
   const createFork = useCreateFork();
   const [focus, setFocus] = useState<BranchId | null>(null);
-  // STATE: per-fork approvals belong in `forks[].approvals` (a 'fork/approval' action); the original's already use
-  // 'approval/set'. Forks the frame draws but the store doesn't have keep theirs here.
-  const [forkApprovals, setForkApprovals] = useState<
-    Record<BranchId, Record<string, ApprovalState>>
-  >({});
-  // STATE: chosenVersion defaults to 'original', so "you picked the original" can't be told from "nothing picked
-  // yet". An optional chosenVersion (undefined until "Use this version") would replace this flag.
-  const [choseOriginal, setChoseOriginal] = useState(false);
 
   // Branches: Original + the frame's forks, renamed / added from the store.
   const live = wf.forks.map(branchFromFork);
@@ -124,13 +123,12 @@ export function useForkRunView({
   const hasForks = branches.length > 1;
   const swaps = renameSwaps(drawn, branches);
 
-  const chosen: BranchId | undefined =
-    wf.chosenVersion !== 'original' &&
-    branches.some((b) => b.id === wf.chosenVersion)
-      ? wf.chosenVersion
-      : choseOriginal && hasForks
-        ? 'original'
-        : undefined;
+  // The version you chose ("Use this version"); undefined until you choose.
+  const chosen: BranchId | undefined = branches.some(
+    (b) => b.id === wf.chosenVersion
+  )
+    ? wf.chosenVersion
+    : undefined;
   const view =
     hasForks && (focus || chosen)
       ? viewBranches(data, (id) => id !== (focus ?? chosen), chosen)
@@ -161,37 +159,47 @@ export function useForkRunView({
 
   // ---- Approval scoped to one branch ----
 
-  const itemsFor = (b: Branch): ForkApprovalItem[] => {
-    const all = approvalItems(wf);
-    if (!b.fork) return all;
-    const lane = laneOf(b.id);
-    const owners = new Set(lane.map((n) => n.agent?.toLowerCase()));
-    const scoped = all.filter((i) => owners.has(i.owner));
-    // The lane's own copy replaces the original's where a step previews it ("X post").
-    const copy = new Map(
-      lane.flatMap((n) =>
-        n.preview ? [[n.preview.label, n.preview.text]] : []
-      )
+  const storedFork = (b: Branch) => wf.forks.find((f) => f.id === b.id);
+  /** The lane's own copy, by output id, where a step previews it ("X post" on Vs Penny's Launch copy). */
+  const laneCopy = (b: Branch): Record<string, string> => {
+    const items = branchItems(wf, { from: b.from ?? '' });
+    return Object.fromEntries(
+      laneOf(b.id).flatMap((n) => {
+        const item = n.preview && items.find((i) => i.title === n.preview!.label);
+        return item && n.preview!.text !== item.body
+          ? [[item.id, n.preview!.text]]
+          : [];
+      })
     );
-    return (scoped.length ? scoped : all).map((i) => ({
-      ...i,
-      body: copy.get(i.title) ?? i.body,
-    }));
+  };
+  const itemsFor = (b: Branch): ForkApprovalItem[] =>
+    withEditedText(
+      wf,
+      b.id,
+      b.fork
+        ? branchItems(wf, {
+            from: b.from ?? '',
+            copy: storedFork(b)?.copy ?? laneCopy(b),
+          })
+        : branchItems(wf)
+    );
+  /** A fork the frame draws joins the store the first time you act on it (approve, choose), with its copy. */
+  const ensureFork = (b: Branch) => {
+    if (!b.fork) return;
+    const stored = storedFork(b);
+    if (!stored)
+      dispatch({
+        type: 'fork/create',
+        fork: { ...forkFromBranch({ ...b, fork: b.fork }), copy: laneCopy(b) },
+      });
+    else if (!stored.copy)
+      dispatch({ type: 'fork/update', id: b.id, patch: { copy: laneCopy(b) } });
   };
   const statesFor = (b: Branch): Record<string, ApprovalState> =>
-    b.fork
-      ? {
-          ...wf.forks.find((f) => forkBranchId(f.n) === b.id)?.approvals,
-          ...forkApprovals[b.id],
-        }
-      : (wf.approvals as Record<string, ApprovalState>);
+    branchApprovals(wf, b.id);
   const setState = (b: Branch, id: string, s: ApprovalState) => {
-    if (!b.fork) dispatch({ type: 'approval/set', output: id, value: s });
-    else
-      setForkApprovals((all) => ({
-        ...all,
-        [b.id]: { ...all[b.id], [id]: s },
-      }));
+    ensureFork(b);
+    dispatch({ type: 'fork/approval', branch: b.id, output: id, value: s });
   };
   const lead = (b: Branch) => {
     const items = itemsFor(b);
@@ -221,9 +229,9 @@ export function useForkRunView({
         compare={compare}
         chosen={chosen === b.id}
         onUseVersion={() => {
-          // STATE: 'fork/choose' sets chosenVersion; Home, 5.1 and 5.2 should read it to post only this version.
+          // 5.1, 5.2 and Home follow the chosen version (runView.chosenBranch).
+          ensureFork(b);
           dispatch({ type: 'fork/choose', id: b.id });
-          setChoseOriginal(b.id === 'original');
           setFocus(null);
         }}
         onApproveAll={() => {
@@ -231,9 +239,10 @@ export function useForkRunView({
             if ((states[i.id] ?? 'waiting') === 'waiting')
               setState(b, i.id, 'approved');
         }}
-        onEdit={() => {
-          const first = laneOf(b.id).find((n) => n.agent);
-          if (first) setPanel({ kind: 'inspector', nodeId: first.id });
+        // Edit changes the text in place; the store keeps it per branch, so 5.1 and 5.2 show it once chosen.
+        onBodyChange={(id, text) => {
+          ensureFork(b);
+          dispatch({ type: 'approval/edit', branch: b.id, output: id, text });
         }}
         onClose={close}
         onDecideLater={close}
@@ -278,6 +287,35 @@ export function useForkRunView({
     });
   };
 
+  // ---- Status pill ----
+
+  /**
+   * The status pill with the forks counted: "Running · <fork> · $x" for one fork, "<n> forks · $x" for more, and
+   * each fork no frame draws adding its lane's spend. A frame as drawn keeps Figma's label.
+   */
+  const costLabel = (label: string) => {
+    const named = swapText(label, swaps);
+    if (!hasForks || wf.asDrawn) return named;
+    const forks = branches.filter((b) => b.fork);
+    const added = forks
+      .filter((b) => b.fork && !drawnNumbers.has(b.fork))
+      .reduce((sum, b) => sum + laneOf(b.id).length * LANE_STEP_COST, 0);
+    const parts = named.split(' · ');
+    let money = -1;
+    parts.forEach((p, i) => {
+      if (/^\$\d+\.\d\d$/.test(p)) money = i;
+    });
+    if (money < 0) return named;
+    parts[money] = `$${(Number(parts[money].slice(1)) + added).toFixed(2)}`;
+    const segment =
+      forks.length === 1 ? forks[0].name : `${forks.length} forks`;
+    const names = new Set(forks.map((b) => b.name));
+    const at = parts.findIndex((p) => names.has(p) || /^\d+ forks$/.test(p));
+    if (at >= 0) parts[at] = segment;
+    else parts.splice(money, 0, segment);
+    return parts.join(' · ');
+  };
+
   // ---- Branches row ----
 
   const openNewFork = () => {
@@ -316,5 +354,6 @@ export function useForkRunView({
     create,
     /** A label with drawn fork names swapped for yours (the status pill's "Vs Penny · $0.24"). */
     swap: (s: string) => swapText(s, swaps),
+    costLabel,
   };
 }

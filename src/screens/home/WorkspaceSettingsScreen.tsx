@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import arrowLeftDark from '@/assets/icons/arrow-left-dark.svg';
 import lock from '@/assets/icons/lock.svg';
 import more from '@/assets/icons/more.svg';
 import plusDark14 from '@/assets/icons/plus-dark-14.svg';
@@ -27,9 +28,13 @@ import { TextInput } from '@/components/ui/TextInput';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { Progress } from '@/components/ui/Progress';
 import { screenPath } from '@/screens/registry';
+import { PresetEditor } from '@/components/panels/PresetEditor';
+import { useConnectTool } from '@/components/planning/useConnectTool';
 import { useGo } from '@/state/nav';
+import { presetAdLimit, presetCheck } from '@/state/permissions';
+import { dispatch, useAppState } from '@/state/store';
 
-import { PRESETS, TOOLS } from './workspaceData';
+import { TOOLS } from './workspaceData';
 
 export const screenId = '1.2';
 
@@ -69,8 +74,29 @@ const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
 export default function WorkspaceSettingsScreen() {
   const go = useGo();
   const [section, setSection] = useState<Section>('presets');
-  const [defaultPreset, setDefaultPreset] = useState('balanced');
-  const [tools, setTools] = useState(TOOLS);
+  // Presets, the default and connected tools are the workspace's in the store: 2.7, 2.8, the plan's cards and 5.1
+  // read the same ones (src/state/permissions.ts).
+  const app = useAppState();
+  const ws = app.workspace;
+  const tools = ws.tools.map((t) => {
+    const seed = TOOLS.find((x) => x.name === t.name);
+    return {
+      ...t,
+      detail:
+        seed?.connected && t.account === seed.detail.split(' · ')[0]
+          ? seed.detail
+          : `${t.account ?? 'Lumen'} · used in 1 workflow`,
+    };
+  });
+  const [editingPreset, setEditingPreset] = useState<string | null>(null);
+  const [connectDialog, connect] = useConnectTool();
+  const editPreset =
+    editingPreset && editingPreset !== 'new'
+      ? ws.presets.find((p) => p.key === editingPreset)
+      : undefined;
+  // Opened from a workflow (return-to stack): a way back to it.
+  const backTo = go.backTarget('1.1');
+  const wf = app.workflows[app.activeId];
   const [brand, setBrand] = useState(BRAND);
   const [people, setPeople] = useState(PEOPLE);
   const upload = useRef<HTMLInputElement>(null);
@@ -105,6 +131,17 @@ export default function WorkspaceSettingsScreen() {
             id="settings-general"
             className="flex w-[920px] max-w-full shrink-0 flex-col items-start p-10 max-md:px-4 max-md:py-6"
           >
+            {backTo !== '1.1' && (
+              <div className="flex w-full flex-col items-start pt-1 pb-4">
+                <Button
+                  size="sm"
+                  leading={<Icon src={arrowLeftDark} size={16} />}
+                  onClick={() => go.back('1.1')}
+                >
+                  {`Back to ${wf.title}`}
+                </Button>
+              </div>
+            )}
             <h1 className="text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
               Workspace settings
             </h1>
@@ -121,8 +158,8 @@ export default function WorkspaceSettingsScreen() {
                   subtitle="Saved sets of rules any workflow can use"
                 >
                   <div className="flex w-full flex-col items-start gap-2 pt-4">
-                    {PRESETS.map((p) => {
-                      const isDefault = p.key === defaultPreset;
+                    {ws.presets.map((p) => {
+                      const isDefault = p.name === ws.defaultPreset;
                       return (
                         <SettingsWellRow key={p.key} className="py-3 max-md:flex-wrap max-md:gap-y-2">
                           <SettingName name={p.name} description={p.rules} className="max-md:basis-full" />
@@ -133,7 +170,12 @@ export default function WorkspaceSettingsScreen() {
                               variant="secondary"
                               size="sm"
                               className="w-[101px]"
-                              onClick={() => setDefaultPreset(p.key)}
+                              onClick={() =>
+                                dispatch({
+                                  type: 'workspace/defaultPreset',
+                                  name: p.name,
+                                })
+                              }
                             >
                               Make default
                             </Button>
@@ -142,7 +184,7 @@ export default function WorkspaceSettingsScreen() {
                             variant="secondary"
                             size="sm"
                             className="w-[49px]"
-                            onClick={() => go('2.7')}
+                            onClick={() => setEditingPreset(p.key)}
                           >
                             Edit
                           </Button>
@@ -154,7 +196,7 @@ export default function WorkspaceSettingsScreen() {
                     <SettingsLinkButton
                       icon={plusDark14}
                       label="New preset"
-                      onClick={() => go('2.7')}
+                      onClick={() => setEditingPreset('new')}
                     />
                   </div>
                   <div className="flex w-full flex-col items-start pt-3">
@@ -200,13 +242,11 @@ export default function WorkspaceSettingsScreen() {
                                   label: 'Disconnect',
                                   description: 'Workflows ask you to connect it again',
                                   onSelect: () =>
-                                    setTools((all) =>
-                                      all.map((x) =>
-                                        x.name === t.name
-                                          ? { ...x, connected: false }
-                                          : x
-                                      )
-                                    ),
+                                    dispatch({
+                                      type: 'workspace/tool',
+                                      name: t.name,
+                                      connected: false,
+                                    }),
                                 },
                               ]}
                               trigger={(p) => (
@@ -225,19 +265,7 @@ export default function WorkspaceSettingsScreen() {
                           <Button
                             variant="secondary"
                             className="w-[79px]"
-                            onClick={() =>
-                              setTools((all) =>
-                                all.map((x) =>
-                                  x.name === t.name
-                                    ? {
-                                        ...x,
-                                        connected: true,
-                                        detail: 'Lumen · used in 0 workflows',
-                                      }
-                                    : x
-                                )
-                              )
-                            }
+                            onClick={() => connect(t.name)}
                           >
                             Connect
                           </Button>
@@ -365,6 +393,34 @@ export default function WorkspaceSettingsScreen() {
           </div>
         </div>
       </div>
+      {(editingPreset === 'new' || editPreset) && (
+        <PresetEditor
+          isNew={editingPreset === 'new'}
+          initial={
+            editPreset
+              ? {
+                  name: editPreset.name,
+                  check: presetCheck(editPreset),
+                  adLimit: presetAdLimit(editPreset),
+                }
+              : { name: '', check: 'unsure', adLimit: 0 }
+          }
+          onClose={() => setEditingPreset(null)}
+          onSave={(draft) => {
+            dispatch({
+              type: 'workspace/preset',
+              preset: {
+                key:
+                  editPreset?.key ??
+                  `preset-${draft.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                ...draft,
+              },
+            });
+            setEditingPreset(null);
+          }}
+        />
+      )}
+      {connectDialog}
     </AppShell>
   );
 }

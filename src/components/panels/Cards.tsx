@@ -254,11 +254,14 @@ export function ApprovalItem({
   onBodyChange,
   onChange,
   className,
+  needs,
 }: {
   title: string;
   when: string;
   body: string;
   channelNote?: string;
+  /** Can't be approved yet (LinkedIn isn't connected): a note and a button that fixes it replace Approve. */
+  needs?: { note: string; action: string; onAction: () => void };
   initial?: ApprovalState;
   state?: ApprovalState;
   /** Edit leaves the card (old behaviour). Without it, Edit edits the text in place: a Text area with Save / Cancel. */
@@ -315,6 +318,11 @@ export function ApprovalItem({
           </p>
         </div>
       )}
+      {needs && state === 'waiting' && (
+        <p className="pt-1.5 text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
+          {needs.note}
+        </p>
+      )}
       {draft !== null ? (
         <div className="w-full pt-1.5">
           <TextArea
@@ -352,13 +360,19 @@ export function ApprovalItem({
         ) : state === 'waiting' ? (
           <div className="flex w-full items-center justify-between">
             <div className="flex items-start gap-1.5">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => set('approved')}
-              >
-                Approve
-              </Button>
+              {needs ? (
+                <Button variant="primary" size="sm" onClick={needs.onAction}>
+                  {needs.action}
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => set('approved')}
+                >
+                  Approve
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

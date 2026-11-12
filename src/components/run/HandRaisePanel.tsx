@@ -41,6 +41,9 @@ export type HandRaiseData = {
   steps: HandRaiseStep[];
   /** The last step's button ("Confirm"); earlier steps say "Next: <next step label>". */
   confirmLabel: string;
+  /** "See the full handoff": who passed to whom and what arrived fine (runView.handoffOf); the Fix steps'
+   *  problems are the rest. */
+  handoff?: { from: string; to: string; passed: { title: string; detail: string }[] };
 };
 
 // The hand-raise panel (4.1 2362:27655, 4.3 2362:25379): the side panel when a helper raised its hand. Inspector

@@ -178,6 +178,8 @@ export type DecisionEntry = {
   title: string;
   basis: string;
   time: string;
+  /** A decision's "Change" (3.4): the id of the decision (a helper's or yours) this one replaces in the log. */
+  replaces?: string;
 };
 
 export type Rerun = {
@@ -206,6 +208,8 @@ export type Fork = {
   approvals: Record<string, ApprovalValue>;
   /** "Use this version": mirrors `Workflow.chosenVersion === id` (both set by `fork/choose`). */
   chosen?: boolean;
+  /** The fork's own copy per output id where it differs from the original's (its lane's previews: "X post"). */
+  copy?: Record<string, string>;
 };
 
 // ---- Workflow and app ----------------------------------------------------------------------------------------
@@ -240,9 +244,16 @@ export type Workflow = {
   reruns: Rerun[];
   approvals: Record<string, ApprovalValue>;
   forks: Fork[];
-  /** 'original' or a fork id: the version you chose to post ("Use this version"). */
-  chosenVersion: string;
+  /**
+   * 'original' or a fork id: the version you chose to post ("Use this version"); undefined until you choose, which
+   * posts the original. 5.1, 5.2 and Home follow it (runView.chosenBranch).
+   */
+  chosenVersion?: string;
   launchedOn?: string;
+  /** 2.8 Archive: hidden from Home and its run stopped; Restore clears it. */
+  archived?: boolean;
+  /** 5.1 inline edits: the text you saved per `<branch>:<output id>` (approvalItems shows it). */
+  approvalText?: Record<string, string>;
   /**
    * Set by a scene: the workflow is exactly Figma frame <id>, so views show that frame's literal text where Figma
    * disagrees with what the data implies (counts, estimate). Cleared by the first action that changes the workflow.

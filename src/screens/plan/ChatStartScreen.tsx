@@ -100,9 +100,16 @@ export default function ChatStartScreen() {
     if (kind === 'upload') fileInput.current?.click();
     else setAttachments((a) => [...a, ATTACH_LABEL[kind]]);
   };
+  // "Your answers in this chat": scroll to them and outline them for a moment.
+  const [answersLit, setAnswersLit] = useState(false);
+  const litTimer = useRef<number>(undefined);
+  useEffect(() => () => window.clearTimeout(litTimer.current), []);
   const showAnswers = () => {
     if (!isDesktop()) setPanelOpen(false);
     scroller.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    setAnswersLit(true);
+    window.clearTimeout(litTimer.current);
+    litTimer.current = window.setTimeout(() => setAnswersLit(false), 1600);
   };
 
   useEffect(() => {
@@ -188,7 +195,15 @@ export default function ChatStartScreen() {
             <ChatThread>
               {messages.map((m) =>
                 m.from === 'user' ? (
-                  <UserMessage key={m.id} text={m.text} />
+                  <UserMessage
+                    key={m.id}
+                    text={m.text}
+                    className={
+                      answersLit && m.id <= START.length
+                        ? 'border-accent-line ring-2 ring-accent-soft'
+                        : undefined
+                    }
+                  />
                 ) : (
                   <AssistantMessage key={m.id} text={m.text}>
                     {m.action === 'team' ? seeTeam : undefined}

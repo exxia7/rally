@@ -1,5 +1,6 @@
 import clsx from 'clsx';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import arrowLeftDark from '@/assets/icons/arrow-left-dark.svg';
 import lockAmber from '@/assets/icons/lock-amber-10.svg';
@@ -11,11 +12,27 @@ import { AppShell } from '@/components/shell/AppShell';
 import { UserAvatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { Toggle } from '@/components/ui/Toggle';
+import {
+  AdLimitValue,
+  PresetChips,
+  PresetNameForm,
+} from '@/components/planning/PermissionControls';
+import { PlanMainAction } from '@/components/planning/PlanTopBar';
+import { useConnectTool } from '@/components/planning/useConnectTool';
 import { useGo } from '@/state/nav';
+import { CHECK_SHORT, toolConnected } from '@/state/permissions';
+import { estimate as planEstimate } from '@/state/planView';
+import { money, runCost } from '@/state/runView';
+import { dispatch, store, useAppState } from '@/state/store';
+import type { Workflow } from '@/state/types';
+import { useWorkflowPermissions } from '@/state/usePermissions';
+
+/** The budget card's "Used $0.18": what the run has spent so far (Figma's number on its own frame). */
+const budgetUsed = (wf: Workflow) =>
+  wf.asDrawn === '2.8' ? '$0.18' : money(runCost(wf));
 
 export const screenId = '2.8';
 
@@ -40,36 +57,23 @@ const MORE: { value: Section; label: string }[] = [
   { value: 'archive', label: 'Archive' },
 ];
 
-type Preset = 'careful' | 'balanced' | 'hands-off' | 'custom';
-// `w` is the Figma chip width: Figma's Inter sets these labels ~1px wider than Chrome.
-const PRESETS: { value: Preset; label: string; check: string; w: string }[] = [
-  {
-    value: 'careful',
-    label: 'Careful',
-    check: 'Before every choice',
-    w: 'w-[62px]',
-  },
-  {
-    value: 'balanced',
-    label: 'Balanced',
-    check: 'Only when unsure',
-    w: 'w-[73px]',
-  },
-  { value: 'hands-off', label: 'Hands-off', check: 'Just go', w: 'w-[78px]' },
-  {
-    value: 'custom',
-    label: 'Custom',
-    check: 'Only when unsure',
-    w: 'w-[65px]',
-  },
-];
-
-const FACTS = [
-  { key: 'date', label: 'Launch date', value: 'Mar 12' },
+// Launch date and price are the workflow's launch facts (a hand-raise fix changes them); the others are 2.8's text.
+const FACTS: { key: string; label: string; value: string; fact?: 'date' | 'price' }[] = [
+  { key: 'date', label: 'Launch date', value: 'Mar 12', fact: 'date' },
   { key: 'audience', label: 'Audience', value: '2,800 waitlist signups' },
-  { key: 'price', label: 'Price', value: '$12/mo' },
+  { key: 'price', label: 'Price', value: '$12/mo', fact: 'price' },
   { key: 'claim', label: 'Approved claim', value: 'Saves you an hour a week' },
 ];
+
+/** The "Back to …" button's label for where it returns. */
+function backLabel(target: string) {
+  if (/^2\./.test(target)) return 'Back to the map';
+  if (target === '5.1') return 'Back to approvals';
+  if (target === '5.2') return 'Back to the summary';
+  if (/^[3-6]\./.test(target)) return 'Back to the run';
+  if (target === '1.1') return 'Back to workflows';
+  return 'Back';
+}
 
 const TOOLS = [
   { name: 'Discord', helper: 'Community', on: true },
@@ -115,17 +119,37 @@ function SettingRow({
 // defaults. Same page layout as 1.2 (side nav, 920px content, two 410px card columns).
 export default function WorkflowSettingsScreen() {
   const go = useGo();
-  const [section, setSection] = useState<Section | undefined>();
-  const [preset, setPreset] = useState<Preset>('balanced');
+  const location = useLocation();
+  const s = useAppState();
+  const wf = s.workflows[s.activeId];
+  const perms = useWorkflowPermissions();
+  const [connectDialog, connect] = useConnectTool();
+  const [naming, setNaming] = useState(false);
+  const [section, setSection] = useState<Section | undefined>(
+    () => (location.state as { section?: Section } | null)?.section
+  );
   const [tools, setTools] = useState(TOOLS);
   const [facts, setFacts] = useState(FACTS);
   const [editing, setEditing] = useState<string | null>(null);
+  const linkedIn = toolConnected(s, 'LinkedIn');
+  const factValue = (f: (typeof FACTS)[number]) =>
+    f.fact ? wf.resources.facts[f.fact] : f.value;
+  // Opened for one section ("Change rule" on 5.1 → Permissions): scroll to it.
+  useEffect(() => {
+    const first = (location.state as { section?: Section } | null)?.section;
+    if (first)
+      document
+        .getElementById(`wf-settings-${first}`)
+        ?.scrollIntoView({ block: 'start' });
+  }, [location.state]);
 
   const [confirm, setConfirm] = useState<'duplicate' | 'archive' | null>(
     null
   );
   const [toast, showToast] = useToast();
-  const [archived, setArchived] = useState(false);
+  // Controls agent: Archive / Restore and Duplicate are store actions (`wf/archive`, `wf/duplicate`).
+  const archived = !!wf.archived;
+  const setArchived = (v: boolean) => dispatch({ type: 'wf/archive', archived: v });
 
   const goTo = (s: Section) => {
     if (s === 'duplicate' || s === 'archive') {
@@ -137,11 +161,11 @@ export default function WorkflowSettingsScreen() {
       .getElementById(`wf-settings-${s}`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  const check = PRESETS.find((p) => p.value === preset)!.check;
   // Opened from a run (the run's settings button or its ⌄ menu): Back returns to the run, and the main action
   // is "Back to run" instead of Start launch.
   const fromRun = /^[3-6]\./.test(go.backTarget('2.3'));
   const back = () => go.back('2.3');
+  const backText = backLabel(go.backTarget('2.3'));
 
   return (
     <AppShell sidebar="none">
@@ -150,22 +174,15 @@ export default function WorkflowSettingsScreen() {
         onViewChange={(v) =>
           v === 'flowchart' && (fromRun ? back() : go('3.1'))
         }
-        estimate="About 9 min · $0.30"
+        title={wf.title}
+        estimate={planEstimate(wf)}
         onSettings={back}
         settingsActive
-        action={
-          <Button
-            variant="primary"
-            className="w-[100px]"
-            onClick={() => (fromRun ? back() : go('3.2'))}
-          >
-            {fromRun ? 'Back to run' : 'Start launch'}
-          </Button>
-        }
+        action={<PlanMainAction className="w-[100px]" />}
       />
       <div className="flex min-h-px w-full flex-1 items-start max-md:flex-col">
         <SettingsNav
-          title="AI Coach launch"
+          title={wf.title}
           items={NAV}
           more={{
             title: 'More',
@@ -181,21 +198,21 @@ export default function WorkflowSettingsScreen() {
         <div className="flex h-full min-h-px min-w-px flex-1 flex-col items-start overflow-y-auto bg-white max-md:w-full">
           <div className="flex w-[920px] max-w-full shrink-0 flex-col items-start p-10 max-md:px-4 max-md:py-6">
             <div className="flex w-full flex-col items-start pt-1">
+              {/* Returns to whoever opened settings (the map, the run, approvals…). */}
               <Button
                 size="sm"
-                className="w-[140px]"
+                className={backText === 'Back to the map' ? 'w-[140px]' : undefined}
                 leading={<Icon src={arrowLeftDark} size={16} />}
                 onClick={back}
               >
-                Back to the map
+                {backText}
               </Button>
             </div>
             <h1 className="pt-4 text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
               Workflow settings
             </h1>
             <p className="h-[26px] w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-muted max-xl:h-auto max-xl:whitespace-normal">
-              Only for AI Coach launch. Anything you don&apos;t change follows
-              workspace settings.
+              {`Only for ${wf.title}. Anything you don't change follows workspace settings.`}
             </p>
             <div className="grid w-full grid-cols-[410px_410px] items-start gap-5 pt-8 max-xl:grid-cols-1">
               <div className="flex flex-col items-start gap-5">
@@ -204,24 +221,25 @@ export default function WorkflowSettingsScreen() {
                   title="Permissions"
                   subtitle="Start from a saved preset, then customize for this workflow"
                 >
-                  <div className="flex h-10 w-full flex-wrap items-start gap-1.5 pt-3 max-md:h-auto">
-                    {PRESETS.map((p) => (
-                      <ChoiceChip
-                        key={p.value}
-                        selected={p.value === preset}
-                        className={p.w}
-                        onClick={() => setPreset(p.value)}
-                      >
-                        {p.label}
-                      </ChoiceChip>
-                    ))}
-                  </div>
+                  {/* The same permissions as 2.7's Sandbox section, 2.4e and the drawer (src/state/permissions.ts). */}
+                  <PresetChips
+                    className="h-10 pt-3 max-md:h-auto"
+                    presets={perms.presets}
+                    value={perms.preset}
+                    onChange={perms.setPreset}
+                  />
                   <div className="flex w-full flex-col items-start gap-3 pt-4">
                     <SettingRow name="Check with you">
-                      <p className={value}>{check}</p>
-                      <Badge tone="subtle" className="w-[76px]">
-                        {preset === 'custom' ? 'Changed here' : 'From preset'}
-                      </Badge>
+                      <p className={value}>{CHECK_SHORT[perms.check]}</p>
+                      {perms.checkChanged ? (
+                        <Badge tone="blue" className="w-[87px]">
+                          Changed here
+                        </Badge>
+                      ) : (
+                        <Badge tone="subtle" className="w-[76px]">
+                          From preset
+                        </Badge>
+                      )}
                     </SettingRow>
                     <SettingRow name="Posting or spending">
                       <p className={value}>Always waits for you</p>
@@ -235,12 +253,26 @@ export default function WorkflowSettingsScreen() {
                     </SettingRow>
                     <SettingRow
                       name="Ad spend limit"
-                      hint={`${PRESETS.find((p) => p.value === preset)!.label} preset is ${preset === 'hands-off' ? '$50' : '$0'}`}
+                      hint={
+                        perms.presetAdLimit === undefined
+                          ? 'Custom for this workflow'
+                          : `${perms.preset} preset is $${perms.presetAdLimit}`
+                      }
                     >
-                      <p className={value}>$50</p>
-                      <Badge tone="blue" className="w-[87px]">
-                        Changed here
-                      </Badge>
+                      <AdLimitValue
+                        className={value}
+                        value={perms.adLimit}
+                        onChange={perms.setAdLimit}
+                      />
+                      {perms.adLimitChanged ? (
+                        <Badge tone="blue" className="w-[87px]">
+                          Changed here
+                        </Badge>
+                      ) : (
+                        <Badge tone="subtle" className="w-[76px]">
+                          From preset
+                        </Badge>
+                      )}
                     </SettingRow>
                     <SettingRow name="Checkpoint">
                       <p className={value}>You approve before step 4</p>
@@ -249,10 +281,26 @@ export default function WorkflowSettingsScreen() {
                       </Badge>
                     </SettingRow>
                   </div>
-                  <p className="min-h-[33px] w-full pt-4 text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
-                    Save these as a new preset · A helper can still override in
-                    its Details
-                  </p>
+                  {naming ? (
+                    <PresetNameForm
+                      className="pt-4"
+                      onSave={(name) => {
+                        perms.saveAsPreset(name);
+                        setNaming(false);
+                      }}
+                      onCancel={() => setNaming(false)}
+                    />
+                  ) : (
+                    // One text node (as Figma draws it): the whole line saves these as a new preset.
+                    <button
+                      type="button"
+                      onClick={() => setNaming(true)}
+                      className="block min-h-[33px] w-full pt-4 text-left text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted hover:text-accent"
+                    >
+                      Save these as a new preset · A helper can still override in
+                      its Details
+                    </button>
+                  )}
                 </SettingsCard>
 
                 <SettingsCard
@@ -277,9 +325,14 @@ export default function WorkflowSettingsScreen() {
                           <input
                             autoFocus
                             aria-label={f.label}
-                            value={f.value}
+                            value={factValue(f)}
                             onChange={(e) =>
-                              setFacts((all) =>
+                              f.fact
+                                ? dispatch({
+                                    type: 'facts/set',
+                                    patch: { [f.fact]: e.target.value },
+                                  })
+                                : setFacts((all) =>
                                 all.map((x) =>
                                   x.key === f.key
                                     ? { ...x, value: e.target.value }
@@ -293,7 +346,9 @@ export default function WorkflowSettingsScreen() {
                             className="h-7 w-[180px] min-w-0 rounded-control border border-accent-line px-2 text-right text-[13px] font-medium text-ink outline-none"
                           />
                         ) : (
-                          <p className={clsx(value, 'truncate')}>{f.value}</p>
+                          <p className={clsx(value, 'truncate')}>
+                            {factValue(f)}
+                          </p>
                         )}
                         <Button
                           size="sm"
@@ -341,19 +396,35 @@ export default function WorkflowSettingsScreen() {
                         />
                       </div>
                     ))}
+                    {/* LinkedIn: the workspace's connection (1.2), connected right here when it isn't. */}
                     <div className="flex h-12 w-full items-center">
                       <div className="flex min-w-px flex-1 flex-col items-start">
-                        <p className="h-5 text-[13px] leading-[19.5px] font-medium tracking-[-0.08px] whitespace-nowrap text-muted">
+                        <p
+                          className={clsx(
+                            'h-5 text-[13px] leading-[19.5px] font-medium tracking-[-0.08px] whitespace-nowrap',
+                            linkedIn ? 'text-ink' : 'text-muted'
+                          )}
+                        >
                           LinkedIn
                         </p>
                         <p className="h-[17px] truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted max-md:w-full">
-                          Not connected · connect in workspace settings
+                          {linkedIn
+                            ? 'Publisher'
+                            : 'Not connected · connect in workspace settings'}
                         </p>
                       </div>
                       <Toggle
-                        label="LinkedIn (connect in workspace settings)"
-                        checked={false}
-                        onChange={() => go('1.2')}
+                        label={linkedIn ? 'LinkedIn' : 'LinkedIn (connect it)'}
+                        checked={linkedIn}
+                        onChange={(on) =>
+                          on
+                            ? connect('LinkedIn')
+                            : dispatch({
+                                type: 'workspace/tool',
+                                name: 'LinkedIn',
+                                connected: false,
+                              })
+                        }
                       />
                     </div>
                   </div>
@@ -367,7 +438,7 @@ export default function WorkflowSettingsScreen() {
                     <div className="flex min-w-px flex-1 flex-col items-start">
                       <p className={clsx(value, 'h-5')}>Spending cap</p>
                       <p className="min-h-[33px] w-full text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
-                        Used $0.18 so far · pauses and asks you at the cap
+                        {`Used ${budgetUsed(wf)} so far · pauses and asks you at the cap`}
                       </p>
                     </div>
                     <p className="h-[21px] w-12 shrink-0 pr-2 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
@@ -414,9 +485,20 @@ export default function WorkflowSettingsScreen() {
         confirmLabel="Duplicate"
         onConfirm={(_, name) => {
           setConfirm(null);
-          // STATE: the store should add a draft workflow (copy of helpers, settings and facts, no run) named
-          // `name`, so it shows on Home and its toast action can open it.
-          showToast({ message: `Created “${name.trim() || 'AI Coach launch copy'}” as a draft` });
+          // A draft copy (same team, settings and facts; no run), first on Home; the toast opens it.
+          const title = name.trim() || `${wf.title} copy`;
+          dispatch({ type: 'wf/duplicate', title });
+          const copyId = store.get().order[0];
+          showToast({
+            message: `Created “${title}” as a draft`,
+            action: {
+              label: 'Open',
+              onClick: () => {
+                dispatch({ type: 'wf/open', id: copyId });
+                go('2.3');
+              },
+            },
+          });
         }}
       />
       <ConfirmDialog
@@ -431,8 +513,7 @@ export default function WorkflowSettingsScreen() {
         confirmLabel={archived ? 'Restore' : 'Archive'}
         onConfirm={() => {
           setConfirm(null);
-          // STATE: the store should set this workflow's status to archived (hidden from Home's list, run
-          // stopped) and clear it on Undo / Restore.
+          // Archived: hidden from Home and the run paused; Undo / Restore bring it back.
           const next = !archived;
           setArchived(next);
           showToast(
@@ -446,6 +527,7 @@ export default function WorkflowSettingsScreen() {
         }}
       />
       {toast}
+      {connectDialog}
     </AppShell>
   );
 }

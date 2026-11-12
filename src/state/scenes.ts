@@ -181,7 +181,6 @@ function aiCoach(o: {
           }
         : {},
     forks: [],
-    chosenVersion: 'original',
     launchedOn: beat === 'launched' ? AI_COACH_FACTS.date : undefined,
     asDrawn: o.asDrawn,
   };

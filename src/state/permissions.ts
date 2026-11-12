@@ -201,6 +201,21 @@ export function toolConnected(s: AppState, name: string) {
   return t ? t.connected : true;
 }
 
+/**
+ * Why an output can't go out under your workspace's connections ("LinkedIn isn’t connected"), else undefined. 5.1
+ * holds it back on launch (stored as won't post); 5.2 says why instead of counting it as one you skipped.
+ */
+export function blockedOutput(
+  s: AppState,
+  wf: Workflow,
+  output: string
+): string | undefined {
+  if (wf.asDrawn) return undefined;
+  if (output === 'li' && !toolConnected(s, 'LinkedIn'))
+    return 'LinkedIn isn’t connected';
+  return undefined;
+}
+
 /** The workspace tools a helper uses that aren't connected (LinkedIn on Publisher). */
 export function missingTools(s: AppState, h: Helper | undefined) {
   return (h?.tools ?? []).filter((t) => !toolConnected(s, t));

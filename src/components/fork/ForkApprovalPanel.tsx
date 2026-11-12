@@ -36,7 +36,10 @@ export type ForkApprovalPanelProps = {
   /** Once chosen: approve what's still waiting. */
   onApproveAll: () => void;
   onClose: () => void;
+  /** Edit leaves the panel (e.g. to the step). Without it, Edit edits the text in place and saves with `onBodyChange`. */
   onEdit?: (id: string) => void;
+  /** The text you saved after an in-place Edit. */
+  onBodyChange?: (id: string, text: string) => void;
   onDecideLater?: () => void;
 };
 
@@ -62,6 +65,7 @@ export function ForkApprovalPanel({
   onApproveAll,
   onClose,
   onEdit,
+  onBodyChange,
   onDecideLater,
 }: ForkApprovalPanelProps) {
   const waiting = items.filter(
@@ -145,6 +149,7 @@ export function ForkApprovalPanel({
             state={states[item.id] ?? 'waiting'}
             onChange={(s) => onStateChange(item.id, s)}
             onEdit={onEdit && (() => onEdit(item.id))}
+            onBodyChange={onBodyChange && ((t) => onBodyChange(item.id, t))}
             className={`w-full shrink-0 ${item.minH ?? ''}`}
           />
         ))}
