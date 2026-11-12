@@ -1,6 +1,6 @@
-# Pathfinder
+# Rally
 
-Pathfinder, built from the Figma wireframes
+Rally, built from the Figma wireframes
 ([file](https://www.figma.com/design/uL2LNYWjWvYM9rPXjwDwAr/Wireframes?node-id=2362-50744), section
 "emily's pass"). It runs as a working app with no backend: your workflows, edits and runs are saved in the
 browser (localStorage) and stay across reloads. A first visit starts from a starter workspace.

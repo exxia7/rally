@@ -385,7 +385,7 @@ for (const size of [
   ].entries())
     await page.evaluate(
       ([i, name]) =>
-        window.__pathfinder.dispatch({
+        window.__rally.dispatch({
           type: "plan/insertStep",
           edit: {
             edge: { from: "strategist", to: "writer" },
@@ -440,11 +440,11 @@ for (const size of [
 // show at once. Open, it stays clear of the legend and the zoom controls; Escape and outside clicks fold it.
 const storeWf = (page) =>
   page.evaluate(() => {
-    const s = window.__pathfinder.store.get();
+    const s = window.__rally.store.get();
     return s.workflows[s.activeId];
   });
 const dispatchIn = (page, a) =>
-  page.evaluate((x) => window.__pathfinder.dispatch(x), a);
+  page.evaluate((x) => window.__rally.dispatch(x), a);
 for (const size of [
   { width: 1440, height: 900 },
   { width: 1024, height: 768 },

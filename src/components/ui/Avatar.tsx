@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import spark from '@/assets/icons/pathfinder-spark.svg';
+import spark from '@/assets/icons/rally-spark.svg';
 
 import { Icon } from './Icon';
 
@@ -27,9 +27,9 @@ export function UserAvatar({
   );
 }
 
-// Figma "Pathfinder avatar" (2362:29001): the assistant's mark next to Pathfinder's chat and planning messages.
-// Soft blue square with the Pathfinder spark. Screens use it at 30px.
-export function PathfinderAvatar({
+// Figma "Pathfinder avatar" (now Rally) (2362:29001): the assistant's mark next to Rally's chat and planning messages.
+// Soft blue square with the Rally spark. Screens use it at 30px.
+export function RallyAvatar({
   size = 30,
   className,
 }: {

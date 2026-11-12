@@ -2,7 +2,7 @@ import type { Ref } from 'react';
 
 import closeGray from '@/assets/icons/close-gray.svg';
 import link from '@/assets/icons/link.svg';
-import spark from '@/assets/icons/pathfinder-spark.svg';
+import spark from '@/assets/icons/rally-spark.svg';
 import upload from '@/assets/icons/upload.svg';
 import { Icon } from '@/components/ui/Icon';
 import { Menu } from '@/components/ui/Menu';

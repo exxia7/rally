@@ -10,7 +10,7 @@ import { InspectorPanel } from '@/components/run/InspectorPanel';
 import { inspectorFromNode } from '@/components/run/RunScreenLayout';
 import { TasksDropdown } from '@/components/run/TasksDropdown';
 import { AppShell } from '@/components/shell/AppShell';
-import { PathfinderAvatar } from '@/components/ui/Avatar';
+import { RallyAvatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -147,7 +147,7 @@ export default function LaunchSummaryScreen() {
               contained
               header={
                 <div className="flex w-full items-center gap-3">
-                  <PathfinderAvatar size={52} />
+                  <RallyAvatar size={52} />
                   <div className="flex min-w-0 flex-1 flex-col items-start">
                     <h2 className="text-[24px] leading-7 font-semibold tracking-[-0.48px] text-ink max-md:text-[20px]">
                       Your launch is live

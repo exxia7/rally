@@ -38,7 +38,7 @@ export function PlanChatPanel({
   onTabChange?: (tab: PanelTab) => void;
   sandbox?: ReactNode;
   onClose?: () => void;
-  /** 'column': the older left chat column of 2.4c (300px, "Chat with Pathfinder", no tabs), placed in the
+  /** 'column': the older left chat column of 2.4c (300px, "Chat with Rally", no tabs), placed in the
    *  main panel by the screen. */
   variant?: 'panel' | 'column';
   className?: string;
@@ -80,11 +80,11 @@ export function PlanChatPanel({
   if (variant === 'column')
     return (
       <section
-        aria-label="Chat with Pathfinder"
+        aria-label="Chat with Rally"
         className="flex h-full w-[300px] shrink-0 flex-col items-start border-r border-line bg-white pb-[7px] max-xl:hidden"
       >
         <p className="shrink-0 px-4 pt-4 pb-2 text-[12px] leading-[18px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink-2">
-          Chat with Pathfinder
+          Chat with Rally
         </p>
         <ScrollArea ref={body}>{thread('narrow')}</ScrollArea>
         <ChatComposer onSend={onSend} suggestions={suggestions} narrow />

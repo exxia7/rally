@@ -172,7 +172,9 @@ function factsFromDecision(
   return out;
 }
 
-const KEY = 'pathfinder:app';
+const KEY = 'rally:app';
+/** Where the app saved before it was renamed Rally: read once, then moved to KEY. */
+const OLD_KEY = 'pathfinder:app';
 
 // Actions that don't change a workflow (so a scene's frame stays "as drawn").
 const NEUTRAL = new Set([
@@ -823,7 +825,14 @@ export function initialState(): AppState {
 
 function load(): AppState | null {
   try {
-    const raw = window.localStorage.getItem(KEY);
+    let raw = window.localStorage.getItem(KEY);
+    const old = window.localStorage.getItem(OLD_KEY);
+    if (raw === null && old !== null) {
+      // Copy first, so the data is never only in memory.
+      window.localStorage.setItem(KEY, old);
+      raw = old;
+    }
+    if (old !== null) window.localStorage.removeItem(OLD_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as AppState;
     return s.version === STATE_VERSION && s.workflows?.[s.activeId] ? s : null;
@@ -880,9 +889,9 @@ export const store = {
 export const dispatch = (action: Action) => store.dispatch(action);
 
 if (typeof window !== 'undefined') installTimeline(store, extraWorkDelay);
-// Dev only: scripts (scripts/story-e2e.mjs) read and drive the store through window.__pathfinder.
+// Dev only: scripts (scripts/story-e2e.mjs) read and drive the store through window.__rally.
 if (typeof window !== 'undefined' && import.meta.env.DEV)
-  (window as unknown as { __pathfinder: unknown }).__pathfinder = {
+  (window as unknown as { __rally: unknown }).__rally = {
     store,
     dispatch,
   };

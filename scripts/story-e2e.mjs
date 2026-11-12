@@ -28,10 +28,10 @@ const check = (name, ok, detail = '') => {
 const text = () => page.evaluate(() => document.body.innerText)
 const state = () =>
   page.evaluate(() => {
-    const s = window.__pathfinder.store.get()
+    const s = window.__rally.store.get()
     return s.workflows[s.activeId]
   })
-const dispatch = (a) => page.evaluate((x) => window.__pathfinder.dispatch(x), a)
+const dispatch = (a) => page.evaluate((x) => window.__rally.dispatch(x), a)
 const noDesigner = async (where) => {
   if (process.env.SHOTS) await page.screenshot({ path: `design/out/story-${where}.png` })
   const t = await text()
@@ -125,7 +125,7 @@ try {
   // team now, not Figma's literal 2.3 text.
   const live = await page.evaluate(async () => {
     const pv = await import('/src/state/planView.ts')
-    const s = window.__pathfinder.store.get()
+    const s = window.__rally.store.get()
     const w = s.workflows[s.activeId]
     return { asDrawn: w.asDrawn, time: pv.estimate(w), cost: pv.estimateCost(w) }
   })

@@ -5,13 +5,18 @@ import { useSyncExternalStore } from 'react';
 //   per-browser preference, not workflow data, so it isn't in the app store).
 // - `open`: the overlay sidebar: the rail's expand under 1280px, the slide-out drawer on phones.
 
-const KEY = 'pathfinder:sidebar';
+const KEY = 'rally:sidebar';
+/** The key before the app was renamed Rally (still read, so the setting carries over). */
+const OLD_KEY = 'pathfinder:sidebar';
 
 type SidebarUi = { collapsed: boolean; open: boolean };
 
 function readCollapsed() {
   try {
-    return window.localStorage.getItem(KEY) === 'collapsed';
+    return (
+      (window.localStorage.getItem(KEY) ??
+        window.localStorage.getItem(OLD_KEY)) === 'collapsed'
+    );
   } catch {
     return false;
   }

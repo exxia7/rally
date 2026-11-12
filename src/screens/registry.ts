@@ -1,4 +1,4 @@
-// Every Pathfinder frame in Figma (file uL2LNYWjWvYM9rPXjwDwAr, section "Pathfinder · live app screens").
+// Every Rally frame in Figma (file uL2LNYWjWvYM9rPXjwDwAr, section "Pathfinder · live app screens", from before the rename).
 // `id` is the Figma frame number; routes are /s/<id>. `node` is the Figma node id used for design context
 // and for the reference screenshot in design/ref/<id>.png.
 export type ScreenMeta = {

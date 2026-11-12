@@ -5,13 +5,13 @@ import type { ReactNode } from 'react';
 import { AgentArt } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
 import { ThinkingDots } from '@/components/motion/Motion';
-import { PathfinderAvatar } from '@/components/ui/Avatar';
+import { RallyAvatar } from '@/components/ui/Avatar';
 import { transitions, useEnter, variants } from '@/lib/motion';
 
 // One set of chat components for every chat surface: the plan's main-column chat (2.1 → 2.2, 2362:23566,
 // `density="main"`) and the side panel's Chat (plan 2.3–2.8, 2362:23715; the run Chat tab: `density="panel"`).
 //
-// - <Message from="assistant">: the Pathfinder avatar, then a white bubble (1px line border, 10px corners with a
+// - <Message from="assistant">: the Rally avatar, then a white bubble (1px line border, 10px corners with a
 //   sharp top-left). <Message from="user">: a well bubble on the right with a sharp top-right corner.
 // - Bubbles hug their text up to a max width (assistant: the thread width less the avatar, 420px in the main column;
 //   user: 400px main / 280px panel, and never more than 85% of the thread), wrap, keep explicit "\n" line breaks
@@ -103,7 +103,7 @@ export function Message({
       )}
     >
       <div className={clsx('flex w-full items-start', s.row)}>
-        <PathfinderAvatar size={s.avatar} />
+        <RallyAvatar size={s.avatar} />
         <div
           className={clsx(
             'flex min-w-0 flex-col items-start rounded-[10px] border border-line bg-white',
@@ -160,7 +160,7 @@ export function Thread({
 }
 
 // Someone working at the foot of a thread: a helper in the run Chat tab ("Writer is working", its character in the
-// avatar's place) or the Planner in 2.2 while it thinks of a reply (no `agent`: the Pathfinder avatar). Then an
+// avatar's place) or the Planner in 2.2 while it thinks of a reply (no `agent`: the Rally avatar). Then an
 // assistant-style bubble with three dots that pulse in turn (ThinkingDots; still under reduced motion) and the label.
 // Keyed by the screen on who is working, so it changes (and rises in) as that moves on. Same density values as
 // Message: 26px avatar 8px from the bubble in the panel, 30px and 12px in the main column.
@@ -192,7 +192,7 @@ export function TypingRow({
       {agent ? (
         <AgentArt agent={agent} size={s.avatar} />
       ) : (
-        <PathfinderAvatar size={s.avatar} />
+        <RallyAvatar size={s.avatar} />
       )}
       <div
         className={clsx(

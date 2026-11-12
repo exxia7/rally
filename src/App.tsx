@@ -132,7 +132,7 @@ function ScreenIndex() {
   const chapters = [...new Set(SCREENS.map((s) => s.chapter))];
   return (
     <div className="min-h-full bg-white px-12 py-10 max-md:px-4 max-md:py-6">
-      <h1 className="text-[22px] font-semibold">Pathfinder frames (dev)</h1>
+      <h1 className="text-[22px] font-semibold">Rally frames (dev)</h1>
       <p className="mt-1 text-[13px] text-muted">
         Each link opens a Figma frame with its sample state. Sample states aren't saved: reload any page to get
         your own data back.

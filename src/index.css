@@ -4,7 +4,7 @@
 @import '@fontsource/inter/700.css';
 @import 'tailwindcss';
 
-/* Pathfinder tokens, from the Figma "Foundations" swatches and Fig/Button variables. */
+/* Rally tokens, from the Figma "Foundations" swatches and Fig/Button variables. */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 

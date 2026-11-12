@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
-import spark from '@/assets/icons/pathfinder-spark.svg';
+import spark from '@/assets/icons/rally-spark.svg';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';

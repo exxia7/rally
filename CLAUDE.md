@@ -1,6 +1,6 @@
-# Pathfinder
+# Rally
 
-Pathfinder, a working app built pixel-exact from the Figma wireframes
+Rally, a working app built pixel-exact from the Figma wireframes
 (file `uL2LNYWjWvYM9rPXjwDwAr`, section `2362:50744` "emily's pass"). Vite + React 19 + TypeScript +
 Tailwind v4. No backend: state lives in one store (`src/state`, see "App state") saved to localStorage; every
 screen has a real URL (`/w/<workflow>/<page>`).
@@ -118,7 +118,7 @@ to "show" a state: change the store and let the screen render it.
   per-step overrides), `handRaises`, `decisions` (yours), `reruns`, `approvals`, `forks` + `chosenVersion`.
 - `src/state/store.ts`: `useAppState()`, `useWorkflow()` (the active workflow), `dispatch(action)`. Every change is
   an `Action` handled in `reduce`; add a new action there rather than mutating state anywhere else. The store is
-  saved to localStorage (`pathfinder:app`); a first visit starts from `initialState()` (Home's scene, live). Additive fields are fine; give them a default in
+  saved to localStorage (`rally:app`; data saved under the old `pathfinder:app` moves over on load); a first visit starts from `initialState()` (Home's scene, live). Additive fields are fine; give them a default in
   `scenes.ts` so every scene sets them.
 - `src/state/scenes.ts`: `sceneFor(id)` builds the whole store state for Figma frame `id` from the screens' data
   files (`aiCoachPlan`, `communityPlan`, `aiCoachMap`, `stuck/data`, `launchMap`…). Data lives in those files;
@@ -154,7 +154,7 @@ in place). Scenes for frames not on the timeline yet (forks, rerun from a step) 
 
 Run screens use `useLiveRun(id)` (`src/state/useRun.ts`): it returns the props for RunScreenLayout (data, status,
 controlled Pause, renamed agents, Planning target) and does the frame sync. Shared actions with navigation live in
-`src/state/actions.ts` (`useStartLaunch()`: `run/start` then go to the run). `window.__pathfinder` (dev only) exposes
+`src/state/actions.ts` (`useStartLaunch()`: `run/start` then go to the run). `window.__rally` (dev only) exposes
 `{ store, dispatch }` for scripts.
 
 Checks for this layer: `node scripts/story-e2e.mjs` walks the main story with a removed and a renamed helper;
