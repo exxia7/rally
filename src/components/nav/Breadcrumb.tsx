@@ -45,14 +45,18 @@ export function Breadcrumb({
           )}
         </div>
       ))}
-      <div className="flex min-w-0 items-center gap-1.5 overflow-clip text-[14px] leading-5 tracking-[-0.08px] whitespace-nowrap">
+      <div className="flex min-w-0 items-center gap-1.5 text-[14px] leading-5 tracking-[-0.08px] whitespace-nowrap">
         {parents.length > 0 && (
           <span className="shrink-0 text-[#b4b6bc] max-lg:hidden">/</span>
         )}
         <span
           aria-current="page"
           title={current}
-          className="min-w-0 truncate font-medium text-ink"
+          // A long title keeps at least 120px when the bar is crowded (the status pill gives way first).
+          className={clsx(
+            'truncate font-medium text-ink',
+            current.length > 14 ? 'min-w-[120px]' : 'shrink-0'
+          )}
         >
           {current}
         </span>

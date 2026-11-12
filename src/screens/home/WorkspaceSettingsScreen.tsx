@@ -280,7 +280,8 @@ export default function WorkspaceSettingsScreen() {
               preset or customize it, and a helper can override it in its
               Details.
             </p>
-            <div className="grid w-full grid-cols-[410px_410px] items-start gap-5 pt-8 max-xl:grid-cols-1">
+            {/* As many 360px+ columns as the content area holds (two at 840px, one beside a docked sidebar at 1280). */}
+            <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(360px,100%),1fr))] items-start gap-5 pt-8">
               <div className="flex flex-col items-start gap-5">
                 <SettingsCard
                   id="settings-presets"

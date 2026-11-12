@@ -15,12 +15,15 @@ import { IconButton } from '@/components/ui/IconButton';
 // The planning side panel's Sandbox tab (2.6 / 2.7 "SandboxPanel", 2362:24362): a header with a 1px line (20px top,
 // 12px bottom, 24px sides, 4px gap; 88px with a one-line note): Panel tabs (Chat · Sandbox) and a Primary Small
 // "Import", then a 12/18 muted note that wraps on narrow screens. Below, the Sandbox sections (Assets, Skills, Tools, Launch facts, Permissions, Estimate):
-// rows drag onto helpers on the map. Under 1280px it is an overlay with ×, under 768px a sheet (SidePanel).
+// rows drag onto helpers on the map. A section's "+" calls `onAdd` (sections marked `addable: false` have none).
+// Under 1280px it is an overlay with ×, under 768px a half-height sheet (SidePanel); the header stays put while the
+// sections scroll under it.
 export function PlanSandboxPanel({
   sections,
   sectionsKey,
   onTabChange,
   onImport,
+  onAdd,
   onClose,
   onRowDragStart,
   onRowDragEnd,
@@ -32,13 +35,15 @@ export function PlanSandboxPanel({
   sectionsKey?: string | number;
   onTabChange: (tab: PanelTab) => void;
   onImport?: () => void;
+  /** A section's "+" (Assets imports, Skills adds a skill, Tools connects one…). */
+  onAdd?: (section: SandboxSection) => void;
   onClose?: () => void;
   onRowDragStart?: (item: SandboxItem, section: SandboxSection) => void;
   onRowDragEnd?: () => void;
   /** Touch path: a tapped row's "Add to…" menu items (see SandboxPanel). */
   rowMenu?: (
     item: SandboxItem,
-    section: SandboxSection,
+    section: SandboxSection
   ) => MenuItemData[] | undefined;
   note?: string;
 }) {
@@ -82,6 +87,7 @@ export function PlanSandboxPanel({
         key={sectionsKey}
         sections={sections}
         note={null}
+        onAdd={onAdd}
         onRowDragStart={onRowDragStart}
         onRowDragEnd={onRowDragEnd}
         rowMenu={rowMenu}

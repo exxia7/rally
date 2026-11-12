@@ -3,6 +3,7 @@ import { useRef, type CSSProperties } from 'react';
 
 import chevronRightDark from '@/assets/icons/chevron-right-dark.svg';
 import plusDarkThin from '@/assets/icons/plus-dark-thin.svg';
+import { ScrollArea } from '@/components/panels/ScrollArea';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { ToolRow } from '@/components/ui/ToolRow';
@@ -12,7 +13,9 @@ import { TOOLS } from './tools';
 
 // Figma "ToolPicker" (2.4b, 2362:23931): edit a helper's tools right on its card. 296px popover (white, 1px line,
 // 12px radius, 6px padding, layered shadow): "Tools for <helper>" + "From Sandbox", the Tool rows, then a line and
-// Ghost Small "Connect a tool" / "Open full editor ›". The 2.4b map draws it at 0.85 (`scale`).
+// Ghost Small "Connect a tool" / "Open full editor ›". The 2.4b map draws it at 0.85 (`scale`). A long helper name
+// truncates beside "From Sandbox"; past eight rows the list scrolls between the title and the footer (line under the
+// title while scrolled, fade at the cut), so the popover never runs off the map or the phone sheet.
 export function ToolPicker({
   helper,
   selected,
@@ -52,23 +55,27 @@ export function ToolPicker({
       )}
       style={scale ? { zoom: scale, ...style } : style}
     >
-      <div className="flex w-full items-center justify-between px-3 pt-2.5 pb-2 tracking-[-0.066px] whitespace-nowrap">
-        <p className="text-[14px] leading-5 font-medium text-ink">
+      <div className="flex w-full shrink-0 items-center justify-between gap-3 px-3 pt-2.5 pb-2 tracking-[-0.066px] whitespace-nowrap">
+        <p className="min-w-0 truncate text-[14px] leading-5 font-medium text-ink">
           Tools for {helper}
         </p>
-        <p className="text-[12px] leading-[18px] text-muted">From Sandbox</p>
+        <p className="shrink-0 text-[12px] leading-[18px] text-muted">
+          From Sandbox
+        </p>
       </div>
-      {TOOLS.map((t) => (
-        <ToolRow
-          key={t.name}
-          name={t.name}
-          source={toolSource?.(t.name) ?? t.source}
-          checked={selected.includes(t.name)}
-          onToggle={() => onToggle(t.name)}
-          fill
-        />
-      ))}
-      <div className="flex w-full flex-col items-start pt-1.5">
+      <ScrollArea className="max-h-64">
+        {TOOLS.map((t) => (
+          <ToolRow
+            key={t.name}
+            name={t.name}
+            source={toolSource?.(t.name) ?? t.source}
+            checked={selected.includes(t.name)}
+            onToggle={() => onToggle(t.name)}
+            fill
+          />
+        ))}
+      </ScrollArea>
+      <div className="flex w-full shrink-0 flex-col items-start pt-1.5">
         <div className="flex w-full items-center justify-between pt-[5px] shadow-[inset_0_1px_0_0_var(--color-line)]">
           <Button
             variant="ghost"

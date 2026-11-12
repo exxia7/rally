@@ -133,7 +133,7 @@ export function ForkApprovalPanel({
               >
                 {v.branch.name}:
               </span>{' '}
-              {v.text}
+              {withoutName(v.text, v.branch.name)}
             </p>
           ))}
         </div>
@@ -156,4 +156,13 @@ export function ForkApprovalPanel({
       </div>
     </SidePanel>
   );
+}
+
+// A fork's brief is often its chip's text ("Post at noon: lunch-break scrollers"), and the fork is named after the
+// chip ("Post at noon"). The line already leads with the name, so drop it from the text rather than say it twice.
+function withoutName(text: string, name: string) {
+  const lead = `${name}:`;
+  return text.toLowerCase().startsWith(lead.toLowerCase())
+    ? text.slice(lead.length).trimStart()
+    : text;
 }
