@@ -198,7 +198,7 @@ export function withForkLane(data: RunData, b: Branch): RunData {
       x: lineX - 22 * s,
       y: (anchor.y + base) / 2,
       scale: s,
-      content: createElement(ForkPill, { fork, label: b.name }),
+      content: createElement(ForkPill, { fork, label: `Fork ${fork}` }),
     },
     {
       id: `fork-${fork}-label`,
@@ -207,7 +207,7 @@ export function withForkLane(data: RunData, b: Branch): RunData {
       scale: s,
       content: createElement(ForkLabel, {
         fork,
-        label: `${b.name} · running`,
+        label: `Fork ${fork} · running`,
       }),
     },
   ];
