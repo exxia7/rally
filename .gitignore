@@ -33,3 +33,5 @@ dist-hosted/
 # Local backend state and credentials
 .data/
 .env
+
+.vercel
