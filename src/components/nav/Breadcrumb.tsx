@@ -52,10 +52,11 @@ export function Breadcrumb({
         <span
           aria-current="page"
           title={current}
-          // A long title keeps at least 120px when the bar is crowded (the status pill gives way first).
+          // A long title keeps at least 120px when the bar is crowded; on phones it may shrink to 48px so it never
+          // runs under the Plan / Run switch (it truncates, full text in the tooltip).
           className={clsx(
             'truncate font-medium text-ink',
-            current.length > 14 ? 'min-w-[120px]' : 'shrink-0'
+            current.length > 14 ? 'min-w-[120px] max-md:min-w-12' : 'shrink-0'
           )}
         >
           {current}
