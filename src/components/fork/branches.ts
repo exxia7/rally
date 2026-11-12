@@ -10,7 +10,7 @@ export type BranchId = string;
 export type Branch = {
   /** 'original' or `fork-<n>`. */
   id: BranchId;
-  /** "Original" or the fork's name ("Vs Penny", or whatever the user typed or picked). */
+  /** "Original" or the fork's name: always its number ("Fork 1"), whatever the frame drew or the user typed. */
   name: string;
   /** The fork's colour; undefined for the original path. */
   fork?: ForkNumber;
@@ -25,6 +25,9 @@ export type Branch = {
 export const ORIGINAL: Branch = { id: 'original', name: 'Original' };
 
 export const forkBranchId = (n: ForkNumber): BranchId => `fork-${n}`;
+
+/** A fork's name everywhere it shows: its number. What it tries is its brief. */
+export const forkName = (n: ForkNumber) => `Fork ${n}`;
 
 /** The branch a map node is on (lane nodes carry their fork number). */
 export const branchOfNode = (node: { fork?: ForkNumber }): BranchId =>
@@ -42,7 +45,7 @@ export function nextForkNumber(used: Iterable<number>): ForkNumber | null {
 export function branchFromFork(f: Fork): Branch {
   return {
     id: forkBranchId(f.n),
-    name: f.name,
+    name: forkName(f.n),
     fork: f.n,
     parent: f.parent,
     from: f.from,
@@ -64,47 +67,15 @@ export function forkFromBranch(b: Branch & { fork: ForkNumber }): Fork {
 }
 
 /**
- * Original + every fork, by colour: a live fork (from the store) replaces the fork a frame draws in the same colour,
- * so a fork you named shows under your name on the frame that draws it.
+ * Original + every fork, by colour: a live fork (from the store) replaces the fork a frame draws in the same colour.
+ * Every fork is named by its number, so a frame's drawn name ("Vs Penny") is swapped for "Fork 1" (renameSwaps).
  */
 export function mergeBranches(drawn: Branch[], live: Branch[]): Branch[] {
   const byId = new Map<BranchId, Branch>();
-  for (const b of [...drawn, ...live]) if (b.fork) byId.set(b.id, b);
+  for (const b of [...drawn, ...live])
+    if (b.fork) byId.set(b.id, { ...b, name: forkName(b.fork) });
   return [
     ORIGINAL,
     ...[...byId.values()].sort((a, b) => (a.fork ?? 0) - (b.fork ?? 0)),
   ];
-}
-
-/**
- * A fork's name from the Fork card (finding 2g): a chosen chip names it after the chip ("Students"); typed text
- * names it after its first words ("Lead with the free trial"). The card's first chip, untouched, keeps the name the
- * frame that draws this fork gives it (`drawnName`: "Vs Penny", "First-timers").
- */
-export function forkNameFromInput(
-  instruction: string,
-  options: { label: string; text: string }[] = [],
-  drawnName?: string
-): string | null {
-  const text = instruction.trim();
-  if (!text) return null;
-  const i = options.findIndex((o) => o.text.trim() === text);
-  if (i === 0 && drawnName) return drawnName;
-  if (i >= 0) return options[i].label;
-  return shortName(text);
-}
-
-const MAX_NAME = 24;
-
-function shortName(text: string) {
-  const head = text.split(/[:;.!?\n—]/)[0].trim() || text;
-  let out = '';
-  for (const w of head.split(/\s+/)) {
-    const next = out ? `${out} ${w}` : w;
-    if (next.length > MAX_NAME) break;
-    out = next;
-  }
-  if (!out) out = head.slice(0, MAX_NAME);
-  out = out.replace(/[,'"“”‘’]+$/g, '').replace(/^["“‘']+/, '');
-  return out ? out[0].toUpperCase() + out.slice(1) : null;
 }
