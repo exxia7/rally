@@ -9,7 +9,10 @@ import { Suggestion } from '@/components/ui/Suggestion';
 import { TextInput } from '@/components/ui/TextInput';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 
+import type { Effort, ModelId } from '@/state/types';
+
 import { AttachMenu } from './AttachMenu';
+import { EffortPicker, ModelPicker } from './ModelEffortPicker';
 
 // Shared composer state: a controlled text value, Enter (without Shift) or the send button sends trimmed text.
 function useComposer(onSend: (text: string) => void, initial = '') {
@@ -186,10 +189,19 @@ export function BriefComposer({
   attachOpen,
   onAttachOpenChange,
   onAttach,
+  model,
+  onModelChange,
+  effort,
+  onEffortChange,
   className,
 }: {
   onSend: (text: string) => void;
   placeholder?: string;
+  /** Optional model / effort pickers beside the attach button (each shows when its onChange is passed). */
+  model?: ModelId;
+  onModelChange?: (model: ModelId) => void;
+  effort?: Effort;
+  onEffortChange?: (effort: Effort) => void;
   /** The placeholder after Send with an empty brief. */
   emptyPlaceholder?: string;
   /** Controlled text (a starter chip fills it). */
@@ -239,24 +251,32 @@ export function BriefComposer({
         }}
         className="block h-11 w-full resize-none bg-transparent p-0 text-[14px] leading-[normal] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
       />
-      <div className="flex w-full items-center justify-between">
-        <div ref={anchor} className="relative flex shrink-0">
-          <button
-            type="button"
-            aria-label="Attach"
-            aria-haspopup="menu"
-            aria-expanded={attachOpen}
-            onClick={() => onAttachOpenChange(!attachOpen)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-control border border-line-2 bg-white hover:bg-hover"
-          >
-            <Icon src={plusAttach} size={16} />
-          </button>
-          {attachOpen && (
-            <AttachMenu
-              onClose={close}
-              onPick={onAttach}
-              className="absolute top-[53px] left-0 w-[263px]"
-            />
+      <div className="flex w-full items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1">
+          <div ref={anchor} className="relative flex shrink-0">
+            <button
+              type="button"
+              aria-label="Attach"
+              aria-haspopup="menu"
+              aria-expanded={attachOpen}
+              onClick={() => onAttachOpenChange(!attachOpen)}
+              className="flex size-8 shrink-0 items-center justify-center rounded-control border border-line-2 bg-white hover:bg-hover"
+            >
+              <Icon src={plusAttach} size={16} />
+            </button>
+            {attachOpen && (
+              <AttachMenu
+                onClose={close}
+                onPick={onAttach}
+                className="absolute top-[53px] left-0 w-[263px]"
+              />
+            )}
+          </div>
+          {onModelChange && (
+            <ModelPicker value={model} onChange={onModelChange} />
+          )}
+          {onEffortChange && (
+            <EffortPicker value={effort} onChange={onEffortChange} />
           )}
         </div>
         <Button variant="primary" onClick={send}>

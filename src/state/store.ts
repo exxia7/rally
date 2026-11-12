@@ -23,9 +23,11 @@ import type {
   ApprovalValue,
   BeatId,
   ChatLine,
+  Effort,
   Fork,
   HandRaiseId,
   HelperId,
+  ModelId,
   Output,
   PlanStage,
   PlanStepEdit,
@@ -52,6 +54,8 @@ export type Action =
   | { type: 'wf/new' }
   | { type: 'wf/open'; id: WorkflowId }
   | { type: 'brief/send'; text: string; attachments?: string[] }
+  | { type: 'brief/model'; model: ModelId }
+  | { type: 'brief/effort'; effort: Effort }
   | { type: 'briefChat/send'; text: string; reply: string }
   | { type: 'plan/stage'; stage: PlanStage }
   | { type: 'helper/patch'; id: HelperId; patch: Partial<Helper> }
@@ -242,6 +246,10 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
         briefChat: briefChat(text),
       };
     }
+    case 'brief/model':
+      return { ...wf, model: a.model };
+    case 'brief/effort':
+      return { ...wf, effort: a.effort };
     case 'briefChat/send': {
       const n = wf.briefChat.length;
       return {

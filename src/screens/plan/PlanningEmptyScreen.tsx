@@ -2,10 +2,7 @@ import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
-import {
-  ATTACH_LABEL,
-  AttachmentChips,
-} from '@/components/panels/AttachMenu';
+import { ATTACH_LABEL, AttachmentChips } from '@/components/panels/AttachMenu';
 import { BriefComposer } from '@/components/panels/ChatComposer';
 import { AppShell } from '@/components/shell/AppShell';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
@@ -31,7 +28,6 @@ const STARTERS: { label: string; brief: string }[] = [
     brief: 'Announce our new pricing to existing customers in two weeks',
   },
 ];
-
 
 // Figma 2.1 "Planning · empty" (2362:23498) and 2.1-attach "· attach menu open" (2362:27498): "New workflow" from
 // Home. Write the launch brief (or start from a chip) and Send to meet the Planner (2.2). The attach button opens
@@ -94,6 +90,14 @@ export default function PlanningEmptyScreen() {
                 attachOpen={attachOpen}
                 onAttachOpenChange={setAttachOpen}
                 onAttach={attach}
+                model={wf.model}
+                onModelChange={(model) =>
+                  dispatch({ type: 'brief/model', model })
+                }
+                effort={wf.effort}
+                onEffortChange={(effort) =>
+                  dispatch({ type: 'brief/effort', effort })
+                }
               />
               <input
                 ref={fileInput}

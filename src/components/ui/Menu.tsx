@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useState, type ReactNode, type Ref } from 'react';
 
+import checkDark from '@/assets/icons/check-dark.svg';
+
 import { Icon } from './Icon';
 
 // Popover menu from the attach menus (Figma "Attach menu", e.g. 2362:26459): white, 1px line-2 border (in layout),
@@ -12,6 +14,8 @@ export type MenuItemData = {
   label: string;
   description?: string;
   icon?: string;
+  /** Single-choice menus: set on every row (true on the chosen one) to get radio rows with a trailing check. */
+  checked?: boolean;
   onSelect?: () => void;
 };
 
@@ -28,7 +32,13 @@ export function Menu({
   ref?: Ref<HTMLDivElement>;
   label?: string;
 }) {
-  const [active, setActive] = useState(0);
+  // Single-choice menus start highlighted on the chosen row.
+  const [active, setActive] = useState(() =>
+    Math.max(
+      0,
+      items.findIndex((i) => i.checked)
+    )
+  );
   return (
     <div
       ref={ref}
@@ -45,6 +55,7 @@ export function Menu({
           label={item.label}
           description={item.description}
           icon={item.icon}
+          checked={item.checked}
           active={i === active}
           onHover={() => setActive(i)}
           onSelect={() => {
@@ -61,6 +72,7 @@ function MenuItem({
   label,
   description,
   icon,
+  checked,
   active,
   onHover,
   onSelect,
@@ -71,7 +83,8 @@ function MenuItem({
   return (
     <button
       type="button"
-      role="menuitem"
+      role={checked === undefined ? 'menuitem' : 'menuitemradio'}
+      aria-checked={checked}
       onMouseEnter={onHover}
       onFocus={onHover}
       onClick={onSelect}
@@ -91,6 +104,7 @@ function MenuItem({
           </span>
         )}
       </span>
+      {checked && <Icon src={checkDark} size={14} />}
     </button>
   );
 }

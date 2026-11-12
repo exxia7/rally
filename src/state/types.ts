@@ -259,7 +259,14 @@ export type Workflow = {
    * disagrees with what the data implies (counts, estimate). Cleared by the first action that changes the workflow.
    */
   asDrawn?: string;
+  /** Picked in the brief composer (2.1); unset = the defaults in components/panels/ModelEffortPicker. */
+  model?: ModelId;
+  effort?: Effort;
 };
+
+/** The brief composer's model and effort pickers (not in Figma, see design/non-figma-ui.md). */
+export type ModelId = 'opus' | 'sonnet' | 'haiku';
+export type Effort = 'low' | 'medium' | 'high';
 
 export type Speed = 'normal' | 'fast' | 'hold';
 

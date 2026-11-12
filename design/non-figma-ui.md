@@ -68,3 +68,12 @@ Small additions a flow needs, built only from existing components and tokens. Ad
 | 3.x–5.1 run maps | A helper you added on a line (2.4c) or duplicated is its own run step: a new column between the steps its line joined (later columns move right, the map draws smaller), lines reconnected through it, a task row, "Waits for <helper>" → "Working" → "Done"; the beat it works in runs 2.5s longer | 2b: plan edits reach the run. |
 | 2.8 → run, 5.1, 5.2 | Launch facts are all the workflow's: editing Audience or Approved claim saves them (like date and price). The audience shows in 4.3's handoff; a changed claim replaces "AI Coach knows your actual budget" in the X post (run map, approvals, summary). Reached in-app, 2.8 shows the workflow's own audience and claim; a direct load shows Figma's text, which the first edit keeps | Facts you edit should carry on. |
 | 2.1 | Send (or Enter) with an empty brief focuses the brief and its placeholder reads "Write your launch brief first, or pick a starter above." until you type or pick a starter; Send stays the enabled blue button Figma draws | Send did nothing on an empty brief. |
+
+- Settings nav (1.2, 2.7, 2.8): Selected item is a grey fill (`bg-hover`) with no shadow, instead of Figma's white
+  chip + drop shadow. Workspace settings (1.2) nav lists only the 5 sections that have cards, in page order
+  (Figma also had General and Notifications, which had no content).
+
+- Brief composer (2.1): model picker ("Sonnet 5.5 ⌄": Opus / Sonnet / Haiku 5.5) and effort picker ("Medium effort ⌄":
+  Low / Medium / High) beside the attach button. Ghost 32px buttons, shared Menu with a check on the current choice.
+  Saved per workflow (`model`, `effort`; actions `brief/model`, `brief/effort`). Each model shows its maker's logo
+  (Claude: `assets/icons/claude.svg`, Simple Icons, #D97757); new makers add a logo in `MAKER_LOGOS`.
