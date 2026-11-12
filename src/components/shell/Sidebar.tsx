@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   useCallback,
   useEffect,
@@ -7,7 +8,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import bell from '@/assets/icons/bell.svg';
@@ -89,7 +89,9 @@ function useSidebarTransition() {
   const reduce = useReducedMotion();
   return {
     move: reduce ? { duration: 0 } : { duration: 0.28, ease: EASE },
-    fade: reduce ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' as const },
+    fade: reduce
+      ? { duration: 0 }
+      : { duration: 0.18, ease: 'easeOut' as const },
   };
 }
 
@@ -101,8 +103,10 @@ function useSidebarData() {
     () =>
       app.order
         .map((id) => app.workflows[id])
-        // Archived workflows (2.8 Archive) leave the list and the bell, as on Home.
-        .filter((wf): wf is Workflow => !!wf && !wf.archived),
+        // Archived workflows (2.8 Archive) leave the list and the bell, as on Home. A brand-new one joins once its
+        // brief gives it a title: until then it would be a second "New workflow" row, and inserting it at the top
+        // would shift the list under the pointer that just clicked New workflow.
+        .filter((wf): wf is Workflow => !!wf && !wf.archived && !wf.isNew),
     [app.order, app.workflows]
   );
   const waiting = useMemo(
@@ -411,14 +415,15 @@ function SidebarPanel({
           disabled={!d.waiting.length}
           onClick={() => d.waiting[0] && openWaiting(d.waiting[0])}
         />
-        {/* Several waiting: each is listed under Needs you. */}
+        {/* Several waiting: each is listed under Needs you. One selected row: the open workflow's own row in
+            Workflows, so these shortcuts never show as selected. */}
         {d.waiting.length > 1 &&
           d.waiting.map((wf) => (
             <WorkflowRow
               key={wf.id}
               wf={wf}
               indent
-              active={wf.id === d.activeId}
+              active={false}
               onClick={() => openWaiting(wf)}
             />
           ))}
@@ -759,11 +764,12 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
           {(close) => (
             <div role="dialog" aria-label="Needs you" className={FLYOUT}>
               <FlyoutTitle>Needs you</FlyoutTitle>
+              {/* Shortcuts, never selected (the Workflows row is). */}
               {d.waiting.map((wf) => (
                 <WorkflowRow
                   key={wf.id}
                   wf={wf}
-                  active={wf.id === d.activeId}
+                  active={false}
                   onClick={() => {
                     close();
                     openWaiting(wf);
