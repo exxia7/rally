@@ -340,9 +340,10 @@ export default function WorkflowSettingsScreen() {
                           i < FACTS.length - 1 && 'border-b border-line',
                         )}
                       >
-                        <p className="min-w-px flex-1 truncate text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink-2">
+                        <p className="shrink-0 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-ink-2">
                           {f.label}
                         </p>
+                        <span className="min-w-0 flex-1" />
                         {editing === f.key ? (
                           <input
                             autoFocus
@@ -355,7 +356,11 @@ export default function WorkflowSettingsScreen() {
                             className="h-7 w-[180px] min-w-0 rounded-control border border-accent-line px-2 text-right text-[13px] font-medium text-ink outline-none"
                           />
                         ) : (
-                          <p className={clsx(value, 'truncate')}>
+                          // A long value truncates (full text on hover), never the label.
+                          <p
+                            title={facts[f.key]}
+                            className={clsx(value, 'min-w-0 truncate')}
+                          >
                             {facts[f.key]}
                           </p>
                         )}

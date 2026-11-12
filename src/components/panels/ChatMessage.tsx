@@ -48,6 +48,10 @@ const STYLE = {
 
 const TEXT = 'tracking-[-0.08px] whitespace-pre-line wrap-break-word text-ink';
 
+/** A reply from a helper you @mentioned (or sent its block to): its character instead of the Pathfinder avatar, and
+ *  its name above the text. */
+export type MessageFrom = { name: string; agent?: AgentName };
+
 export function Message({
   from,
   text,
@@ -56,7 +60,10 @@ export function Message({
   className,
   bubbleClassName,
   enter,
+  sender,
 }: {
+  /** Assistant only: the helper who answers (see MessageFrom). */
+  sender?: MessageFrom;
   /** Motion: a message that arrives while you watch rises in (450ms; never on a first paint). */
   enter?: boolean;
   from: 'assistant' | 'user';
@@ -103,7 +110,11 @@ export function Message({
       )}
     >
       <div className={clsx('flex w-full items-start', s.row)}>
-        <PathfinderAvatar size={s.avatar} />
+        {sender?.agent ? (
+          <AgentArt agent={sender.agent} size={s.avatar} className="shrink-0" />
+        ) : (
+          <PathfinderAvatar size={s.avatar} />
+        )}
         <div
           className={clsx(
             'flex min-w-0 flex-col items-start rounded-[10px] border border-line bg-white',
@@ -111,6 +122,11 @@ export function Message({
             bubbleClassName
           )}
         >
+          {sender && (
+            <p className="pb-1 text-[11px] leading-4 font-medium text-muted">
+              {sender.name}
+            </p>
+          )}
           <p className={clsx(TEXT, s.assistantText)}>{text}</p>
           {inside && children && (
             <div className="flex w-full flex-col items-start pt-2">

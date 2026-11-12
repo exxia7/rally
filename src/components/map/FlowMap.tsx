@@ -658,6 +658,7 @@ function MapCard({
     >
       <NodeCard
         {...n}
+        nodeId={n.id}
         motionKey={`${scope}:state:${n.id}`}
         onClick={onClick}
         onRerun={onRerun}

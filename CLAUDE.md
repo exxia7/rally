@@ -186,7 +186,8 @@ pixel-exact at 1440×900, so:
   52px rail at 768–1279px (expanding opens it over the content), and under 768px a slide-out drawer opened from the
   menu button TopBar adds on phones; the main panel is full-bleed there. No bottom bar, so nothing offsets for one.
 - Side panel (Chat/Sandbox/Decisions), drawers, inspector: docked beside the content at ≥1280px; under 1280px
-  they overlay the content from the right with a scrim and ×; under 768px they're full-screen sheets.
+  they float over the right of the content with a shadow and × but no scrim (the map stays clickable); under 768px
+  they're full-screen sheets.
 - Map canvas: a pannable viewport (overflow-auto plus drag-to-pan) holding the map at design size. Zoom
   controls really scale it; under 768px it starts fit-to-width. Canvas overlays (Tasks chip, agents bar,
   zoom) stay pinned to the viewport corners.

@@ -67,6 +67,10 @@ export type NodeCardData = {
   note?: string;
   /** Selected on the map (its inspector is open): 2px accent border at frame scale (2.934px at map scale). */
   selected?: boolean;
+  /** Added to the chat as context: a 2px outline in the connector blue laid over the card edge (no layout space). */
+  inChat?: boolean;
+  /** Map node id, set as data-node-id so the Tasks list can bring the card into view. */
+  nodeId?: string;
   /** Vertical padding around the card's content, when an instance adds one (the hand-raised decision: 5.868px). */
   padY?: number;
   /** Kind tile overrides at map scale. Some instances in the docked frames (4.1, 4.3, 6.1, 6.3) keep the
@@ -262,6 +266,8 @@ export function NodeCard({
   width = 175.2,
   note,
   selected,
+  inChat,
+  nodeId,
   padY,
   opacity,
   fork,
@@ -307,6 +313,7 @@ export function NodeCard({
           : null;
   return (
     <div
+      data-node-id={nodeId}
       ref={ref}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -314,6 +321,7 @@ export function NodeCard({
       onKeyDown={onKey}
       className={clsx(
         'flex flex-col justify-center rounded-[9.221px] bg-white drop-shadow-[0px_0.922px_0.922px_rgba(16,18,24,0.04)]',
+        inChat && 'outline-2 -outline-offset-1 outline-accent-line',
         stroke
           ? 'border-0'
           : state === 'needs-you'

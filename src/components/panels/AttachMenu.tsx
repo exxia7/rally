@@ -1,4 +1,4 @@
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import closeGray from '@/assets/icons/close-gray.svg';
 import link from '@/assets/icons/link.svg';
@@ -54,37 +54,49 @@ export function AttachMenu({
 }
 
 /** What a link or skill pick adds as an attachment (Upload files opens the file picker instead). */
-export const ATTACH_LABEL = { link: 'Link', skill: 'Skill · Brand voice' } as const;
+export const ATTACH_LABEL = {
+  link: 'Link',
+  skill: 'Skill · Brand voice',
+} as const;
 
 // The attachments a composer holds (2.1, 2.2): 24px chip-grey chips, 6px radius, Medium 12 ink-2, with a × each.
+// An item can be a plain label or { label, leading } with a 16px icon before the label (chat context pills).
+export type AttachmentChipItem =
+  string | { label: string; leading?: ReactNode };
+
 export function AttachmentChips({
   items,
   onRemove,
   className = 'pt-2',
 }: {
-  items: string[];
+  items: AttachmentChipItem[];
   onRemove: (index: number) => void;
   className?: string;
 }) {
   if (!items.length) return null;
   return (
     <div className={`flex w-full flex-wrap gap-1.5 ${className}`}>
-      {items.map((a, i) => (
-        <span
-          key={`${a}-${i}`}
-          className="flex h-6 items-center gap-1 rounded-[6px] bg-chip pr-1 pl-2 text-[12px] leading-4 font-medium text-ink-2"
-        >
-          {a}
-          <button
-            type="button"
-            aria-label={`Remove ${a}`}
-            onClick={() => onRemove(i)}
-            className="flex rounded-[4px] hover:bg-hover"
+      {items.map((item, i) => {
+        const a = typeof item === 'string' ? item : item.label;
+        const leading = typeof item === 'string' ? null : item.leading;
+        return (
+          <span
+            key={`${a}-${i}`}
+            className={`flex h-6 items-center gap-1 rounded-[6px] bg-chip pr-1 text-[12px] leading-4 font-medium text-ink-2 ${leading ? 'pl-1' : 'pl-2'}`}
           >
-            <Icon src={closeGray} size={14} />
-          </button>
-        </span>
-      ))}
+            {leading}
+            {a}
+            <button
+              type="button"
+              aria-label={`Remove ${a}`}
+              onClick={() => onRemove(i)}
+              className="flex rounded-[4px] hover:bg-hover"
+            >
+              <Icon src={closeGray} size={14} />
+            </button>
+          </span>
+        );
+      })}
     </div>
   );
 }

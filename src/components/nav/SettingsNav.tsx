@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 
 // Left-hand nav of the settings pages (frames 1.2, 2.7, 2.8): 240px column, 1px right line, 16px padding,
 // an 11px muted group label, then Figma "Settings nav item" rows (2362:29287): 32px, 10px padding, 8px radius;
-// Selected = white with a soft drop shadow and Medium ink, Default = Regular ink-2.
+// Selected = quiet grey fill (no shadow) and Medium ink, Default = Regular ink-2. (Figma draws Selected white
+// with a shadow, the segmented-control chip; changed per design review, see design/non-figma-ui.md.)
 // Under 768px it becomes a horizontal, scrollable tab row above the content.
 // `value` is optional: 2.8 opens with nothing selected. `more` adds a second titled group (2.8 "More": 16px above
 // its label); on phones its items join the same tab row, and a white fade on the right edge hints that the row
@@ -130,8 +131,9 @@ export function SettingsNavButton({
       className={clsx(
         'flex h-8 w-full shrink-0 items-center rounded-control px-2.5 text-left text-[13px] leading-[19.5px] tracking-[-0.08px] max-md:w-auto max-md:whitespace-nowrap',
         selected
-          ? // Phones: the tab row sits on white, so the selected tab takes the accent tint to stand out.
-          'bg-white font-medium text-ink drop-shadow-[0px_1px_1.5px_rgba(0,0,0,0.1)] max-md:bg-accent-soft max-md:text-accent max-md:drop-shadow-none'
+          ? // Desktop: a quiet grey fill (design review). Phones: the tab row sits on white, so the selected tab
+            // takes the accent tint to stand out.
+            'bg-hover font-medium text-ink max-md:bg-accent-soft max-md:text-accent'
           : 'text-ink-2 hover:bg-hover'
       )}
     >

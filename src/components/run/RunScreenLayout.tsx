@@ -29,8 +29,9 @@ import { PauseIcon } from '@/components/ui/PauseIcon';
 import type { RunState } from '@/components/ui/RunStatus';
 import { useChangedFrom } from '@/lib/motion';
 import { useMediaQuery } from '@/lib/useMediaQuery';
+import { chatContext, useChatChips } from '@/state/chatContext';
 import { useGo } from '@/state/nav';
-import { goesOut } from '@/state/runView';
+import { goesOut, helperOfStep } from '@/state/runView';
 import { useAppState, useWorkflow } from '@/state/store';
 
 import { HandRaisePanel, type HandRaiseData } from './HandRaisePanel';
@@ -185,6 +186,8 @@ export function RunScreenLayout({
   const [panel, setPanel] = useState<RunPanel>(
     initialTasksOpen && !xl ? null : initialPanel
   );
+  // Tasks list → card: MapCanvas glides it into view and pulses it.
+  const [reveal, setReveal] = useState<{ id: string; n: number }>();
   // Forks (store): every branch drawn, the Branches row, fork-scoped approval, the inline Fork card.
   const forks = useForkRunView({
     data: frameData,
@@ -210,7 +213,29 @@ export function RunScreenLayout({
   const scale = place.width / map.width;
 
   const inspect = (nodeId: string) => setPanel({ kind: 'inspector', nodeId });
+  const chips = useChatChips();
+  const chatOpen = panel?.kind === 'tabs' && panel.tab === 'chat';
   const onNodeClick = (node: MapNode) => {
+    // While the chat is open, a block click adds it to the chat as context (again removes it).
+    if (chatOpen) {
+      const helper = helperOfStep(node.id);
+      const isHelper = !!(helper && wf.helpers[helper]);
+      // Same key as the plan map's, so a helper is only ever in the chat once.
+      chatContext.toggle({
+        key: isHelper ? `helper:${helper}` : `node:${node.id}`,
+        label: isHelper ? wf.helpers[helper].name : node.title,
+        helper: isHelper ? helper : undefined,
+        agent: isHelper
+          ? (wf.helpers[helper].agent ?? node.avatar?.agent)
+          : undefined,
+        kind: node.kind,
+      });
+      return;
+    }
+    openNode(node);
+  };
+  // What clicking a card does outside the chat: its inspector, the hand-raise panel, a fork's approval.
+  const openNode = (node: MapNode) => {
     const branchPanel = forks.nodePanel(node);
     if (branchPanel) setPanel(branchPanel);
     else if (nodeLinks?.[node.id]) go(nodeLinks[node.id]);
@@ -349,6 +374,8 @@ export function RunScreenLayout({
         contentScale={RUN_MAP_SCALE * scale}
         viewKey={`run:${activeId}`}
         focus={focus}
+        // Tasks list → card: glide it to the middle of the map, then pulse it.
+        reveal={reveal}
         // Phones: a hand-raise or inspector opens as a half-height sheet, so keep the card above it.
         focusAt={panel && panel.kind !== 'tabs' ? 0.2 : 0.5}
         zoomClassName="max-md:bottom-[95px]"
@@ -366,9 +393,12 @@ export function RunScreenLayout({
               // Under 1280px the panel covers the map: opening the list closes it.
               onOpen={() => !xl && setPanel(null)}
               // A row does what clicking its card does (inspector, hand-raise panel, a fork's approval).
+              // Also glides the map to the card and pulses it (even with the chat open).
               onSelectTask={(t) => {
                 const node = map.nodes.find((n) => n.id === t.id);
-                if (node) onNodeClick(node);
+                if (!node) return;
+                openNode(node);
+                setReveal((r) => ({ id: node.id, n: (r?.n ?? 0) + 1 }));
               }}
             />
             <CompletedAgents
@@ -393,7 +423,19 @@ export function RunScreenLayout({
           }}
         >
           <FlowMap
-            nodes={map.nodes}
+            nodes={
+              chatOpen
+                ? map.nodes.map((n) =>
+                    chips.some(
+                      (c) =>
+                        c.key === `node:${n.id}` ||
+                        (c.helper && c.helper === helperOfStep(n.id))
+                    )
+                      ? { ...n, inChat: true }
+                      : n
+                  )
+                : map.nodes
+            }
             edges={map.edges}
             overlays={map.overlays}
             forkLines={map.forkLines}

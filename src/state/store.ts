@@ -27,9 +27,11 @@ import type {
   ApprovalValue,
   BeatId,
   ChatLine,
+  Effort,
   Fork,
   HandRaiseId,
   HelperId,
+  ModelId,
   Output,
   PlanStage,
   PlanStepEdit,
@@ -58,6 +60,8 @@ export type Action =
   | { type: 'wf/new' }
   | { type: 'wf/open'; id: WorkflowId }
   | { type: 'brief/send'; text: string; attachments?: string[] }
+  | { type: 'brief/model'; model: ModelId }
+  | { type: 'brief/effort'; effort: Effort }
   | { type: 'briefChat/send'; text: string; reply: string }
   /** 2.2 after a brief: the Planner's next line once it has "thought" (its questions, then "Your team is ready"). */
   | { type: 'briefChat/planner'; step: 'ask' | 'ready' }
@@ -286,6 +290,10 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
         briefChat: [...wf.briefChat, { id: '4', from: 'user', text: a.text }],
       };
     }
+    case 'brief/model':
+      return { ...wf, model: a.model };
+    case 'brief/effort':
+      return { ...wf, effort: a.effort };
     case 'briefChat/send': {
       const n = wf.briefChat.length;
       return {

@@ -42,23 +42,15 @@ import { TOOLS, YOU } from './workspaceData';
 
 export const screenId = '1.2';
 
-type Section =
-  | 'general'
-  | 'tools'
-  | 'brand'
-  | 'presets'
-  | 'people'
-  | 'usage'
-  | 'notifications';
+type Section = 'presets' | 'tools' | 'brand' | 'people' | 'usage';
 
 const NAV: { value: Section; label: string }[] = [
-  { value: 'general', label: 'General' },
+  // Same order as the cards on the page.
+  { value: 'presets', label: 'Permission presets' },
   { value: 'tools', label: 'Connected tools' },
   { value: 'brand', label: 'Brand kit' },
-  { value: 'presets', label: 'Permission presets' },
   { value: 'people', label: 'People and approvals' },
   { value: 'usage', label: 'Usage and budget' },
-  { value: 'notifications', label: 'Notifications' },
 ];
 
 const BRAND: { name: string; kind: 'File' | 'Skill' }[] = [
@@ -190,10 +182,7 @@ export default function WorkspaceSettingsScreen() {
     scroller,
     NAV.map(({ value }) => ({
       id: value,
-      el: () =>
-        value === 'general'
-          ? heading.current
-          : document.getElementById(`settings-${value}`),
+      el: () => document.getElementById(`settings-${value}`),
     })),
     pinned,
     setSection

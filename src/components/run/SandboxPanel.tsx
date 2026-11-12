@@ -35,7 +35,7 @@ export type SandboxSection = {
 // A section's "+" opens it and calls `onAdd` (the run Sandbox imports into that section).
 export function SandboxPanel({
   sections,
-  note = 'Running now. New items go to steps that haven’t started; running steps keep what they have.',
+  note = 'Running now · new items only reach steps that haven’t started.',
   onRowDragStart,
   onRowDragEnd,
   rowMenu,
@@ -79,7 +79,7 @@ export function SandboxPanel({
   return (
     <div className="flex w-full flex-1 flex-col items-start">
       {note !== null && (
-        <p className="w-full px-6 pt-1 text-[12px] leading-[18px] tracking-[-0.08px] text-muted max-md:px-4">
+        <p className="w-full px-6 pt-3 text-[12px] leading-[18px] tracking-[-0.08px] text-muted max-md:px-4">
           {note}
         </p>
       )}

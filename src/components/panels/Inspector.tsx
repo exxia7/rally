@@ -38,13 +38,17 @@ export function InspectorHeader({
   return (
     <div className="flex w-full shrink-0 flex-col items-start px-6 pt-5 pb-5 max-md:px-4">
       <div className="flex w-full items-center gap-2">
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex min-w-0 shrink items-center gap-1.5">
           {kindIcon && <Icon src={kindIcon} size={12} />}
-          <p className="text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted">
+          {/* A long (renamed) helper truncates instead of running under the branch label and ×. */}
+          <p
+            title={eyebrow}
+            className="min-w-0 truncate text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted"
+          >
             {eyebrow}
           </p>
         </div>
-        <div className="flex min-w-px flex-1 items-start justify-end">
+        <div className="flex min-w-fit flex-1 items-start justify-end">
           <div className="flex shrink-0 items-center gap-2">
             {branch && (
               <div className="flex items-center gap-1.5">

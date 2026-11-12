@@ -201,9 +201,13 @@ export function MapCanvas({
   zoomPosition = 'right',
   focus,
   focusAt = 0.5,
+  reveal,
   className,
   children,
 }: {
+  /** Glide the card with this data-node-id to the middle of the visible map, then pulse it (Tasks list → card);
+   *  change `n` to repeat. */
+  reveal?: { id: string; n: number };
   /** Phones: where `focus` lands, as a fraction of the free canvas height (0.2 keeps it above a half-height sheet). */
   focusAt?: number;
   stageWidth?: number;
@@ -506,6 +510,75 @@ export function MapCanvas({
     };
     anim.current = requestAnimationFrame(tick);
   };
+
+  // Reveal: centre one card in the free area (left of a side panel floating over the canvas) at the current zoom,
+  // gliding over FIT_MS, then pulse a blue ring around it twice.
+  const revealCard = (el: Element) => {
+    const sc = scroller.current;
+    const st = stage.current;
+    const cv = canvas.current;
+    if (!sc || !st || !cv) return;
+    cancelAnimationFrame(anim.current);
+    const k = z.current;
+    const s0 = st.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const px = (r.left + r.width / 2 - s0.left) / k;
+    const py = (r.top + r.height / 2 - s0.top) / k;
+    const area = freeArea(bounds.current ?? fullStage());
+    const c = cv.getBoundingClientRect();
+    for (const a of document.querySelectorAll('[data-side-panel]')) {
+      const ar = a.getBoundingClientRect();
+      if (ar.width > 0 && ar.left > c.left + c.width / 3 && ar.left < c.right)
+        area.right = Math.min(area.right, ar.left - c.left - FIT_PAD);
+    }
+    const o0 = origin();
+    const o1 = {
+      x: (area.left + area.right) / 2 - px * k,
+      y: (area.top + area.bottom) / 2 - py * k,
+    };
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finish = () => {
+      placeOrigin(o1.x, o1.y);
+      save();
+      updateCut();
+    };
+    if (reduce) finish();
+    else {
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - t0) / FIT_MS);
+        if (t >= 1) return finish();
+        const e = easeOut(t);
+        placeOrigin(o0.x + (o1.x - o0.x) * e, o0.y + (o1.y - o0.y) * e);
+        anim.current = requestAnimationFrame(tick);
+      };
+      anim.current = requestAnimationFrame(tick);
+      el.animate(
+        [
+          { boxShadow: '0 0 0 0 rgba(36,87,214,0)' },
+          { boxShadow: '0 0 0 6px rgba(36,87,214,0.35)' },
+          { boxShadow: '0 0 0 0 rgba(36,87,214,0)' },
+        ],
+        { duration: 700, iterations: 2, delay: FIT_MS }
+      );
+    }
+  };
+  const revealRef = useRef(revealCard);
+  useLayoutEffect(() => {
+    revealRef.current = revealCard;
+  });
+  useEffect(() => {
+    if (!reveal) return;
+    // Wait a frame: opening the inspector may have just resized the canvas.
+    const raf = requestAnimationFrame(() => {
+      const el = stage.current?.querySelector(
+        `[data-node-id="${CSS.escape(reveal.id)}"]`
+      );
+      if (el) revealRef.current(el);
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs per reveal request
+  }, [reveal?.id, reveal?.n]);
 
   // ⌘/Ctrl+0 and Shift+1 fit; ⌘/Ctrl + and − zoom the map instead of the page.
   const keys = useRef({ fitView, zoomTo });

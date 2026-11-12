@@ -17,10 +17,10 @@ import { ScrollArea } from './ScrollArea';
 // The right-hand side panel (Figma "Artifact panel", e.g. 2362:23590; Chat · Sandbox · Decisions, inspector,
 // drawers): 400px, white, 1px line border, 12px radius, docked beside the main panel with the shell's 8px gap.
 // Title header (plan, 2362:23591): 52px, 1px bottom line, 16px left / 10px right padding, SemiBold 14/20 title, ghost ×.
-// Tabs header (run, 2362:25046): Panel tabs at 24px sides, 20px top / 12px bottom, no line; on desktop the
+// Tabs header (run, 2362:25046): underline Panel tabs at 24px sides, 4px top, on a 1px bottom line; on desktop the
 // top bar's panel toggle closes it, so its × only shows under 1280px.
-// Pass it to AppShell's `aside`. Under 1280px it overlays the content from the right over a scrim; under 768px
-// it is a full-screen sheet. Clicking the scrim closes it.
+// Pass it to AppShell's `aside`. Under 1280px it floats over the right of the content with a shadow, and the
+// content stays usable (no scrim: you can click map blocks into the chat); under 768px it is a full-screen sheet.
 // `header` replaces the built-in headers (the inspector's own header); `footer` is pinned under the scrolling body
 // (the inspector's Edit / I'll do this one bar).
 // The body is a ScrollArea between the header and the footer, which stay put: it scrolls when content outgrows it,
@@ -94,16 +94,7 @@ export function SidePanel({
   const leaves = !media.docked && !reducedMotion();
   return (
     <>
-      <motion.div
-        aria-hidden
-        onClick={onClose}
-        className="absolute inset-0 z-30 hidden bg-[rgba(29,30,34,0.24)] max-xl:block"
-        variants={variants.fadeIn}
-        initial={play ? 'hidden' : false}
-        animate="shown"
-        exit={leaves ? 'hidden' : undefined}
-        transition={transitions.base}
-      />
+      {/* No scrim under 1280px (design review): the panel floats over the content and the map stays usable. */}
       <motion.aside
         variants={slide}
         initial={play ? 'hidden' : false}
@@ -127,7 +118,7 @@ export function SidePanel({
         {header}
         {!header &&
           (tabs ? (
-            <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-3 max-md:px-4">
+            <div className="flex w-full shrink-0 items-center gap-2 border-b border-line px-6 pt-1 max-md:px-4">
               <div className="flex min-w-px flex-1 items-center">{tabs}</div>
               {headerExtra}
               {onClose && (

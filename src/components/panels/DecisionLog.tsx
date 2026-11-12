@@ -103,7 +103,7 @@ export function DecisionLog({
   const yours = decisions.filter((d) => d.by === 'you').length;
   const visible = decisions.filter((d) => filter === 'all' || d.by === filter);
   return (
-    <div className="flex w-full flex-col items-start px-6 max-md:px-4">
+    <div className="flex w-full flex-col items-start px-6 pt-3 max-md:px-4">
       <p className="w-full text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
         Everything your helpers decided and everything you chose, newest first.
       </p>

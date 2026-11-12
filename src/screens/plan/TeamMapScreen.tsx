@@ -28,6 +28,7 @@ import { useConnectTool } from '@/components/planning/useConnectTool';
 import { AppShell } from '@/components/shell/AppShell';
 import { Button } from '@/components/ui/Button';
 import { useOutsideClick } from '@/lib/useOutsideClick';
+import { chatContext, helperReply, useChatChips } from '@/state/chatContext';
 import { useGo } from '@/state/nav';
 import {
   CHECK_TEAM_DEFAULT,
@@ -132,6 +133,9 @@ export default function TeamMapScreen() {
     () => isDesktop() || drawer !== null
   );
   const [tab, setTab] = useState<PanelTab>('chat');
+  const chips = useChatChips();
+  // The chat is showing (side panel's Chat tab, or 2.4c's column): map clicks add blocks to it.
+  const chatOpen = !drawer && panelOpen && tab === 'chat';
   const [adding, setAdding] = useState<{
     edge: Pick<PlanEdge, 'from' | 'to'>;
     at: { x: number; y: number };
@@ -213,7 +217,21 @@ export default function TeamMapScreen() {
     }
   };
 
-  const send = (text: string) => {
+  const send = (text: string, meta?: { about: string[] }) => {
+    // @mentioning a helper (or sending with its block as context) gets its own answer.
+    const fromHelper = helperReply(wf, text, meta?.about);
+    if (fromHelper) {
+      say([
+        { id: `u-${n}`, from: 'user', text },
+        {
+          id: `h-${n}`,
+          from: 'assistant',
+          text: fromHelper.text,
+          helper: fromHelper.helper.id,
+        },
+      ]);
+      return;
+    }
     if (live('writer') && /playful|tiktok/i.test(text)) {
       patch('writer', PLAYFUL_WRITER);
       if (!wf.outputs.some((o) => o.id === TIKTOK_OUTPUT.id))
@@ -386,24 +404,36 @@ export default function TeamMapScreen() {
               }
             : node;
         });
-  const nodes: PlanNode[] = withToolAlerts(drawer
-    ? planNodes(
-        layout,
-        { [drawer]: { selected: true } },
-        { opacity: 0.5 },
-        cardTeam
-      )
-    : picker
-      ? planNodes(layout, { [picker]: {} }, { state: 'dimmed' }, cardTeam)
-      : askPicker
-        ? planNodes(
-            layout,
-            { [askPicker]: { selected: 'accent' } },
-            // Faded, but a New card keeps its badge and dashed border.
-            { opacity: 0.4 },
-            cardTeam
-          )
-        : planNodes(layout, {}, {}, cardTeam));
+  const nodes: PlanNode[] = withToolAlerts(
+    drawer
+      ? planNodes(
+          layout,
+          { [drawer]: { selected: true } },
+          { opacity: 0.5 },
+          cardTeam
+        )
+      : picker
+        ? planNodes(layout, { [picker]: {} }, { state: 'dimmed' }, cardTeam)
+        : askPicker
+          ? planNodes(
+              layout,
+              { [askPicker]: { selected: 'accent' } },
+              // Faded, but a New card keeps its badge and dashed border.
+              { opacity: 0.4 },
+              cardTeam
+            )
+          : planNodes(
+              layout,
+              // Blocks added to the chat as context get an outline (no layout shift).
+              Object.fromEntries(
+                (chatOpen ? chips : [])
+                  .filter((c) => c.helper)
+                  .map((c) => [c.helper!, { inChat: true }])
+              ),
+              {},
+              cardTeam
+            )
+  );
   const gates = layout.gates?.map((g) => ({
     ...g,
     dimmed: g.dimmed || !!drawer,
@@ -417,6 +447,10 @@ export default function TeamMapScreen() {
 
   const chatMessages = wf.planChat.map((m) => ({
     ...m,
+    sender:
+      m.helper && team[m.helper]
+        ? { name: team[m.helper].name, agent: team[m.helper].agent }
+        : undefined,
     text:
       liveRun && m.from === 'assistant'
         ? m.text.replace(PLAN_CHAT_START, PLAN_CHAT_LIVE)
@@ -517,7 +551,19 @@ export default function TeamMapScreen() {
               items.map((i) => wf.outputs.find((o) => o.id === i.id) ?? i)
             )
           }
-          onNodeClick={(node) => openDrawer(node.id)}
+          // While the chat is open, a block click adds it to the chat as context (again removes it); otherwise it
+          // opens the helper's drawer.
+          onNodeClick={(node) =>
+            chatOpen && live(node.id)
+              ? chatContext.toggle({
+                  key: `helper:${node.id}`,
+                  label: team[node.id].name,
+                  helper: node.id,
+                  agent: team[node.id].agent,
+                  kind: node.kind,
+                })
+              : openDrawer(node.id)
+          }
           // "You approve" holds Publisher until you say yes: open Publisher, where "Checks with you" sets it.
           onGateClick={() => openDrawer('publisher')}
           onSettingClick={(node, label) => {

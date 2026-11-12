@@ -1,10 +1,16 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import { Message, Thread } from '@/components/panels/ChatMessage';
+import {
+  Message,
+  type MessageFrom,
+  Thread,
+} from '@/components/panels/ChatMessage';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
+import { mentionables } from '@/state/chatContext';
+import { dispatch, useWorkflow } from '@/state/store';
 
 export type PlanChatMessage = {
   id: number | string;
@@ -12,6 +18,8 @@ export type PlanChatMessage = {
   text: ReactNode;
   /** Rendered inside the assistant bubble under the text (e.g. an Undo button). */
   extra?: ReactNode;
+  /** A helper's reply (you @mentioned it or sent its block). */
+  sender?: MessageFrom;
 };
 
 // The planning side panel's Chat tab (2.3 "Sidebar", 2362:23712): Panel tabs (Chat · Sandbox), the side-panel
@@ -33,7 +41,7 @@ export function PlanChatPanel({
 }: {
   messages: PlanChatMessage[];
   suggestions?: string[];
-  onSend: (text: string) => void;
+  onSend: (text: string, meta?: { about: string[] }) => void;
   tab?: PanelTab;
   onTabChange?: (tab: PanelTab) => void;
   sandbox?: ReactNode;
@@ -43,6 +51,15 @@ export function PlanChatPanel({
   variant?: 'panel' | 'column';
   className?: string;
 }) {
+  const wf = useWorkflow();
+  // The chat box's + (attach), model picker and @ helper list.
+  const tools = {
+    attachable: true,
+    model: wf.model,
+    onModelChange: (model: NonNullable<typeof wf.model>) =>
+      dispatch({ type: 'brief/model', model }),
+    mentions: mentionables(wf),
+  };
   const body = useRef<HTMLDivElement>(null);
   const count = useRef<number | null>(null);
   const showSandbox = tab === 'sandbox' && sandbox;
@@ -70,7 +87,7 @@ export function PlanChatPanel({
   const thread = (inset?: 'narrow') => (
     <Thread inset={inset}>
       {messages.map((m) => (
-        <Message key={m.id} from={m.from} text={m.text}>
+        <Message key={m.id} from={m.from} text={m.text} sender={m.sender}>
           {m.extra}
         </Message>
       ))}
@@ -87,7 +104,12 @@ export function PlanChatPanel({
           Chat with Pathfinder
         </p>
         <ScrollArea ref={body}>{thread('narrow')}</ScrollArea>
-        <ChatComposer onSend={onSend} suggestions={suggestions} narrow />
+        <ChatComposer
+          onSend={onSend}
+          suggestions={suggestions}
+          narrow
+          {...tools}
+        />
       </section>
     );
 
@@ -105,7 +127,7 @@ export function PlanChatPanel({
       onClose={onClose}
       footer={
         showSandbox ? undefined : (
-          <ChatComposer onSend={onSend} suggestions={suggestions} />
+          <ChatComposer onSend={onSend} suggestions={suggestions} {...tools} />
         )
       }
     >

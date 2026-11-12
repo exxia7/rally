@@ -2,14 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { AgentName } from '@/components/agents/characters';
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import { Message, Thread, TypingRow } from '@/components/panels/ChatMessage';
+import {
+  Message,
+  type MessageFrom,
+  Thread,
+  TypingRow,
+} from '@/components/panels/ChatMessage';
+import { helperReply, mentionables } from '@/state/chatContext';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
-import { ImportButton } from '@/components/panels/ImportButton';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
-import { dispatch } from '@/state/store';
+import { dispatch, useWorkflow } from '@/state/store';
 import type { MenuItemData } from '@/components/ui/Menu';
 
 import {
@@ -18,13 +23,19 @@ import {
   type SandboxSection,
 } from './SandboxPanel';
 
-export type RunChatMessage = { from: 'assistant' | 'user'; text: string };
+export type RunChatMessage = {
+  from: 'assistant' | 'user';
+  text: string;
+  /** A helper's reply (you @mentioned it or sent with its block). */
+  sender?: MessageFrom;
+};
 
 /** A step that hasn't started: the run Sandbox's "Add to…" menu offers it. */
 export type SandboxStep = { id: string; name: string; detail: string };
 
 // The run side panel (3.3 Sandbox 2362:24915, 3.4 Decisions 2362:25044): SidePanel with run Panel tabs
-// (Chat · Sandbox · Decisions · N). Sandbox adds the ImportButton on the right of the tabs.
+// (Chat · Sandbox · Decisions · N). Figma also puts a Primary "Import" beside the tabs on Sandbox; removed (design
+// review, design/non-figma-ui.md): each Sandbox section's "+" imports into it, so the tab row is the same on every tab.
 // Docked at ≥1280px (the top bar's panel toggle closes it); an overlay with × below 1280, a sheet below 768.
 export function RunSidePanel({
   tab,
@@ -76,10 +87,7 @@ export function RunSidePanel({
           ? {
               ...s,
               open: true,
-              items: [
-                { name, source: 'New · not used yet' },
-                ...s.items,
-              ],
+              items: [{ name, source: 'New · not used yet' }, ...s.items],
             }
           : s
       )
@@ -88,13 +96,24 @@ export function RunSidePanel({
 
   // "Add to <step>…" on a row: only steps that haven't started take new items (the Sandbox note says so). The
   // store gives it to that step's helper (`sandbox/give`: its files, skills or tools); the row updates at once.
-  const addTo = (item: SandboxItem, section: SandboxSection, step: SandboxStep) => {
+  const addTo = (
+    item: SandboxItem,
+    section: SandboxSection,
+    step: SandboxStep
+  ) => {
     const helper = helperOfStep(step.id);
     if (
       helper &&
-      (section.id === 'assets' || section.id === 'skills' || section.id === 'tools')
+      (section.id === 'assets' ||
+        section.id === 'skills' ||
+        section.id === 'tools')
     )
-      dispatch({ type: 'sandbox/give', section: section.id, name: item.name, helper });
+      dispatch({
+        type: 'sandbox/give',
+        section: section.id,
+        name: item.name,
+        helper,
+      });
     setSections((prev) =>
       prev.map((s) =>
         s.id === section.id
@@ -176,9 +195,6 @@ export function RunSidePanel({
           decisions={decisions.length}
         />
       }
-      headerExtra={
-        tab === 'sandbox' && <ImportButton onClick={() => importFile()} />
-      }
     >
       {tab === 'sandbox' && (
         // Remount when an import lands so the Assets section opens on it.
@@ -227,6 +243,7 @@ function RunChat({
   /** Applies a decision change; returns the reply, or null when the text wasn't one. */
   onSendChange?: (text: string) => string | null;
 }) {
+  const wf = useWorkflow();
   const [messages, setMessages] = useState(initial);
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -235,7 +252,23 @@ function RunChat({
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages.length, initial.length]);
 
-  const send = (text: string) => {
+  const send = (text: string, meta?: { about: string[] }) => {
+    const fromHelper = helperReply(wf, text, meta?.about);
+    if (fromHelper) {
+      setMessages((m) => [
+        ...m,
+        { from: 'user', text },
+        {
+          from: 'assistant',
+          text: fromHelper.text,
+          sender: {
+            name: fromHelper.helper.name,
+            agent: fromHelper.helper.agent,
+          },
+        },
+      ]);
+      return;
+    }
     const changed = onSendChange?.(text);
     setMessages((m) => [
       ...m,
@@ -258,6 +291,7 @@ function RunChat({
               key={i}
               from={m.from}
               text={m.text}
+              sender={m.sender}
               // Messages that arrive while you watch rise in (motion only).
               enter={i >= initial.length}
             />
@@ -270,6 +304,10 @@ function RunChat({
         defaultText={draft}
         onSend={send}
         suggestions={messages.length === initial.length ? suggestions : []}
+        attachable
+        model={wf.model}
+        onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+        mentions={mentionables(wf)}
       />
     </div>
   );
