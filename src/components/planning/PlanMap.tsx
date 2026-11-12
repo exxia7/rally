@@ -15,7 +15,12 @@ import { useAppState } from '@/state/store';
 import { HelperCard, type HelperCardData } from './HelperCard';
 import { edgeKey } from './planEdit';
 import { MapPopoverHost } from './MapPopoverHost';
-import { AddStepButton, ApprovalGate, StageLabel } from './PlanMapParts';
+import {
+  AddStepButton,
+  ApprovalGate,
+  STAGE_HEADER_H,
+  StageHeader,
+} from './PlanMapParts';
 
 // Plan-map geometry, from the 2.3 map where cards draw at 0.85 (154.275px wide): 1.054px connectors with
 // 4.25px circular corners, 4.675px ports centred on the card header. Everything scales with `scale / 0.85`
@@ -81,9 +86,6 @@ export type PlanLayout = {
   edges: PlanEdge[];
   gates?: PlanGate[];
   stages?: PlanStage[];
-  stageY?: number;
-  /** Stage label scale (2.3: 0.85 → 10.2px; 2.4: 1 → 12px). */
-  stageScale?: number;
 };
 
 // The planning map: helper cards, orthogonal connectors with ports, approval gates and stage labels, plus
@@ -93,8 +95,6 @@ export function PlanMap({
   edges,
   gates,
   stages,
-  stageY = 0,
-  stageScale,
   overlays,
   scale = BASE,
   x,
@@ -179,6 +179,23 @@ export function PlanMap({
     ...lines.map((l) => `line:${l.key}`),
   ]);
 
+  // Column headers: over each stage's column (its cards' left edge), on one line a fixed gap above the top card, at
+  // the cards' scale. A stage whose column has no cards left (its helpers removed) shows no header.
+  const top = Math.min(...nodes.map((n) => n.y));
+  const headers = (stages ?? [])
+    .map((st) => {
+      const col = nodes.filter((n) => Math.abs(n.x - st.x) < 6);
+      return col.length
+        ? { label: st.label, x: Math.min(...col.map((n) => n.x)) }
+        : null;
+    })
+    .filter((h): h is { label: string; x: number } => !!h)
+    .map((h, i) => ({
+      ...h,
+      number: i + 1,
+      y: top - (STAGE_HEADER_H + 14) * scale,
+    }));
+
   return (
     <div
       className={className}
@@ -190,13 +207,18 @@ export function PlanMap({
         height,
       }}
     >
-      {stages?.map((s) => (
+      {headers.map((h) => (
         <div
-          key={s.label}
+          key={h.label}
           className="absolute"
-          style={{ left: s.x, top: stageY }}
+          style={{ left: h.x, top: h.y }}
         >
-          <StageLabel label={s.label} scale={stageScale} />
+          <StageHeader
+            number={h.number}
+            label={h.label}
+            width={CARD_W}
+            scale={scale}
+          />
         </div>
       ))}
       <svg

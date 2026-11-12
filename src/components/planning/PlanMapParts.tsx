@@ -7,6 +7,39 @@ import plusWhite from '@/assets/icons/plus-white-14.svg';
 import helperGlyph from '@/assets/icons/step-kind-helper.svg';
 import { type NodeKindName, NodeKindTile } from '@/components/map/NodeKind';
 
+/** Stage header height at card scale 1 (number chip 18 + 6 padding + 1 rule). */
+export const STAGE_HEADER_H = 25;
+
+// A plan map column's header: a numbered chip, the stage ("Research", "Decide the message"…) and a hairline rule
+// across the column. Drawn at the cards' scale (`zoom`), so it keeps the same size next to the cards on every layout
+// (the full map, the compact map beside a drawer) and lines up with the column it heads.
+export function StageHeader({
+  number,
+  label,
+  width,
+  scale,
+}: {
+  number: number;
+  label: string;
+  /** The column's width at card scale 1 (a helper card's width). */
+  width: number;
+  scale: number;
+}) {
+  return (
+    <div
+      className="flex items-center gap-1.5 border-b border-line pb-1.5"
+      style={{ width, zoom: scale }}
+    >
+      <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full border border-line bg-well text-[10px] leading-none font-semibold text-muted">
+        {number}
+      </span>
+      <span className="min-w-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.08px] text-ink-2">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 // Figma "Stage label" (2362:29462): column header on the plan map. Without `number` it is the plain column label
 // the 2.x frames use now ("Research", "Decide the message"…): Medium 12/18 muted at design size; the 2.3 map
 // draws it at its 0.85 scale (10.2/15.3), so pass `scale`. With `number` it is the older numbered tile + label.

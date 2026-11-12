@@ -235,8 +235,6 @@ export const AI_COACH_PLAN: PlanLayout = layout(
       label,
       x: [24, 227.15, 431.15, 711.65][i],
     })),
-    stageY: 61.625,
-    stageScale: 0.85,
   },
   {
     planner: { x: 24, y: 99.025 },
@@ -265,8 +263,6 @@ export const AI_COACH_PLAN_COMPACT: PlanLayout = layout(
       },
     ],
     stages: STAGES.map((label, i) => ({ label, x: [36, 177, 317, 511][i] })),
-    stageY: 134.125,
-    stageScale: 1,
   },
   {
     planner: { x: 36, y: 178.125 },
@@ -291,8 +287,6 @@ export const AI_COACH_PLAN_WIDE: PlanLayout = layout(
     ),
     gates: [{ id: 'approve', x: 720.705, y: 268.15, width: 100.25 }],
     stages: STAGES.map((label, i) => ({ label, x: [36, 275, 515, 845][i] })),
-    stageY: 61.625,
-    stageScale: 1,
   },
   {
     planner: { x: 36, y: 105.625 },

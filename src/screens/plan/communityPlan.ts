@@ -79,7 +79,6 @@ export const COMMUNITY_PLAN_COMPACT: PlanLayout = (() => {
     ...withCommunity(AI_COACH_PLAN_COMPACT, { x: 511.3, y: 162.125, height: 85.44 }, moves, {
       y: 259.22,
     }),
-    stageY: (AI_COACH_PLAN_COMPACT.stageY ?? 0) - 16,
   };
 })();
 
