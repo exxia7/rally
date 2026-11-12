@@ -14,6 +14,8 @@ import bell from '@/assets/icons/bell.svg';
 import chevronDown from '@/assets/icons/chevron-down-14.svg';
 import close16 from '@/assets/icons/close-16.svg';
 import home from '@/assets/icons/home.svg';
+import link from '@/assets/icons/link.svg';
+import lockDark from '@/assets/icons/lock-dark.svg';
 import logo from '@/assets/icons/logo.svg';
 import plus from '@/assets/icons/plus-gray-14.svg';
 import search from '@/assets/icons/search.svg';
@@ -135,10 +137,16 @@ function useWorkspaceItems(): MenuItemData[] {
       icon: settings16,
       onSelect: () => to(),
     },
-    { key: 'tools', label: 'Connected tools', onSelect: () => to('tools') },
+    {
+      key: 'tools',
+      label: 'Connected tools',
+      icon: link,
+      onSelect: () => to('tools'),
+    },
     {
       key: 'presets',
       label: 'Permission presets',
+      icon: lockDark,
       onSelect: () => to('presets'),
     },
   ];
