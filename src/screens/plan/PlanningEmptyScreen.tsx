@@ -83,6 +83,7 @@ export default function PlanningEmptyScreen() {
               <BriefComposer
                 value={brief}
                 onValueChange={setBrief}
+                emptyPlaceholder="Write your launch brief first, or pick a starter above."
                 onSend={(text?: string) => {
                   // Your words become the brief, the first chat message and the workflow's title.
                   const typed = (text ?? brief).trim();

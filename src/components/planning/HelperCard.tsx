@@ -1,25 +1,83 @@
 import clsx from 'clsx';
-import type { CSSProperties } from 'react';
+import { type CSSProperties, Fragment } from 'react';
 
+import lock from '@/assets/icons/lock-amber.svg';
 import { AgentAvatar, type AgentState } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
 import { type NodeKindName, NodeKindTile } from '@/components/map/NodeKind';
 
 // Figma "Setting pair" (2362:29472): label + value row inside a helper card. Highlighted = just changed.
 // With `onClick` the row is a button that edits that setting in place (2.4b: Tools opens the tool picker).
+// Not in Figma: `alert` items of the comma-separated value (a tool the workspace hasn't connected) read amber with a
+// lock and are their own buttons (`onAlertClick`: the connect step), so the row keeps one line.
 export function SettingPair({
   label,
   value,
   highlighted,
+  alert,
+  onAlertClick,
   onClick,
-}: {
-  label: string;
-  value: string;
-  highlighted?: boolean;
-  onClick?: () => void;
-}) {
+}: SettingRow & { onClick?: () => void }) {
   const text =
     'min-h-[15px] text-[9.488px] leading-[14.231px] tracking-[-0.066px]';
+  const row = clsx(
+    'flex w-full items-center gap-[6.6px] rounded-[4.125px] px-[4.95px] py-[3.3px] text-left',
+    highlighted && 'bg-[#fff1b8]'
+  );
+  const labelClass = clsx(
+    text,
+    'w-[34.65px] shrink-0 whitespace-nowrap text-muted'
+  );
+  const valueClass = clsx(
+    text,
+    'min-w-px flex-1 overflow-clip font-medium text-ink'
+  );
+  if (alert?.length) {
+    const items = value.split(', ');
+    // The row's own action is a button behind the text, so each alert item can be a button too (no nesting).
+    return (
+      <div className={clsx(row, 'relative')}>
+        {onClick && (
+          <button
+            type="button"
+            aria-label={`Edit ${label}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="absolute inset-0 rounded-[4.125px] hover:bg-hover"
+          />
+        )}
+        <p className={clsx(labelClass, 'pointer-events-none relative')}>
+          {label}
+        </p>
+        <p className={clsx(valueClass, 'pointer-events-none relative')}>
+          {items.map((item, i) => (
+            <Fragment key={item}>
+              {i > 0 && ', '}
+              {alert.includes(item) ? (
+                <button
+                  type="button"
+                  aria-label={`Connect ${item}`}
+                  title={`${item} isn't connected`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAlertClick?.(item);
+                  }}
+                  className="pointer-events-auto inline-flex items-center gap-[2px] align-top whitespace-nowrap text-[#a66600] hover:underline"
+                >
+                  <img src={lock} alt="" className="size-[7px] shrink-0" />
+                  {item}
+                </button>
+              ) : (
+                item
+              )}
+            </Fragment>
+          ))}
+        </p>
+      </div>
+    );
+  }
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
@@ -33,31 +91,23 @@ export function SettingPair({
             }
           : undefined
       }
-      className={clsx(
-        'flex w-full items-center gap-[6.6px] rounded-[4.125px] px-[4.95px] py-[3.3px] text-left',
-        highlighted && 'bg-[#fff1b8]',
-        onClick && 'hover:bg-hover'
-      )}
+      className={clsx(row, onClick && 'hover:bg-hover')}
     >
-      <p
-        className={clsx(
-          text,
-          'w-[34.65px] shrink-0 whitespace-nowrap text-muted'
-        )}
-      >
-        {label}
-      </p>
-      <p
-        className={clsx(
-          text,
-          'min-w-px flex-1 overflow-clip font-medium text-ink'
-        )}
-      >
-        {value}
-      </p>
+      <p className={labelClass}>{label}</p>
+      <p className={valueClass}>{value}</p>
     </Tag>
   );
 }
+
+/** One row of a helper card's settings well. */
+export type SettingRow = {
+  label: string;
+  value: string;
+  highlighted?: boolean;
+  /** Items of `value` drawn amber with a lock, e.g. a tool the workspace hasn't connected. */
+  alert?: string[];
+  onAlertClick?: (item: string) => void;
+};
 
 export type HelperCardData = {
   name: AgentName | string;
@@ -66,7 +116,7 @@ export type HelperCardData = {
   agentState?: AgentState;
   kind?: Exclude<NodeKindName, 'task'>;
   description: string;
-  settings: { label: string; value: string; highlighted?: boolean }[];
+  settings: SettingRow[];
   /** "Updated" (blue badge) or "New" (blue badge + dashed border). Dimmed = not involved. */
   state?: 'default' | 'dimmed' | 'updated' | 'new';
   /** The helper being edited (drawer, inline edit): 1.4px ink-2 border. 'accent' = the 2px blue border of a card

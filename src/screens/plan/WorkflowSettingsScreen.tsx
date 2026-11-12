@@ -27,7 +27,7 @@ import { CHECK_SHORT, toolConnected } from '@/state/permissions';
 import { estimate as planEstimate } from '@/state/planView';
 import { money, runCost } from '@/state/runView';
 import { dispatch, store, useAppState } from '@/state/store';
-import type { Workflow } from '@/state/types';
+import type { LaunchFacts, Workflow } from '@/state/types';
 import { useWorkflowPermissions } from '@/state/usePermissions';
 
 /** The budget card's "Used $0.18": what the run has spent so far (Figma's number on its own frame). */
@@ -57,13 +57,24 @@ const MORE: { value: Section; label: string }[] = [
   { value: 'archive', label: 'Archive' },
 ];
 
-// Launch date and price are the workflow's launch facts (a hand-raise fix changes them); the others are 2.8's text.
-const FACTS: { key: string; label: string; value: string; fact?: 'date' | 'price' }[] = [
-  { key: 'date', label: 'Launch date', value: 'Mar 12', fact: 'date' },
-  { key: 'audience', label: 'Audience', value: '2,800 waitlist signups' },
-  { key: 'price', label: 'Price', value: '$12/mo', fact: 'price' },
-  { key: 'claim', label: 'Approved claim', value: 'Saves you an hour a week' },
+// The workflow's launch facts, in 2.8's order. A hand-raise fix changes the date or price; edits here change any of
+// them, and the run's copy, handoffs and approvals follow (`factsPass` in runView).
+const FACTS: { key: 'date' | 'audience' | 'price' | 'claim'; label: string }[] = [
+  { key: 'date', label: 'Launch date' },
+  { key: 'audience', label: 'Audience' },
+  { key: 'price', label: 'Price' },
+  { key: 'claim', label: 'Approved claim' },
 ];
+
+/** Figma 2.8's Audience and Approved claim, which differ from the scene's facts (shown while the frame is as drawn). */
+const DRAWN_FACTS: Partial<LaunchFacts> = {
+  audience: '2,800 waitlist signups',
+  claim: 'Saves you an hour a week',
+};
+const shownFacts = (wf: Workflow): LaunchFacts =>
+  wf.asDrawn === '2.8'
+    ? { ...wf.resources.facts, ...DRAWN_FACTS }
+    : wf.resources.facts;
 
 /** The "Back to …" button's label for where it returns. */
 function backLabel(target: string) {
@@ -129,11 +140,18 @@ export default function WorkflowSettingsScreen() {
     () => (location.state as { section?: Section } | null)?.section
   );
   const [tools, setTools] = useState(TOOLS);
-  const [facts, setFacts] = useState(FACTS);
   const [editing, setEditing] = useState<string | null>(null);
   const linkedIn = toolConnected(s, 'LinkedIn');
-  const factValue = (f: (typeof FACTS)[number]) =>
-    f.fact ? wf.resources.facts[f.fact] : f.value;
+  const facts = shownFacts(wf);
+  // The first edit on an as-drawn 2.8 keeps the other facts as shown (the frame's text), so nothing else flips.
+  const setFact = (key: (typeof FACTS)[number]['key'], text: string) =>
+    dispatch({
+      type: 'facts/set',
+      patch: {
+        ...(wf.asDrawn === '2.8' ? DRAWN_FACTS : {}),
+        [key]: text,
+      },
+    });
   // Opened for one section ("Change rule" on 5.1 → Permissions): scroll to it.
   useEffect(() => {
     const first = (location.state as { section?: Section } | null)?.section;
@@ -310,12 +328,12 @@ export default function WorkflowSettingsScreen() {
                   subtitleWrap
                 >
                   <div className="flex w-full flex-col items-start pt-3">
-                    {facts.map((f, i) => (
+                    {FACTS.map((f, i) => (
                       <div
                         key={f.key}
                         className={clsx(
                           'flex h-11 w-full items-center gap-3',
-                          i < facts.length - 1 && 'border-b border-line',
+                          i < FACTS.length - 1 && 'border-b border-line',
                         )}
                       >
                         <p className="min-w-px flex-1 truncate text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink-2">
@@ -325,21 +343,8 @@ export default function WorkflowSettingsScreen() {
                           <input
                             autoFocus
                             aria-label={f.label}
-                            value={factValue(f)}
-                            onChange={(e) =>
-                              f.fact
-                                ? dispatch({
-                                    type: 'facts/set',
-                                    patch: { [f.fact]: e.target.value },
-                                  })
-                                : setFacts((all) =>
-                                all.map((x) =>
-                                  x.key === f.key
-                                    ? { ...x, value: e.target.value }
-                                    : x,
-                                ),
-                              )
-                            }
+                            value={facts[f.key]}
+                            onChange={(e) => setFact(f.key, e.target.value)}
                             onKeyDown={(e) =>
                               e.key === 'Enter' && setEditing(null)
                             }
@@ -347,7 +352,7 @@ export default function WorkflowSettingsScreen() {
                           />
                         ) : (
                           <p className={clsx(value, 'truncate')}>
-                            {factValue(f)}
+                            {facts[f.key]}
                           </p>
                         )}
                         <Button

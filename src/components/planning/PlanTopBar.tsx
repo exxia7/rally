@@ -45,8 +45,10 @@ export function PlanTopBar({
   );
 }
 
-/** Whether the workflow's run has started (planning then edits a live run). */
-const runStarted = (wf: Workflow) => wf.run.phase !== 'notStarted';
+/** Whether the workflow's run has started (planning then edits a live run): "Back to run", and 2.3's chat says
+ *  edits reach the steps that haven't started. */
+// eslint-disable-next-line react-refresh/only-export-components -- the one live-run check the planning views share
+export const runStarted = (wf: Workflow) => wf.run.phase !== 'notStarted';
 
 /** The planning views' main action: "Start launch" before the run, "Back to run" once it has started. */
 export function PlanMainAction({ className }: { className?: string }) {

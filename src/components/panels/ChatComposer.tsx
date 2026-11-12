@@ -174,10 +174,13 @@ export function ChatComposer({
 // The launch-brief composer of 2.1 "Planning · empty" ("Launch description", 2362:23524): 620px white box (1px
 // line-2 border in layout, 12px radius, 12px padding, 8px gap, faint shadow). A 44px multi-line field (14px,
 // placeholder ink at 50%), then the actions row: an Outlined 32px attach button and the Primary "Send".
-// Enter sends (Shift+Enter is a new line). The attach menu opens 21px under the attach button.
+// Enter sends (Shift+Enter is a new line). The attach menu opens 21px under the attach button. Send stays enabled
+// (as Figma draws it): with an empty brief it focuses the field and swaps the placeholder for `emptyPlaceholder`
+// until there's text again.
 export function BriefComposer({
   onSend,
   placeholder = 'What are you launching, who is it for, and when?',
+  emptyPlaceholder = 'Write your launch brief first.',
   value,
   onValueChange,
   attachOpen,
@@ -187,6 +190,8 @@ export function BriefComposer({
 }: {
   onSend: (text: string) => void;
   placeholder?: string;
+  /** The placeholder after Send with an empty brief. */
+  emptyPlaceholder?: string;
   /** Controlled text (a starter chip fills it). */
   value: string;
   onValueChange: (text: string) => void;
@@ -201,9 +206,17 @@ export function BriefComposer({
     [onAttachOpenChange]
   );
   useOutsideClick([anchor], attachOpen, close);
+  const field = useRef<HTMLTextAreaElement>(null);
+  const [nudge, setNudge] = useState(false);
+  // Any text (typed or a starter chip) ends the nudge.
+  if (nudge && value.trim()) setNudge(false);
   const send = () => {
     const t = value.trim();
     if (t) onSend(t);
+    else {
+      setNudge(true);
+      field.current?.focus();
+    }
   };
   return (
     <div
@@ -213,9 +226,10 @@ export function BriefComposer({
       )}
     >
       <textarea
+        ref={field}
         aria-label="Launch brief"
         value={value}
-        placeholder={placeholder}
+        placeholder={nudge ? emptyPlaceholder : placeholder}
         onChange={(e) => onValueChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {

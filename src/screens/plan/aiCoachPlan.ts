@@ -332,9 +332,14 @@ export const AI_COACH_OUTPUTS: OutputItem[] = [
   { id: 'email', label: 'Waitlist email', type: 'email' },
 ];
 
+/** The intro's last sentence before the run (Figma 2.3), and what it says once the run has started. */
+export const PLAN_CHAT_START = 'When it looks right, press Start launch.';
+export const PLAN_CHAT_LIVE =
+  "Changes you make here apply to steps that haven't started.";
+
 /** The planning chat's opening messages (2.3 side panel). */
 export const PLAN_CHAT_INTRO = [
-  "Here's your team as a map. Read it left to right: each box is a helper with one job, and lines show who passes work to whom. Click a helper to see or change it. When it looks right, press Start launch.",
+  `Here's your team as a map. Read it left to right: each box is a helper with one job, and lines show who passes work to whom. Click a helper to see or change it. ${PLAN_CHAT_START}`,
   'They check with you before anything gets posted or costs money. Want to change anything?',
 ];
 

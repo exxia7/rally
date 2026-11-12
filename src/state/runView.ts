@@ -16,7 +16,11 @@ import {
   LAUNCH_SUMMARY_LINE,
   LAUNCHED_RUN,
 } from '@/screens/approve/launchMap';
-import { AI_COACH_TEAM, type Helper } from '@/screens/plan/aiCoachPlan';
+import {
+  AI_COACH_FACTS,
+  AI_COACH_TEAM,
+  type Helper,
+} from '@/screens/plan/aiCoachPlan';
 import { COMMUNITY } from '@/screens/plan/communityPlan';
 import {
   AI_COACH_DECIDING_RUN,
@@ -197,7 +201,7 @@ const mentionsPenny = (wf: Workflow) => {
 
 /** Facts and copy that follow your answers: "Mar 12" → the launch date, the X post without Penny… */
 function factsPass(wf: Workflow) {
-  const { date, price } = wf.resources.facts;
+  const { date, price, claim } = wf.resources.facts;
   const swaps: [string, string][] = [];
   // Whole-copy swaps first, while the copy still reads "Mar 12".
   if (!mentionsPenny(wf))
@@ -205,6 +209,10 @@ function factsPass(wf: Workflow) {
       if (item.bodyWithoutPenny) swaps.push([item.body, item.bodyWithoutPenny]);
   if (date !== 'Mar 12') swaps.push(['Mar 12', date]);
   if (price !== '$12/mo') swaps.push(['$12/mo', price]);
+  // The approved claim (2.8) is the X post's middle sentence ("AI Coach knows your actual budget.").
+  const said = claim.trim().replace(/[.!\s]+$/, '');
+  if (said && claim !== AI_COACH_FACTS.claim)
+    swaps.push([AI_COACH_FACTS.claim, said]);
   const m = resolved(wf, 'missing');
   const decided = m && fixEffects('missing', m.choices)[0].decided;
   if (decided)

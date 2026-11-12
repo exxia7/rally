@@ -19,7 +19,7 @@ import { PlanCanvas } from '@/components/planning/PlanCanvas';
 import { PlanChatPanel } from '@/components/planning/PlanChatPanel';
 import { edgeKey, planRight } from '@/components/planning/planEdit';
 import type { PlanEdge, PlanNode } from '@/components/planning/PlanMap';
-import { PlanTopBar } from '@/components/planning/PlanTopBar';
+import { PlanTopBar, runStarted } from '@/components/planning/PlanTopBar';
 import { ToolPicker } from '@/components/planning/ToolPicker';
 import { TOOLS } from '@/components/planning/tools';
 import { useConnectTool } from '@/components/planning/useConnectTool';
@@ -32,6 +32,7 @@ import {
   checksLabel,
   helperAsk,
   isPoster,
+  missingTools,
   pickerAsk,
   toolConnected,
   withPermissionRows,
@@ -46,6 +47,8 @@ import {
   AI_COACH_TEAM,
   type Helper,
   modelCost,
+  PLAN_CHAT_LIVE,
+  PLAN_CHAT_START,
   PLAN_CHAT_SUGGESTIONS,
   planNodes,
 } from './aiCoachPlan';
@@ -84,6 +87,9 @@ const isDesktop = () =>
 
 const GENERIC_REPLY =
   "Got it. I'll fold that into the plan. Nothing runs until you press Start launch.";
+// Not in Figma: once the run has started, nothing waits for Start launch (the intro says so too).
+const GENERIC_REPLY_LIVE =
+  "Got it. I'll apply that to the steps that haven't started yet.";
 
 const PICKER_REPLY: Record<AskLevel, (name: string) => string> = {
   'ask-first': (n) => `${n} will wait for your OK before it posts or spends.`,
@@ -108,6 +114,8 @@ export default function TeamMapScreen() {
   const team = wf.helpers;
   const wide = id === '2.4c';
   const check = wf.permissions.checkLevel;
+  // A direct load of a planning frame is always before the run, so this never changes Figma's text.
+  const liveRun = runStarted(wf);
 
   const [drawer, setDrawer] = useState<string | null>(() =>
     initialDrawer(id, location.state)
@@ -233,7 +241,11 @@ export default function TeamMapScreen() {
     }
     say([
       { id: `u-${n}`, from: 'user', text },
-      { id: `a-${n}`, from: 'assistant', text: GENERIC_REPLY },
+      {
+        id: `a-${n}`,
+        from: 'assistant',
+        text: liveRun ? GENERIC_REPLY_LIVE : GENERIC_REPLY,
+      },
     ]);
   };
 
@@ -336,25 +348,33 @@ export default function TeamMapScreen() {
   // ---- The map ---------------------------------------------------------------------------------------------------
 
   const layout = planLayout(wf, drawer ? 'compact' : wide ? 'wide' : 'full');
-  // Cards: poster rows follow each helper's permission; a tool the workspace hasn't connected says so.
+  // Cards: poster rows follow each helper's permission.
   const cardTeam = useMemo(() => {
     const out: Record<string, Helper> = {};
-    for (const [hid, h] of Object.entries(team)) {
-      const withRows = withPermissionRows(wf, hid, h);
-      out[hid] =
-        wf.asDrawn || !withRows.tools
-          ? withRows
-          : {
-              ...withRows,
-              tools: withRows.tools.map((t) =>
-                toolConnected(s, t) ? t : `${t} (not connected)`
-              ),
-            };
-    }
+    for (const [hid, h] of Object.entries(team))
+      out[hid] = withPermissionRows(wf, hid, h);
     return out;
-  }, [team, wf, s]);
+  }, [team, wf]);
   const stageWidth = wide && !drawer ? 1062 : 954;
-  const nodes: PlanNode[] = drawer
+  // After the first edit, a tool the workspace hasn't connected reads amber with a lock in the card's Tools row;
+  // clicking it opens the connect step on that tool. Figma draws every tool as connected, so direct loads don't.
+  const withToolAlerts = (list: PlanNode[]): PlanNode[] =>
+    wf.asDrawn
+      ? list
+      : list.map((node) => {
+          const missing = missingTools(s, team[node.id]);
+          return missing.length
+            ? {
+                ...node,
+                settings: node.settings.map((r) =>
+                  r.label === 'Tools'
+                    ? { ...r, alert: missing, onAlertClick: (t) => connect(t) }
+                    : r
+                ),
+              }
+            : node;
+        });
+  const nodes: PlanNode[] = withToolAlerts(drawer
     ? planNodes(
         layout,
         { [drawer]: { selected: true } },
@@ -371,7 +391,7 @@ export default function TeamMapScreen() {
             { opacity: 0.4 },
             cardTeam
           )
-        : planNodes(layout, {}, {}, cardTeam);
+        : planNodes(layout, {}, {}, cardTeam));
   const gates = layout.gates?.map((g) => ({
     ...g,
     dimmed: g.dimmed || !!drawer,
@@ -385,6 +405,10 @@ export default function TeamMapScreen() {
 
   const chatMessages = wf.planChat.map((m) => ({
     ...m,
+    text:
+      liveRun && m.from === 'assistant'
+        ? m.text.replace(PLAN_CHAT_START, PLAN_CHAT_LIVE)
+        : m.text,
     extra: m.undo ? (
       <Button
         size="sm"
