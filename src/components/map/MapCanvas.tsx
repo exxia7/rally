@@ -7,15 +7,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import { flushSync } from 'react-dom';
 
 import { ZoomControls } from './CanvasControls';
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2;
 const STEP = 0.1;
-// Phones open at a readable zoom (the readout shows 66%) instead of fit-to-width (~23%), scrolled to `focus`.
-const PHONE_ZOOM = 0.8;
 // Fit view: room kept around the map, and between the map and a pinned canvas overlay.
 const FIT_PAD = 40;
 const OVERLAY_GAP = 16;
@@ -75,7 +72,7 @@ function contentBounds(stage: HTMLElement, z: number): Box | null {
         parseFloat(cs.borderTopWidth) + parseFloat(cs.borderLeftWidth) > 0 ||
         cs.boxShadow !== 'none' ||
         [...el.childNodes].some(
-          (n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim()
+          (n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim(),
         );
       if (paints) add(el.getBoundingClientRect());
     }
@@ -97,13 +94,19 @@ function contentBounds(stage: HTMLElement, z: number): Box | null {
 // overlays (Tasks chip, Completed agents, legend, "What goes out", zoom controls). Each overlay reserves a band
 // along one edge it is near: top/bottom or left/right. Of those choices, the one that lets a `bw`×`bh` map
 // (stage px) show largest wins, so a wide map keeps the canvas's width and a tall one its height.
-function fitArea(canvas: HTMLElement, exclude: Element, bw: number, bh: number): Box {
+function fitArea(
+  canvas: HTMLElement,
+  exclude: Element,
+  bw: number,
+  bh: number,
+): Box {
   const c = canvas.getBoundingClientRect();
   const W = c.width;
   const H = c.height;
   type Band = { side: keyof Box; size: number };
   const choices: [Band, Band][] = [];
   const consider = (el: Element) => {
+    if (el.hasAttribute('data-fit-ignore')) return;
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) return;
     // A full-canvas wrapper only positions its children: look at those instead.
@@ -128,7 +131,12 @@ function fitArea(canvas: HTMLElement, exclude: Element, bw: number, bh: number):
   let bestZoom = -1;
   // Few overlays (≤ 6), so every combination is cheap to try.
   for (let mask = 0; mask < 1 << choices.length; mask++) {
-    const inset = { left: FIT_PAD, top: FIT_PAD, right: FIT_PAD, bottom: FIT_PAD };
+    const inset = {
+      left: FIT_PAD,
+      top: FIT_PAD,
+      right: FIT_PAD,
+      bottom: FIT_PAD,
+    };
     choices.forEach((pair, i) => {
       const band = pair[(mask >> i) & 1];
       inset[band.side] = Math.max(inset[band.side], band.size);
@@ -141,184 +149,343 @@ function fitArea(canvas: HTMLElement, exclude: Element, bw: number, bh: number):
     };
     const zoom = Math.min(
       (area.right - area.left) / Math.max(1, bw),
-      (area.bottom - area.top) / Math.max(1, bh)
+      (area.bottom - area.top) / Math.max(1, bh),
     );
     if (zoom > bestZoom) {
       bestZoom = zoom;
       best = area;
     }
   }
-  return best ?? { left: FIT_PAD, top: FIT_PAD, right: W - FIT_PAD, bottom: H - FIT_PAD };
+  return (
+    best ?? {
+      left: FIT_PAD,
+      top: FIT_PAD,
+      right: W - FIT_PAD,
+      bottom: H - FIT_PAD,
+    }
+  );
 }
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLElement &&
   (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 
-// Figma "ZoomStage": the map canvas. A pannable viewport (scroll, or drag with the mouse) holding the
-// stage at its design size (1362×830, the canvas area of a 1440×900 frame), so at 1440×900 it is
-// exactly the Figma frame. Zoom controls scale the stage. Under 768px it starts at a readable zoom, scrolled so
-// `focus` (a stage point, e.g. the active node) is in view.
-// Fit view (also ⌘/Ctrl+0 and Shift+1) scales the map's painted extent into the canvas area the pinned overlays
-// leave free (40px in), centres it and resets the pan, over 200ms (instantly with reduced motion). From the first
-// Fit on, the stage has a viewport of slack on every side, so any part of it can be centred. ⌘/Ctrl + and −
-// zoom. The opening view never changes: Fit only applies when asked for.
+// Each map's last view (zoom, and the stage point at the canvas centre), by `viewKey`: a workflow's run map keeps
+// its zoom across beats (4.1 → 4.2 → 4.3 are separate screens) and as panels open and close.
+const VIEWS = new Map<string, { z: number; cx: number; cy: number }>();
+// The opening view never draws cards smaller than this share of their full size (the zoom label's 75%).
+const MIN_READABLE = 0.75;
+const FADE = 'pointer-events-none absolute from-canvas to-transparent';
+
+// Figma "ZoomStage": the map canvas. A pannable viewport (scroll, or drag with the mouse) holding the stage
+// (`stageWidth` × `stageHeight`, the map's coordinate space) with a viewport of slack on every side, so any part
+// of it can be centred. Zoom scales the stage.
+//
+// Opening view, the same on every plan and run canvas and at every width: the map's painted extent is fitted into
+// the canvas area the pinned overlays leave free (40px in), at most at design size, and never below
+// MIN_READABLE of the cards' full size. A map that is still larger is panned to keep `focus` (the node that needs
+// you, is working or is ready; else the start of the map) in view. A soft fade marks every edge where the map is
+// cut. After that the view is remembered per `viewKey` and kept as panels open and close and as the run moves on;
+// it changes only when you zoom, pan or Fit view. Fit view (also ⌘/Ctrl+0 and Shift+1) fits the whole map over
+// 200ms (instantly with reduced motion); ⌘/Ctrl + and − zoom.
+// The zoom label is the real scale: zoom × `contentScale` (how large the map draws its cards at zoom 1).
 // `overlay` is pinned to the viewport (Tasks chip, Completed agents), not to the map. Zoom controls sit 16px from
 // the bottom-right; planning screens with "What goes out" put them bottom-left (`zoomPosition="left"`).
 export function MapCanvas({
   stageWidth = 1362,
   stageHeight = 830,
-  zoomLabelBase = 83,
+  contentScale = 0.83,
+  viewKey,
   overlay,
   zoomClassName,
   zoomPosition = 'right',
   focus,
   focusAt = 0.5,
-  phoneZoom = PHONE_ZOOM,
-  fitWidth,
   className,
   children,
 }: {
-  /** Phones: where `focus` lands, as a fraction of the canvas height (0.2 keeps it above a half-height sheet). */
+  /** Phones: where `focus` lands, as a fraction of the free canvas height (0.2 keeps it above a half-height sheet). */
   focusAt?: number;
-  /** Phones: the opening zoom (the plan map's cards are drawn at 0.85, so it opens larger to stay readable). */
-  phoneZoom?: number;
   stageWidth?: number;
   stageHeight?: number;
-  /** What the Figma zoom readout shows at design size (the frames say 83%). */
-  zoomLabelBase?: number;
+  /** How large the map draws its cards at zoom 1, as a share of their full size (run maps 0.83, plan maps 0.85). */
+  contentScale?: number;
+  /** Remembers the view under this key (e.g. `run:<workflow>`); without one each mount opens fresh. */
+  viewKey?: string;
   overlay?: ReactNode;
   zoomClassName?: string;
   zoomPosition?: 'left' | 'right';
-  /** Stage point to scroll into view when a phone opens the map (defaults to the stage centre). */
+  /** Stage point to keep in view: the opening view pans to it when the map is larger than the canvas, and a
+   *  change pans to it if it's out of view. */
   focus?: { x: number; y: number };
-  /** Desktop: while the viewport is narrower than the stage, scale the stage down to fit its width, until the
-   *  zoom controls are used. A run screen with the side panel docked at 1280–1440px. */
-  fitWidth?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   const canvas = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const slack = useRef<HTMLDivElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(() => (isPhone() ? phoneZoom : 1));
-  // Slack (px) around the stage once Fit has been used; null keeps the opening, centred layout.
-  const [free, setFree] = useState<{ x: number; y: number } | null>(null);
-  const prevZoom = useRef(zoom);
-  const skipCentre = useRef(false);
+  const key = viewKey && `${viewKey}:${stageWidth}x${stageHeight}`;
+  const [zoom, setZoom] = useState(() => (key && VIEWS.get(key)?.z) || 1);
+  const z = useRef(zoom);
+  const pad = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const bounds = useRef<Box | null>(null);
+  const [cut, setCut] = useState({ l: false, r: false, t: false, b: false });
   const anim = useRef(0);
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
 
-  // Phones: scroll the opening zoom to the focus point once the viewport is measured.
+  // The view, imperatively (React state only carries the zoom for the label and the next render).
+  const applyZoom = (next: number) => {
+    z.current = next;
+    if (holder.current) {
+      holder.current.style.width = `${stageWidth * next}px`;
+      holder.current.style.height = `${stageHeight * next}px`;
+    }
+    if (stage.current)
+      stage.current.style.transform = next === 1 ? '' : `scale(${next})`;
+  };
+  /** Where the stage's top-left corner is, in canvas px. */
+  const origin = () => {
+    const sc = scroller.current!;
+    return {
+      x: pad.current.x - sc.scrollLeft,
+      y: pad.current.y - sc.scrollTop,
+    };
+  };
+  const placeOrigin = (ox: number, oy: number) => {
+    const sc = scroller.current!;
+    sc.scrollLeft = pad.current.x - ox;
+    sc.scrollTop = pad.current.y - oy;
+  };
+  /** The stage point at the canvas centre (for a canvas `w` × `h`, default its last measured size). */
+  const centre = (w = pad.current.w, h = pad.current.h) => {
+    const o = origin();
+    return { cx: (w / 2 - o.x) / z.current, cy: (h / 2 - o.y) / z.current };
+  };
+  const placeCentre = (cx: number, cy: number) => {
+    const sc = scroller.current!;
+    placeOrigin(
+      sc.clientWidth / 2 - cx * z.current,
+      sc.clientHeight / 2 - cy * z.current,
+    );
+  };
+  // A viewport of slack on every side, so any stage point can be scrolled to the centre.
+  const measurePad = () => {
+    const sc = scroller.current!;
+    pad.current = {
+      x: sc.clientWidth,
+      y: sc.clientHeight,
+      w: sc.clientWidth,
+      h: sc.clientHeight,
+    };
+    if (slack.current)
+      slack.current.style.padding = `${sc.clientHeight}px ${sc.clientWidth}px`;
+  };
+  const save = () => {
+    if (key) VIEWS.set(key, { z: z.current, ...centre() });
+  };
+  const fullStage = (): Box => ({
+    left: 0,
+    top: 0,
+    right: stageWidth,
+    bottom: stageHeight,
+  });
+  const updateCut = () => {
+    const sc = scroller.current;
+    const b = bounds.current;
+    if (!sc || !b) return;
+    const o = origin();
+    const k = z.current;
+    const next = {
+      l: o.x + b.left * k < -1,
+      r: o.x + b.right * k > sc.clientWidth + 1,
+      t: o.y + b.top * k < -1,
+      b: o.y + b.bottom * k > sc.clientHeight + 1,
+    };
+    setCut((c) =>
+      c.l === next.l && c.r === next.r && c.t === next.t && c.b === next.b
+        ? c
+        : next,
+    );
+  };
+  /** The origin that puts stage point `p` at the free area's target spot, without leaving empty canvas where the
+   *  map could be (a map larger than the area stays edge to edge). */
+  const originFor = (
+    b: Box,
+    area: Box,
+    k: number,
+    p?: { x: number; y: number },
+  ) => {
+    const axis = (
+      lo: number,
+      hi: number,
+      bLo: number,
+      bHi: number,
+      at: number,
+      pv?: number,
+    ) => {
+      if ((bHi - bLo) * k <= hi - lo)
+        return (lo + hi) / 2 - ((bLo + bHi) / 2) * k;
+      const want = lo + (hi - lo) * at - (pv ?? bLo) * k;
+      return Math.min(lo - bLo * k, Math.max(hi - bHi * k, want));
+    };
+    return {
+      x: axis(area.left, area.right, b.left, b.right, 0.5, p?.x),
+      y: axis(
+        area.top,
+        area.bottom,
+        b.top,
+        b.bottom,
+        isPhone() ? focusAt : 0.5,
+        p?.y,
+      ),
+    };
+  };
+  const freeArea = (b: Box) =>
+    fitArea(
+      canvas.current!,
+      scroller.current!,
+      b.right - b.left,
+      b.bottom - b.top,
+    );
+
+  // Opening view: a remembered one, or fit within [readable, design size], panned to the focus.
   useLayoutEffect(() => {
-    const el = scroller.current;
-    if (!el || !isPhone()) return;
-    const fx = focus?.x ?? stageWidth / 2;
-    const fy = focus?.y ?? stageHeight / 2;
-    el.scrollLeft = fx * zoom - el.clientWidth / 2;
-    el.scrollTop = fy * zoom - el.clientHeight * focusAt;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, for the opening view
+    const sc = scroller.current;
+    const st = stage.current;
+    if (!sc || !st) return;
+    measurePad();
+    bounds.current = contentBounds(st, z.current) ?? fullStage();
+    const b = bounds.current;
+    const area = freeArea(b);
+    const saved = key ? VIEWS.get(key) : undefined;
+    if (saved) {
+      applyZoom(saved.z);
+      placeCentre(saved.cx, saved.cy);
+      // The run moved on: if what needs you now is out of view, bring it in at the same zoom.
+      if (focus && !inArea(focus, area)) {
+        const o = originFor(b, area, saved.z, focus);
+        placeOrigin(o.x, o.y);
+      }
+    } else {
+      const fit = Math.min(
+        (area.right - area.left) / Math.max(1, b.right - b.left),
+        (area.bottom - area.top) / Math.max(1, b.bottom - b.top),
+      );
+      const lo = MIN_READABLE / contentScale;
+      const k = clamp(Math.min(Math.max(1, lo), Math.max(lo, fit)));
+      applyZoom(k);
+      const o = originFor(b, area, k, focus);
+      placeOrigin(o.x, o.y);
+    }
+    if (z.current !== zoom) setZoom(z.current);
+    save();
+    updateCut();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the opening view, once per mount
   }, []);
 
-  // fitWidth: follow the viewport width (never above 100%) until the user zooms by hand.
-  const userZoomed = useRef(false);
-  useLayoutEffect(() => {
-    const el = scroller.current;
-    if (!el || !fitWidth || isPhone()) return;
-    const update = () => {
-      if (userZoomed.current) return;
-      setZoom(
-        el.clientWidth >= stageWidth ? 1 : clamp(el.clientWidth / stageWidth)
-      );
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [fitWidth, stageWidth]);
-  const zoomBy = (next: number) => {
-    cancelAnimationFrame(anim.current);
-    userZoomed.current = true;
-    setZoom(next);
+  /** Whether stage point `p` shows inside canvas area `area` at the current view. */
+  const inArea = (p: { x: number; y: number }, area: Box) => {
+    const o = origin();
+    const x = o.x + p.x * z.current;
+    const y = o.y + p.y * z.current;
+    return (
+      x >= area.left && x <= area.right && y >= area.top && y <= area.bottom
+    );
   };
 
-  // Keep the viewport centre steady while zooming with the buttons or keys.
+  // A new focus (a picker or drawer opened on a card): pan to it if it's out of view.
+  const focusKey = focus ? `${Math.round(focus.x)},${Math.round(focus.y)}` : '';
+  const firstFocus = useRef(true);
   useLayoutEffect(() => {
-    const el = scroller.current;
-    const prev = prevZoom.current;
-    prevZoom.current = zoom;
-    if (skipCentre.current) {
-      skipCentre.current = false;
+    if (firstFocus.current) {
+      firstFocus.current = false;
       return;
     }
-    if (!el || prev <= 0 || zoom <= 0 || prev === zoom) return;
-    const r = zoom / prev;
-    const px = free?.x ?? 0;
-    const py = free?.y ?? 0;
-    el.scrollLeft =
-      (el.scrollLeft - px + el.clientWidth / 2) * r + px - el.clientWidth / 2;
-    el.scrollTop =
-      (el.scrollTop - py + el.clientHeight / 2) * r + py - el.clientHeight / 2;
-  }, [zoom, free]);
+    const b = bounds.current;
+    if (!focus || !b || !scroller.current) return;
+    const area = freeArea(b);
+    if (inArea(focus, area)) return;
+    const o = originFor(b, area, z.current, focus);
+    placeOrigin(o.x, o.y);
+    save();
+    updateCut();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- follows the focus point only
+  }, [focusKey]);
+
+  // The canvas resizes (a panel opens or closes, the window changes): keep the same stage point centred.
+  useLayoutEffect(() => {
+    const sc = scroller.current;
+    if (!sc) return;
+    const ro = new ResizeObserver(() => {
+      if (sc.clientWidth === pad.current.w && sc.clientHeight === pad.current.h)
+        return;
+      const c = centre();
+      measurePad();
+      placeCentre(c.cx, c.cy);
+      save();
+      updateCut();
+    });
+    ro.observe(sc);
+    // The map's extent changes when its content does (a step added, a fork drawn).
+    let raf = 0;
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (stage.current)
+          bounds.current =
+            contentBounds(stage.current, z.current) ?? fullStage();
+        updateCut();
+      });
+    });
+    if (stage.current)
+      mo.observe(stage.current, { childList: true, subtree: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- set up once; reads refs
+  }, []);
 
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
 
-  const z = zoom > 0 ? zoom : 1;
+  // Zoom with the buttons or keys: the canvas centre stays put.
+  const zoomTo = (next: number) => {
+    if (!scroller.current) return;
+    cancelAnimationFrame(anim.current);
+    const c = centre();
+    applyZoom(next);
+    placeCentre(c.cx, c.cy);
+    setZoom(next);
+    save();
+    updateCut();
+  };
 
   const fitView = () => {
     const sc = scroller.current;
-    const cv = canvas.current;
-    const hd = holder.current;
     const st = stage.current;
-    if (!sc || !cv || !hd || !st) return;
+    if (!sc || !st) return;
     cancelAnimationFrame(anim.current);
-    const from = z;
-    const bounds = contentBounds(st, from) ?? {
-      left: 0,
-      top: 0,
-      right: stageWidth,
-      bottom: stageHeight,
-    };
-    const area = fitArea(
-      cv,
-      sc,
-      bounds.right - bounds.left,
-      bounds.bottom - bounds.top
-    );
+    const from = z.current;
+    const b = contentBounds(st, from) ?? fullStage();
+    bounds.current = b;
+    const area = freeArea(b);
     const to = clamp(
       Math.min(
-        (area.right - area.left) / Math.max(1, bounds.right - bounds.left),
-        (area.bottom - area.top) / Math.max(1, bounds.bottom - bounds.top)
-      )
+        (area.right - area.left) / Math.max(1, b.right - b.left),
+        (area.bottom - area.top) / Math.max(1, b.bottom - b.top),
+      ),
     );
-
-    // Switch to the free layout without moving anything on screen. The scroller fills the canvas, so their
-    // origins match.
-    const sr = sc.getBoundingClientRect();
-    const hr = hd.getBoundingClientRect();
-    const ox0 = hr.left - sr.left;
-    const oy0 = hr.top - sr.top;
-    const pad = free ?? { x: sc.clientWidth, y: sc.clientHeight };
-    if (!free) flushSync(() => setFree(pad));
-    sc.scrollLeft = pad.x - ox0;
-    sc.scrollTop = pad.y - oy0;
-
-    // Target: the bounds' centre on the free area's centre.
-    const ox1 =
-      (area.left + area.right) / 2 - ((bounds.left + bounds.right) / 2) * to;
-    const oy1 =
-      (area.top + area.bottom) / 2 - ((bounds.top + bounds.bottom) / 2) * to;
-
+    const o0 = origin();
+    const o1 = originFor(b, area, to);
     const finish = () => {
-      userZoomed.current = true;
-      if (to !== zoom) skipCentre.current = true;
-      flushSync(() => setZoom(to));
-      hd.style.width = `${stageWidth * to}px`;
-      hd.style.height = `${stageHeight * to}px`;
-      st.style.transform = to === 1 ? '' : `scale(${to})`;
-      sc.scrollLeft = pad.x - ox1;
-      sc.scrollTop = pad.y - oy1;
+      applyZoom(to);
+      placeOrigin(o1.x, o1.y);
+      setZoom(to);
+      save();
+      updateCut();
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       finish();
@@ -333,21 +500,17 @@ export function MapCanvas({
         return;
       }
       const e = easeOut(t);
-      const zz = from + (to - from) * e;
-      hd.style.width = `${stageWidth * zz}px`;
-      hd.style.height = `${stageHeight * zz}px`;
-      st.style.transform = zz === 1 ? '' : `scale(${zz})`;
-      sc.scrollLeft = pad.x - (ox0 + (ox1 - ox0) * e);
-      sc.scrollTop = pad.y - (oy0 + (oy1 - oy0) * e);
+      applyZoom(from + (to - from) * e);
+      placeOrigin(o0.x + (o1.x - o0.x) * e, o0.y + (o1.y - o0.y) * e);
       anim.current = requestAnimationFrame(tick);
     };
     anim.current = requestAnimationFrame(tick);
   };
 
   // ⌘/Ctrl+0 and Shift+1 fit; ⌘/Ctrl + and − zoom the map instead of the page.
-  const keys = useRef({ fitView, zoomBy, z });
+  const keys = useRef({ fitView, zoomTo });
   useLayoutEffect(() => {
-    keys.current = { fitView, zoomBy, z };
+    keys.current = { fitView, zoomTo };
   });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -362,10 +525,10 @@ export function MapCanvas({
         k.fitView();
       } else if (mod && !e.altKey && (e.key === '=' || e.key === '+')) {
         e.preventDefault();
-        k.zoomBy(clamp(k.z + STEP));
+        k.zoomTo(clamp(z.current + STEP));
       } else if (mod && !e.altKey && (e.key === '-' || e.key === '_')) {
         e.preventDefault();
-        k.zoomBy(clamp(k.z - STEP));
+        k.zoomTo(clamp(z.current - STEP));
       }
     };
     document.addEventListener('keydown', onKey);
@@ -396,7 +559,7 @@ export function MapCanvas({
       ref={canvas}
       className={clsx(
         'relative min-h-0 w-full min-w-0 flex-1 overflow-clip bg-canvas',
-        className
+        className,
       )}
     >
       <div
@@ -405,20 +568,17 @@ export function MapCanvas({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onScroll={() => {
+          updateCut();
+          save();
+        }}
         className="absolute inset-0 cursor-grab overflow-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
       >
-        <div
-          className={
-            free
-              ? 'h-max w-max'
-              : 'flex h-max min-h-full w-max min-w-full items-center justify-center'
-          }
-          style={free ? { padding: `${free.y}px ${free.x}px` } : undefined}
-        >
+        <div ref={slack} className="h-max w-max">
           <div
             ref={holder}
             className="relative shrink-0"
-            style={{ width: stageWidth * z, height: stageHeight * z }}
+            style={{ width: stageWidth * zoom, height: stageHeight * zoom }}
           >
             <div
               ref={stage}
@@ -426,7 +586,7 @@ export function MapCanvas({
               style={{
                 width: stageWidth,
                 height: stageHeight,
-                transform: z === 1 ? undefined : `scale(${z})`,
+                transform: zoom === 1 ? undefined : `scale(${zoom})`,
               }}
             >
               {children}
@@ -434,16 +594,45 @@ export function MapCanvas({
           </div>
         </div>
       </div>
+      {/* Where the map runs past the canvas edge, it fades out instead of being sliced. */}
+      {cut.l && (
+        <div
+          aria-hidden
+          data-fit-ignore
+          className={`${FADE} inset-y-0 left-0 w-10 bg-linear-to-r`}
+        />
+      )}
+      {cut.r && (
+        <div
+          aria-hidden
+          data-fit-ignore
+          className={`${FADE} inset-y-0 right-0 w-10 bg-linear-to-l`}
+        />
+      )}
+      {cut.t && (
+        <div
+          aria-hidden
+          data-fit-ignore
+          className={`${FADE} inset-x-0 top-0 h-10 bg-linear-to-b`}
+        />
+      )}
+      {cut.b && (
+        <div
+          aria-hidden
+          data-fit-ignore
+          className={`${FADE} inset-x-0 bottom-0 h-10 bg-linear-to-t`}
+        />
+      )}
       {overlay}
       <ZoomControls
-        label={`${Math.round(zoomLabelBase * z)}%`}
-        onZoomOut={() => zoomBy(clamp(z - STEP))}
-        onZoomIn={() => zoomBy(clamp(z + STEP))}
+        label={`${Math.round(contentScale * zoom * 100)}%`}
+        onZoomOut={() => zoomTo(clamp(z.current - STEP))}
+        onZoomIn={() => zoomTo(clamp(z.current + STEP))}
         onFit={fitView}
         className={clsx(
           'absolute bottom-4',
           zoomPosition === 'left' ? 'left-4' : 'right-4',
-          zoomClassName
+          zoomClassName,
         )}
       />
     </div>
