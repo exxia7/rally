@@ -153,9 +153,12 @@ export function MapCanvas({
   focusAt = 0.5,
   phoneZoom = PHONE_ZOOM,
   fitWidth,
+  reveal,
   className,
   children,
 }: {
+  /** Bring the element with this data-node-id to the middle of the map (Tasks list → card); change `n` to repeat. */
+  reveal?: { id: string; n: number };
   /** Phones: where `focus` lands, as a fraction of the canvas height (0.2 keeps it above a half-height sheet). */
   focusAt?: number;
   /** Phones: the opening zoom (the plan map's cards are drawn at 0.85, so it opens larger to stay readable). */
@@ -243,7 +246,8 @@ export function MapCanvas({
 
   const z = zoom > 0 ? zoom : 1;
 
-  const fitView = () => {
+  // Fit view, or (with `target`) bring one element to the middle of the free area at the current zoom.
+  const fitView = (target?: Element) => {
     const sc = scroller.current;
     const cv = canvas.current;
     const hd = holder.current;
@@ -251,19 +255,39 @@ export function MapCanvas({
     if (!sc || !cv || !hd || !st) return;
     cancelAnimationFrame(anim.current);
     const from = z;
-    const bounds = contentBounds(st, from) ?? {
-      left: 0,
-      top: 0,
-      right: stageWidth,
-      bottom: stageHeight,
-    };
+    const s0 = st.getBoundingClientRect();
+    const t = target?.getBoundingClientRect();
+    const bounds = t
+      ? {
+          left: (t.left - s0.left) / from,
+          top: (t.top - s0.top) / from,
+          right: (t.right - s0.left) / from,
+          bottom: (t.bottom - s0.top) / from,
+        }
+      : (contentBounds(st, from) ?? {
+          left: 0,
+          top: 0,
+          right: stageWidth,
+          bottom: stageHeight,
+        });
     const area = fitArea(cv, sc);
-    const to = clamp(
-      Math.min(
-        (area.right - area.left) / Math.max(1, bounds.right - bounds.left),
-        (area.bottom - area.top) / Math.max(1, bounds.bottom - bounds.top)
-      )
-    );
+    if (t) {
+      // A side panel floating over the canvas (under 1280px) hides its right part: centre in what's left.
+      const c = cv.getBoundingClientRect();
+      for (const a of document.querySelectorAll('aside')) {
+        const r = a.getBoundingClientRect();
+        if (r.width > 0 && r.left > c.left + c.width / 3 && r.left < c.right)
+          area.right = Math.min(area.right, r.left - c.left - FIT_PAD);
+      }
+    }
+    const to = t
+      ? from
+      : clamp(
+          Math.min(
+            (area.right - area.left) / Math.max(1, bounds.right - bounds.left),
+            (area.bottom - area.top) / Math.max(1, bounds.bottom - bounds.top)
+          )
+        );
 
     // Switch to the free layout without moving anything on screen. The scroller fills the canvas, so their
     // origins match.
@@ -283,7 +307,7 @@ export function MapCanvas({
       (area.top + area.bottom) / 2 - ((bounds.top + bounds.bottom) / 2) * to;
 
     const finish = () => {
-      userZoomed.current = true;
+      if (!t) userZoomed.current = true;
       if (to !== zoom) skipCentre.current = true;
       flushSync(() => setZoom(to));
       hd.style.width = `${stageWidth * to}px`;
@@ -321,6 +345,30 @@ export function MapCanvas({
   useLayoutEffect(() => {
     keys.current = { fitView, zoomBy, z };
   });
+
+  // Reveal: once laid out (the canvas may have just remounted for a docked panel), glide the card into view.
+  useEffect(() => {
+    if (!reveal) return;
+    const raf = requestAnimationFrame(() => {
+      const el = stage.current?.querySelector(
+        `[data-node-id="${CSS.escape(reveal.id)}"]`
+      );
+      if (!el) return;
+      keys.current.fitView(el);
+      // Then pulse a blue ring twice so you can spot it.
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+        el.animate(
+          [
+            { boxShadow: '0 0 0 0 rgba(36,87,214,0)' },
+            { boxShadow: '0 0 0 6px rgba(36,87,214,0.35)' },
+            { boxShadow: '0 0 0 0 rgba(36,87,214,0)' },
+          ],
+          { duration: 700, iterations: 2, delay: FIT_MS }
+        );
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs per reveal request
+  }, [reveal?.id, reveal?.n]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -411,7 +459,7 @@ export function MapCanvas({
         label={`${Math.round(zoomLabelBase * z)}%`}
         onZoomOut={() => zoomBy(clamp(z - STEP))}
         onZoomIn={() => zoomBy(clamp(z + STEP))}
-        onFit={fitView}
+        onFit={() => fitView()}
         className={clsx(
           'absolute bottom-4',
           zoomPosition === 'left' ? 'left-4' : 'right-4',

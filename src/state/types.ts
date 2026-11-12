@@ -39,6 +39,8 @@ export type ChatLine = {
   action?: 'team';
   /** 2.3: an Undo button under this message. */
   undo?: UndoRef;
+  /** A reply from a helper you @mentioned (its id): shown with its character and name. */
+  helper?: string;
 };
 
 export type UndoRef =

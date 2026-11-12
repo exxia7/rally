@@ -2,13 +2,24 @@ import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 
 import arrowRightDark from '@/assets/icons/arrow-right-dark.svg';
+import linkIcon from '@/assets/icons/link.svg';
+import sparkIcon from '@/assets/icons/pathfinder-spark.svg';
 import plusAttach from '@/assets/icons/plus-attach.svg';
+import uploadIcon from '@/assets/icons/upload.svg';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Suggestion } from '@/components/ui/Suggestion';
 import { TextInput } from '@/components/ui/TextInput';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 
+import { AgentArt } from '@/components/agents/AgentAvatar';
+import { NodeKindTile } from '@/components/map/NodeKind';
+import {
+  type ChatChip,
+  chatContext,
+  type Mentionable,
+  useChatChips,
+} from '@/state/chatContext';
 import type { Effort, ModelId } from '@/state/types';
 
 import { ATTACH_LABEL, AttachMenu, AttachmentChips } from './AttachMenu';
@@ -116,9 +127,11 @@ export function ChatComposer({
   attachable,
   model,
   onModelChange,
+  mentions,
 }: {
   defaultText?: string;
-  onSend: (text: string) => void;
+  /** `about`: helpers the message was sent to (their chips); the screen lets the first one reply. */
+  onSend: (text: string, meta?: { about: string[] }) => void;
   suggestions?: string[];
   placeholder?: string;
   /** 12px sides, for a narrow (300px) chat column (2.4c), as the Figma component description says. */
@@ -127,20 +140,26 @@ export function ChatComposer({
   /**
    * Tools row (not in Figma, design/non-figma-ui.md): `attachable` adds a ghost "+" that opens the attach menu
    * (above it) and `onModelChange` a model picker. With either, the box gets a second row under the field:
-   * + and model on the left, send on the right. Attachments show as chips above the field and are sent with the
-   * message ("… · Attached: Brand guide.pdf").
+   * + and model on the left, send on the right. Context chips (files, links, skills from +, and map blocks clicked
+   * while the chat is open, see state/chatContext) sit above the field and go out with the message.
    */
   attachable?: boolean;
   model?: ModelId;
   onModelChange?: (model: ModelId) => void;
+  /** Typing @ lists these helpers above the field; picking one inserts "@Name ". */
+  mentions?: Mentionable[];
 }) {
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const chips = useChatChips();
   const sendWith = (t: string) => {
-    const withFiles = attachments.length
-      ? `${t} · Attached: ${attachments.join(', ')}`
-      : t;
-    setAttachments([]);
-    onSend(withFiles);
+    const helpers = chips.filter((c) => c.helper);
+    const files = chips.filter((c) => !c.helper);
+    let out = t;
+    if (helpers.length)
+      out += ` · About: ${helpers.map((c) => c.label).join(', ')}`;
+    if (files.length)
+      out += ` · Attached: ${files.map((c) => c.label).join(', ')}`;
+    chatContext.clear();
+    onSend(out, { about: helpers.map((c) => c.helper!) });
   };
   const { text, setText, send } = useComposer(sendWith, defaultText);
   const [attachOpen, setAttachOpen] = useState(false);
@@ -149,9 +168,28 @@ export function ChatComposer({
   useOutsideClick([anchor], attachOpen, closeAttach);
   const fileInput = useRef<HTMLInputElement>(null);
   const tools = attachable || !!onModelChange;
+  const chipsShown = tools ? chips : [];
   // Attachments alone can be sent too.
   const sendAny = () =>
-    !text.trim() && attachments.length ? sendWith('Here you go') : send();
+    !text.trim() && chipsShown.length ? sendWith('Here you go') : send();
+  const addFile = (label: string, attach: 'upload' | 'link' | 'skill') =>
+    chatContext.add({ key: `file:${label}:${Date.now()}`, label, attach });
+
+  // @ mentions: an "@word" right before the end of the text opens the list, filtered by the word.
+  const at = mentions ? /(?:^|\s)@([^\s@]*)$/.exec(text) : null;
+  const matches =
+    at && mentions
+      ? mentions.filter((m) =>
+          m.name.toLowerCase().startsWith(at[1].toLowerCase())
+        )
+      : [];
+  const [active, setActive] = useState(0);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const mentionOpen = matches.length > 0 && dismissed !== text;
+  const pick = (m: Mentionable) => {
+    setText(text.replace(/@[^\s@]*$/, `@${m.name} `));
+    setActive(0);
+  };
 
   const field = (
     <TextInput
@@ -159,6 +197,8 @@ export function ChatComposer({
       className="h-[30px] flex-1"
       placeholder={placeholder}
       autoFocus={!!defaultText}
+      aria-autocomplete={mentions ? 'list' : undefined}
+      aria-expanded={mentions ? mentionOpen : undefined}
       onFocus={
         defaultText
           ? (e) => {
@@ -168,8 +208,29 @@ export function ChatComposer({
           : undefined
       }
       value={text}
-      onChange={(e) => setText(e.target.value)}
+      onChange={(e) => {
+        setText(e.target.value);
+        setActive(0);
+      }}
       onKeyDown={(e) => {
+        if (mentionOpen) {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const d = e.key === 'ArrowDown' ? 1 : -1;
+            setActive((i) => (i + d + matches.length) % matches.length);
+            return;
+          }
+          if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            pick(matches[Math.min(active, matches.length - 1)]);
+            return;
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            setDismissed(text);
+            return;
+          }
+        }
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendAny();
@@ -187,6 +248,46 @@ export function ChatComposer({
       <Icon src={arrowRightDark} size={16} />
     </button>
   );
+  const mentionList = mentionOpen && (
+    <div
+      role="listbox"
+      aria-label="Mention a helper"
+      className="absolute right-0 bottom-[calc(100%+6px)] left-0 z-30 flex max-h-[260px] flex-col gap-0.5 overflow-y-auto rounded-card border border-line-2 bg-white p-1.5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.08)]"
+    >
+      <p className="px-2.5 pt-1 pb-1 text-[11px] leading-4 text-muted">
+        Ask a helper
+      </p>
+      {matches.map((m, i) => (
+        <button
+          key={m.id}
+          type="button"
+          role="option"
+          aria-selected={i === active}
+          onMouseEnter={() => setActive(i)}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => pick(m)}
+          className={clsx(
+            'flex w-full shrink-0 items-center gap-2.5 rounded-control px-2.5 py-1.5 text-left',
+            i === active && 'bg-well'
+          )}
+        >
+          {m.agent ? (
+            <AgentArt agent={m.agent} size={22} />
+          ) : (
+            <span className="size-[22px] shrink-0 rounded-full bg-chip" />
+          )}
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-[13px] leading-[18px] font-medium text-ink">
+              {m.name}
+            </span>
+            <span className="truncate text-[12px] leading-4 text-muted">
+              {m.description}
+            </span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
   return (
     <div
       className={clsx(
@@ -203,10 +304,14 @@ export function ChatComposer({
         </div>
       )}
       {tools ? (
-        <div className="flex w-full flex-col gap-1 rounded-control border border-control-border bg-white p-1 pl-3 focus-within:border-accent-line">
+        <div className="relative flex w-full flex-col gap-1 rounded-control border border-control-border bg-white p-1 pl-3 focus-within:border-accent-line">
+          {mentionList}
           <AttachmentChips
-            items={attachments}
-            onRemove={(i) => setAttachments((a) => a.filter((_, k) => k !== i))}
+            items={chipsShown.map((c) => ({
+              label: c.label,
+              leading: <ChipIcon chip={c} />,
+            }))}
+            onRemove={(i) => chatContext.remove(chipsShown[i].key)}
             className="pt-1.5 pr-2"
           />
           <div className="flex w-full items-center">{field}</div>
@@ -232,7 +337,7 @@ export function ChatComposer({
                     onPick={(kind) =>
                       kind === 'upload'
                         ? fileInput.current?.click()
-                        : setAttachments((a) => [...a, ATTACH_LABEL[kind]])
+                        : addFile(ATTACH_LABEL[kind], kind)
                     }
                     className="absolute bottom-10 left-0 w-[263px]"
                   />
@@ -243,10 +348,9 @@ export function ChatComposer({
                   multiple
                   hidden
                   onChange={(e) => {
-                    const names = [...(e.target.files ?? [])].map(
-                      (f) => f.name
+                    [...(e.target.files ?? [])].forEach((f) =>
+                      addFile(f.name, 'upload')
                     );
-                    setAttachments((a) => [...a, ...names]);
                     e.target.value = '';
                   }}
                 />
@@ -264,12 +368,35 @@ export function ChatComposer({
           </div>
         </div>
       ) : (
-        <div className="flex w-full items-center gap-1 overflow-clip rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
+        <div className="relative flex w-full items-center gap-1 rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
+          {mentionList}
           {field}
           {sendButton}
         </div>
       )}
     </div>
+  );
+}
+
+// A context pill's icon: the helper's character, the block's kind tile (task, decision, output), or the attach
+// menu's icon for files, links and skills. 16px.
+const ATTACH_ICON = { upload: uploadIcon, link: linkIcon, skill: sparkIcon };
+function ChipIcon({ chip }: { chip: ChatChip }) {
+  if (chip.agent)
+    return <AgentArt agent={chip.agent} size={16} className="shrink-0" />;
+  if (chip.kind)
+    return (
+      <NodeKindTile
+        kind={chip.kind}
+        size={16}
+        glyphSize={chip.kind === 'task' ? 9 : 8.5}
+        radius={4}
+      />
+    );
+  return (
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <Icon src={ATTACH_ICON[chip.attach ?? 'upload']} size={12} />
+    </span>
   );
 }
 

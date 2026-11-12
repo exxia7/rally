@@ -252,6 +252,7 @@ export function FlowMap({
         <NodeCard
           key={n.id}
           {...n}
+          nodeId={n.id}
           className="absolute!"
           onClick={onNodeClick ? () => onNodeClick(n) : undefined}
           onRerun={onNodeRerun ? () => onNodeRerun(n) : undefined}

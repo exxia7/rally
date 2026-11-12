@@ -1,7 +1,32 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
+import { AgentArt } from '@/components/agents/AgentAvatar';
+import type { AgentName } from '@/components/agents/characters';
 import { PathfinderAvatar } from '@/components/ui/Avatar';
+
+/** A reply from a helper you @mentioned: its character instead of the Pathfinder spark, and its name above. */
+export type MessageFrom = { name: string; agent?: AgentName };
+
+function FromAvatar({ from, size }: { from?: MessageFrom; size: number }) {
+  if (!from) return <PathfinderAvatar size={size} />;
+  return from.agent ? (
+    <AgentArt agent={from.agent} size={size} className="shrink-0" />
+  ) : (
+    <span
+      className="shrink-0 rounded-full bg-chip"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+function FromName({ from }: { from?: MessageFrom }) {
+  return from ? (
+    <p className="pb-1 text-[11px] leading-4 font-medium text-muted">
+      {from.name}
+    </p>
+  ) : null;
+}
 
 // Chat messages from the plan chat (frame 2.2, 2362:23566). Assistant: 30px Pathfinder avatar, 12px gap, then a
 // white bubble (1px line border, 16/12 padding, 6px top-left corner, 10px elsewhere, max 420px, 13/21.125 text).
@@ -12,15 +37,18 @@ import { PathfinderAvatar } from '@/components/ui/Avatar';
 export function AssistantMessage({
   text,
   children,
+  from,
 }: {
   text: ReactNode;
   children?: ReactNode;
+  from?: MessageFrom;
 }) {
   return (
     <div className="flex w-full flex-col items-start gap-4">
       <div className="flex w-full items-start gap-3">
-        <PathfinderAvatar />
+        <FromAvatar from={from} size={30} />
         <div className="flex max-w-[420px] min-w-0 flex-col items-start rounded-tl-[6px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] border border-line bg-white px-4 pt-3 pb-[12.75px]">
+          <FromName from={from} />
           <p className="text-[13px] leading-[21.125px] tracking-[-0.08px] whitespace-pre-line text-ink">
             {text}
           </p>
@@ -91,19 +119,24 @@ export function ChatThread({
 export function PanelAssistantMessage({
   text,
   children,
+  from,
 }: {
   text: ReactNode;
   children?: ReactNode;
+  from?: MessageFrom;
 }) {
   return (
     <div className="flex w-full shrink-0 items-start gap-2">
-      <PathfinderAvatar size={26} />
+      <FromAvatar from={from} size={26} />
       <div className="flex min-w-px flex-1 flex-col items-start rounded-tl-[5px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] border border-line px-3 pt-2.5 pb-[10.4px]">
+        <FromName from={from} />
         <p className="relative top-[0.75px] w-full text-[12.5px] leading-[20.313px] tracking-[-0.08px] text-ink">
           {text}
         </p>
         {children && (
-          <div className="flex w-full flex-col items-start pt-2">{children}</div>
+          <div className="flex w-full flex-col items-start pt-2">
+            {children}
+          </div>
         )}
       </div>
     </div>

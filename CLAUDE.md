@@ -160,7 +160,8 @@ pixel-exact at 1440×900, so:
   controls are fine.
 - AppShell: under 768px the sidebar is a bottom tab bar (56px) and the main panel is full-bleed.
 - Side panel (Chat/Sandbox/Decisions), drawers, inspector: docked beside the content at ≥1280px; under 1280px
-  they overlay the content from the right with a scrim and ×; under 768px they're full-screen sheets.
+  they float over the right of the content with a shadow and × but no scrim (the map stays clickable); under 768px
+  they're full-screen sheets.
 - Map canvas: a pannable viewport (overflow-auto plus drag-to-pan) holding the map at design size. Zoom
   controls really scale it; under 768px it starts fit-to-width. Canvas overlays (Tasks chip, agents bar,
   zoom) stay pinned to the viewport corners.

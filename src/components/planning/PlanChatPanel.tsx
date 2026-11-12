@@ -2,12 +2,14 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 import { ChatComposer } from '@/components/panels/ChatComposer';
 import {
+  type MessageFrom,
   PanelAssistantMessage,
   PanelThread,
   PanelUserMessage,
 } from '@/components/panels/ChatMessage';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
+import { mentionables } from '@/state/chatContext';
 import { dispatch, useWorkflow } from '@/state/store';
 
 export type PlanChatMessage = {
@@ -16,6 +18,8 @@ export type PlanChatMessage = {
   text: ReactNode;
   /** Rendered inside the assistant bubble under the text (e.g. an Undo button). */
   extra?: ReactNode;
+  /** A helper's reply (you @mentioned it). */
+  sender?: MessageFrom;
 };
 
 // The planning side panel's Chat tab (2.3 "Sidebar", 2362:23712): Panel tabs (Chat · Sandbox), the side-panel
@@ -34,7 +38,7 @@ export function PlanChatPanel({
 }: {
   messages: PlanChatMessage[];
   suggestions?: string[];
-  onSend: (text: string) => void;
+  onSend: (text: string, meta?: { about: string[] }) => void;
   tab?: PanelTab;
   onTabChange?: (tab: PanelTab) => void;
   sandbox?: ReactNode;
@@ -59,7 +63,7 @@ export function PlanChatPanel({
         m.from === 'user' ? (
           <PanelUserMessage key={m.id} text={m.text} />
         ) : (
-          <PanelAssistantMessage key={m.id} text={m.text}>
+          <PanelAssistantMessage key={m.id} text={m.text} from={m.sender}>
             {m.extra}
           </PanelAssistantMessage>
         )
@@ -87,6 +91,7 @@ export function PlanChatPanel({
           attachable
           model={wf.model}
           onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+          mentions={mentionables(wf)}
         />
       </section>
     );
@@ -111,6 +116,7 @@ export function PlanChatPanel({
             attachable
             model={wf.model}
             onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+            mentions={mentionables(wf)}
           />
         )
       }

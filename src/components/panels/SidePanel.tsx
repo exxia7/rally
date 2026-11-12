@@ -9,8 +9,8 @@ import { IconButton } from '@/components/ui/IconButton';
 // Title header (plan, 2362:23591): 52px, 1px bottom line, 16px left / 10px right padding, SemiBold 14/20 title, ghost ×.
 // Tabs header (run, 2362:25046): underline Panel tabs at 24px sides, 4px top, on a 1px bottom line; on desktop the
 // top bar's panel toggle closes it, so its × only shows under 1280px.
-// Pass it to AppShell's `aside`. Under 1280px it overlays the content from the right over a scrim; under 768px
-// it is a full-screen sheet. Clicking the scrim closes it.
+// Pass it to AppShell's `aside`. Under 1280px it floats over the right of the content with a shadow, and the
+// content stays usable (no scrim: you can click map blocks into the chat); under 768px it is a full-screen sheet.
 // `header` replaces the built-in headers (the inspector's own header); `footer` is pinned under the scrolling body
 // (the inspector's Edit / I'll do this one bar).
 // `sheet="half"` (hand-raise, inspector, approval): under 768px a bottom sheet 56% of the screen tall instead of a
@@ -53,11 +53,6 @@ export function SidePanel({
   }, [onClose]);
   return (
     <>
-      <div
-        aria-hidden
-        onClick={onClose}
-        className="absolute inset-0 z-30 hidden bg-[rgba(29,30,34,0.24)] max-xl:block"
-      />
       <aside
         className={clsx(
           'flex h-full w-[400px] shrink-0 flex-col items-start overflow-clip rounded-card border border-line bg-white',

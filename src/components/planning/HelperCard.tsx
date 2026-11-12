@@ -122,6 +122,8 @@ export type HelperCardData = {
   /** The helper being edited (drawer, inline edit): 1.4px ink-2 border. 'accent' = the 2px blue border of a card
    *  whose permission picker is open (2.4e). */
   selected?: boolean | 'accent';
+  /** Added to the chat as context: a 2px outline in the connector blue laid over the card edge (no layout space). */
+  inChat?: boolean;
   /** Avatar size when an instance overrides it (the Publisher's octopus is 26.06px). Right edge stays put. */
   agentSize?: number;
   /** Avatar left edge when an instance keeps it instead (the Planner's owl art is 29.16px, overflowing right). */
@@ -139,6 +141,7 @@ export function HelperCard({
   settings,
   state = 'default',
   selected,
+  inChat,
   agentSize = 24.75,
   agentLeft,
   scale,
@@ -181,6 +184,7 @@ export function HelperCard({
               ? 'border-[0.825px] border-dashed border-line-2'
               : 'p-[0.825px] shadow-[inset_0_0_0_0.825px_var(--color-line-2)]',
         state === 'dimmed' && 'opacity-40',
+        inChat && 'outline-2 -outline-offset-1 outline-accent-line',
         onClick && 'cursor-pointer',
         className
       )}

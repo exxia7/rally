@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import { AssistantMessage, UserMessage } from '@/components/panels/ChatMessage';
+import {
+  AssistantMessage,
+  type MessageFrom,
+  UserMessage,
+} from '@/components/panels/ChatMessage';
+import { helperReply, mentionables } from '@/state/chatContext';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
@@ -15,7 +20,12 @@ import {
   type SandboxSection,
 } from './SandboxPanel';
 
-export type RunChatMessage = { from: 'assistant' | 'user'; text: string };
+export type RunChatMessage = {
+  from: 'assistant' | 'user';
+  text: string;
+  /** A helper's reply (you @mentioned it or sent with its block). */
+  sender?: MessageFrom;
+};
 
 /** A step that hasn't started: the run Sandbox's "Add to…" menu offers it. */
 export type SandboxStep = { id: string; name: string; detail: string };
@@ -251,7 +261,23 @@ function RunChat({
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages.length, initial.length]);
 
-  const send = (text: string) => {
+  const send = (text: string, meta?: { about: string[] }) => {
+    const fromHelper = helperReply(wf, text, meta?.about);
+    if (fromHelper) {
+      setMessages((m) => [
+        ...m,
+        { from: 'user', text },
+        {
+          from: 'assistant',
+          text: fromHelper.text,
+          sender: {
+            name: fromHelper.helper.name,
+            agent: fromHelper.helper.agent,
+          },
+        },
+      ]);
+      return;
+    }
     const changed = onSendChange?.(text);
     setMessages((m) => [
       ...m,
@@ -275,7 +301,7 @@ function RunChat({
           m.from === 'user' ? (
             <UserMessage key={i} text={m.text} wrap />
           ) : (
-            <AssistantMessage key={i} text={m.text} />
+            <AssistantMessage key={i} text={m.text} from={m.sender} />
           )
         )}
       </div>
@@ -287,6 +313,7 @@ function RunChat({
         attachable
         model={wf.model}
         onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+        mentions={mentionables(wf)}
       />
     </div>
   );

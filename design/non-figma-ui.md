@@ -89,3 +89,16 @@ Small additions a flow needs, built only from existing components and tokens. Ad
 - Side panel chat composer (plan and run Chat tab): a second row under the field with a ghost "+" (attach menu above
   it: Upload files / Paste a link / Add a skill) and the model picker (same choice as 2.1, saved on the workflow), send
   arrow on the right. Attachments show as chips above the field and go out with the message ("· Attached: …").
+
+- Side panels under 1280px float over the content with a shadow but no scrim, so the map stays usable.
+- Chat context: while the Chat tab (or 2.4c's chat column) is open, clicking a map block adds it to the composer as a
+  chip and gives it a 2px outline in the connector blue (#91ade8) laid over the card edge, so nothing shifts (click again to remove; one chip per helper
+  across plan and run); otherwise the click opens its drawer / inspector as before.
+  Typing @ lists the helpers ("Ask a helper", character + job); picking one inserts "@Name ". A message that
+  @mentions a helper or carries its chip is answered by that helper (its character and name on the reply).
+
+- Tasks list (run screens): clicking a task still opens its card's inspector, and now also glides the map so that card
+  sits in the middle of the visible map (left of a floating side panel), at the current zoom, then pulses a blue ring
+  twice. Every task maps to a card by id.
+- Chat context pills carry a 16px icon: the helper's character for helper blocks, the block's kind tile for the task /
+  decision / output blocks, and the attach menu's icon (upload, link, skill) for files.
