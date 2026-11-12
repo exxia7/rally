@@ -1,7 +1,7 @@
 import type { MapNode } from '@/components/map/FlowMap';
 import type { InspectorData } from '@/components/run/InspectorPanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 import { patchById } from '@/lib/patchById';
 import {
   AI_COACH_INSPECTOR,
@@ -123,7 +123,6 @@ export function rerunningRun(note: string): RunData {
     tasksChip: {
       label: 'Rerunning · 1 of 3 done',
       progress: 100 / 3,
-      width: 268,
     },
     inspectors: {
       ...AI_COACH_RUN.inspectors,

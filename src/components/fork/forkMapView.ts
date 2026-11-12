@@ -5,11 +5,13 @@ import {
   type ReactElement,
 } from 'react';
 
-import type {
-  ForkLine,
-  MapEdge,
-  MapNode,
-  MapOverlay,
+import { RUN_MAP_RADIUS } from '@/components/map/connectors';
+import {
+  DEFAULT_PORT_DY,
+  type ForkLine,
+  type MapEdge,
+  type MapNode,
+  type MapOverlay,
 } from '@/components/map/FlowMap';
 import { ForkLabel, ForkPill } from '@/components/map/Fork';
 import type { ForkCardContent } from '@/components/panels/ForkCard';
@@ -67,13 +69,9 @@ export function renameSwaps(drawn: Branch[], branches: Branch[]): Swap[] {
   return pairs;
 }
 
-/** The run data with drawn forks renamed; a renamed Tasks chip drops Figma's pinned width so the name fits. */
+/** The run data with drawn forks renamed. */
 export function renameRun(data: RunData, pairs: Swap[]): RunData {
-  if (!pairs.length) return data;
-  const next = swapText(data, pairs);
-  return next.tasksChip
-    ? { ...next, tasksChip: { ...next.tasksChip, width: undefined } }
-    : next;
+  return pairs.length ? swapText(data, pairs) : data;
 }
 
 // ---- A lane for a fork no frame draws ---------------------------------------------------------------------
@@ -103,6 +101,35 @@ function laneFrom(map: RunMap, from: MapNode): MapNode[] {
 }
 
 const laneId = (id: string, n: number) => `${id.replace(/-f\d$/, '')}-f${n}`;
+
+const portY = (n: MapNode) => n.y + (n.portDy ?? DEFAULT_PORT_DY);
+
+/**
+ * Where a fork line leaves the path into `from`, as the drawn forks do: the handoff marker on the connector into it
+ * (or that connector's vertical run when it has no marker). A step on a fork lane with no connector into it leaves
+ * from its own fork line's vertical. A first step with neither leaves just left of its port.
+ */
+function forkAnchor(map: RunMap, from: MapNode): { x: number; y: number } {
+  const y0 = portY(from);
+  const incoming = map.edges
+    .filter((e) => e.to === from.id)
+    .flatMap((e) => {
+      const a = map.nodes.find((n) => n.id === e.from);
+      return a ? [{ e, a }] : [];
+    })
+    // The connector nearest the step's port: the one the fork visibly branches off.
+    .sort((p, q) => Math.abs(portY(p.a) - y0) - Math.abs(portY(q.a) - y0));
+  const first = incoming.find((p) => p.e.marker) ?? incoming[0];
+  if (first) {
+    const { e, a } = first;
+    const y = portY(a);
+    if (e.marker) return { x: a.x + (a.width ?? 175.2) + e.marker.dx, y };
+    return { x: e.lane ?? from.x - RUN_MAP_RADIUS, y };
+  }
+  const parent = map.forkLines?.find((f) => f.to.includes(from.id));
+  if (parent) return { x: parent.x, y: y0 };
+  return { x: from.x - 24, y: y0 };
+}
 
 /**
  * Adds a lane for fork `b` (its `from` step and every step after it on that branch, copied below the map in the
@@ -156,20 +183,20 @@ export function withForkLane(data: RunData, b: Branch): RunData {
       handles: true,
       marker: e.marker && { ...e.marker, status: 'pending', dimmed: false },
     }));
-  const port = from.portDy ?? 20;
   const s = map.width / DOCKED_W;
-  const lineX = from.x - 24;
+  const anchor = forkAnchor(map, from);
+  const lineX = anchor.x;
   const line: ForkLine = {
     fork,
-    x: lineX,
-    y: from.y + port,
+    x: anchor.x,
+    y: anchor.y,
     to: [nodes[0].id],
   };
   const overlays: MapOverlay[] = [
     {
       id: `fork-${fork}-pill`,
       x: lineX - 22 * s,
-      y: (from.y + port + base) / 2,
+      y: (anchor.y + base) / 2,
       scale: s,
       content: createElement(ForkPill, { fork, label: b.name }),
     },

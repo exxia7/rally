@@ -1,7 +1,8 @@
 import clsx from 'clsx';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 
 import chevronDown from '@/assets/icons/chevron-down.svg';
+import { useFitInView } from '@/lib/useFitInView';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 
 import { Button } from './Button';
@@ -46,10 +47,7 @@ export function StatusFilter({
         {value === 'all' ? 'Status' : value === 'drafts' ? 'Drafts' : 'Done'}
       </Button>
       {open && (
-        <div
-          role="menu"
-          className="absolute top-9 left-0 z-30 flex w-[160px] max-w-[calc(100vw-32px)] flex-col items-start gap-1 overflow-clip rounded-control border border-control-border bg-white p-1"
-        >
+        <StatusMenu>
           {OPTIONS.map((o) => (
             <button
               key={o.value}
@@ -65,8 +63,22 @@ export function StatusFilter({
               {o.label}
             </button>
           ))}
-        </div>
+        </StatusMenu>
       )}
+    </div>
+  );
+}
+
+function StatusMenu({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useFitInView(ref);
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      className="absolute top-9 left-0 z-30 flex w-[160px] max-w-[calc(100vw-32px)] flex-col items-start gap-1 overflow-clip rounded-control border border-control-border bg-white p-1"
+    >
+      {children}
     </div>
   );
 }

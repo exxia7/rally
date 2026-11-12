@@ -35,19 +35,38 @@ export function SettingsNav<T extends string>({
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, []);
-  // Phones: keep the selected tab in view (1.2 opens on "Permission presets", fourth in the row).
+  // Phones: keep the selected tab in view (1.2 opens on "Permission presets", fourth in the row; the page's scroll-spy
+  // moves it as you scroll). In place on first paint, then it glides unless motion is reduced.
+  const placed = useRef(false);
   useEffect(() => {
     const el = row.current;
     const tab = el?.querySelector<HTMLElement>('[aria-selected="true"]');
+    const first = !placed.current;
+    placed.current = true;
     if (!el || !tab || el.scrollWidth <= el.clientWidth) return;
-    const left = tab.offsetLeft - el.offsetLeft;
-    if (left < el.scrollLeft || left + tab.offsetWidth > el.scrollLeft + el.clientWidth)
-      el.scrollLeft = left - 12;
+    // Positions from the rects: offsetLeft is relative to the offset parent, not the row, so it lands mid-tab.
+    const GUTTER = 12;
+    const left = tab.getBoundingClientRect().left - el.getBoundingClientRect().left + el.scrollLeft;
+    const right = left + tab.offsetWidth;
+    // The fade on the right covers 48px: keep the tab clear of it.
+    const target =
+      left - GUTTER < el.scrollLeft
+        ? left - GUTTER
+        : right + 48 > el.scrollLeft + el.clientWidth
+          ? Math.min(left - GUTTER, right + 48 - el.clientWidth)
+          : null;
+    if (target !== null) {
+      const still = first || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollTo({ left: Math.max(0, target), behavior: still ? 'auto' : 'smooth' });
+    }
   }, [value]);
   return (
     <aside className="flex w-[240px] max-md:relative shrink-0 flex-col items-start self-stretch border-r border-line bg-white p-4 max-md:w-full max-md:border-r-0 max-md:border-b max-md:px-3 max-md:py-2">
-      <div className="flex h-[25px] w-full flex-col items-start px-2 pb-2 max-md:hidden">
-        <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+      <div className="flex w-full flex-col items-start px-2 pb-2 max-md:hidden">
+        <p
+          title={title}
+          className="w-full truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted"
+        >
           {title}
         </p>
       </div>
@@ -68,7 +87,7 @@ export function SettingsNav<T extends string>({
         ))}
         {more && (
           <>
-            <div className="flex h-[41px] w-full flex-col items-start px-2 pt-4 pb-2 max-md:hidden">
+            <div className="flex w-full flex-col items-start px-2 pt-4 pb-2 max-md:hidden">
               <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                 {more.title}
               </p>
@@ -112,7 +131,9 @@ export function SettingsNavButton({
       className={clsx(
         'flex h-8 w-full shrink-0 items-center rounded-control px-2.5 text-left text-[13px] leading-[19.5px] tracking-[-0.08px] max-md:w-auto max-md:whitespace-nowrap',
         selected
-          ? 'bg-hover font-medium text-ink'
+          ? // Desktop: a quiet grey fill (design review). Phones: the tab row sits on white, so the selected tab
+            // takes the accent tint to stand out.
+            'bg-hover font-medium text-ink max-md:bg-accent-soft max-md:text-accent'
           : 'text-ink-2 hover:bg-hover'
       )}
     >

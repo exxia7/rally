@@ -5,32 +5,26 @@ import { RadioCard } from '@/components/ui/RadioCard';
 
 export type AskLevel = 'ask-first' | 'spends-money' | 'just-go';
 
-// `minH`: the Figma card heights. Figma rounds each text box of the 0.85-scaled instance up to whole pixels, so its
-// cards are ~1px taller than the CSS text; the minimum keeps the stack where Figma has it.
 const ASK_OPTIONS: {
   value: AskLevel;
   title: string;
   description: string;
-  minH: string;
 }[] = [
   {
     value: 'ask-first',
     title: 'Ask me first',
     description:
       'Waits for your OK before it posts or spends. Shows "Asks you first" on the card.',
-    minH: 'min-h-[107.3px]',
   },
   {
     value: 'spends-money',
     title: 'Only when it spends money',
     description: 'Posts on schedule, asks before any ad spend.',
-    minH: 'min-h-[89.65px]',
   },
   {
     value: 'just-go',
     title: 'Just go',
     description: 'Runs without asking. Workspace rules still apply.',
-    minH: 'min-h-[89.65px]',
   },
 ];
 
@@ -85,7 +79,6 @@ export function PermissionPicker({
             description={o.description}
             selected={o.value === value}
             onSelect={() => onChange(o.value)}
-            className={o.minH}
           />
         ))}
       </div>

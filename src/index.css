@@ -89,3 +89,8 @@
   &::after { content: ''; position: absolute; inset: 0; border-right: var(--edge-w, 1px) var(--edge-style, solid) var(--edge, var(--color-line)); border-radius: inherit; pointer-events: none; }
   &:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
 }
+
+/*
+ * Motion lives in framer-motion (src/lib/motion.ts, src/components/motion/Motion.tsx; CLAUDE.md "Motion"). No CSS
+ * keyframes: <MotionRoot> respects prefers-reduced-motion for every animation.
+ */

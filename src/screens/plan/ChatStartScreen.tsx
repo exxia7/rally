@@ -11,11 +11,7 @@ import {
   AttachmentChips,
 } from '@/components/panels/AttachMenu';
 import { PlanComposer } from '@/components/panels/ChatComposer';
-import {
-  AssistantMessage,
-  ChatThread,
-  UserMessage,
-} from '@/components/panels/ChatMessage';
+import { Message, Thread, TypingRow } from '@/components/panels/ChatMessage';
 import {
   FileIcon,
   OutputCard,
@@ -28,10 +24,11 @@ import { UserAvatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Modal } from '@/components/ui/Modal';
-import { AI_COACH_BRIEF } from '@/screens/plan/aiCoachPlan';
+import { Suggestion } from '@/components/ui/Suggestion';
+import { AI_COACH_BRIEF, BRIEF_ANSWER } from '@/screens/plan/aiCoachPlan';
 import { useGo } from '@/state/nav';
 import { runFrame } from '@/state/runView';
-import { dispatch, useWorkflow } from '@/state/store';
+import { dispatch, useAppState, useWorkflow } from '@/state/store';
 import type { Brief } from '@/state/types';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
@@ -70,7 +67,11 @@ const isDesktop = () =>
   window.matchMedia('(min-width: 1280px)').matches;
 
 // Figma 2.2 "Chat start" (2362:23548) and 2.2-attach "Chat start · attach menu open" (2362:26366).
-// The plan chat with the Planner, its composer, and the Resources & outputs side panel.
+// The plan chat with the Planner, its composer, and the Resources & outputs side panel. The chat is the store's
+// `briefChat`. Arriving from 2.1 it holds only your brief, and plays as a conversation: the Planner thinks (a typing
+// row), asks when and for whom, you answer (a suggestion chip offers the default answer: one tap), it thinks again
+// and says the team is ready with "See your team". Each new line rises in. A direct load shows Figma's whole
+// conversation, still.
 export default function ChatStartScreen() {
   const go = useGo();
   const { id } = useParams();
@@ -79,16 +80,30 @@ export default function ChatStartScreen() {
   const [view, setView] = useState<WorkflowView>('planning');
   const wf = useWorkflow();
   // The chat lives in the store: your brief from 2.1 is the first thing you said.
-  const [messages, setMessages] = useState<Message[]>(() =>
-    wf.briefChat.length
-      ? wf.briefChat.map((m, i) => ({
-          id: i + 1,
-          from: m.from,
-          text: m.text,
-          action: m.action,
-        }))
-      : START
-  );
+  const messages: Message[] = wf.briefChat.length
+    ? wf.briefChat.map((m, i) => ({
+        id: i + 1,
+        from: m.from,
+        text: m.text,
+        action: m.action,
+      }))
+    : START;
+  // Lines that arrive after this screen opened rise in; the ones it opened with paint still.
+  const [shown] = useState(messages.length);
+  // Where the scripted conversation is: the Planner is about to ask (2 lines) or to say the team is ready (4), or
+  // waits for your answer to its questions (3).
+  const thinking = wf.briefChat.length === 2 || wf.briefChat.length === 4;
+  const awaitingAnswer = wf.briefChat.length === 3;
+  const { speed } = useAppState();
+  useEffect(() => {
+    if (!thinking) return;
+    const step = wf.briefChat.length === 2 ? 'ask' : 'ready';
+    const t = window.setTimeout(
+      () => dispatch({ type: 'briefChat/planner', step }),
+      speed === 'fast' ? 300 : 1200
+    );
+    return () => window.clearTimeout(t);
+  }, [thinking, wf.briefChat.length, speed]);
   const [goal, setGoal] = useState<string | undefined>();
   const scroller = useRef<HTMLDivElement>(null);
   // Attach works as on 2.1: Upload files opens the file picker, a link or skill becomes a chip. Sending moves
@@ -114,11 +129,17 @@ export default function ChatStartScreen() {
 
   useEffect(() => {
     const el = scroller.current;
-    if (el && messages.length > START.length)
+    if (el && (messages.length > shown || thinking))
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, shown, thinking]);
 
   const send = (text: string) => {
+    // While the Planner waits for when and who, what you send is that answer (it fills the brief's When / Who).
+    if (awaitingAnswer) {
+      dispatch({ type: 'briefChat/answer', text });
+      return;
+    }
+    if (thinking) return;
     setGoal((g) => g ?? text);
     dispatch({
       type: 'briefChat/send',
@@ -130,17 +151,6 @@ export default function ChatStartScreen() {
     const added = attachments;
     setAttachments([]);
     setResources((r) => [...r, ...added]);
-    setMessages((m) => [
-      ...m,
-      { id: m.length + 1, from: 'user', text },
-      {
-        id: m.length + 2,
-        from: 'assistant',
-        text: added.length
-          ? `Got it. I've added that to the launch brief, and I'll use ${added.join(', ')} too.`
-          : "Got it. I've added that to the launch brief.",
-      },
-    ]);
   };
 
   const changeView = (v: WorkflowView) => {
@@ -163,7 +173,6 @@ export default function ChatStartScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         panelOpen && (
           <SidePanel
@@ -192,30 +201,47 @@ export default function ChatStartScreen() {
           className="flex min-h-px w-full flex-1 flex-col items-start overflow-y-auto"
         >
           <div className="flex w-full shrink-0 flex-col items-center">
-            <ChatThread>
-              {messages.map((m) =>
-                m.from === 'user' ? (
-                  <UserMessage
-                    key={m.id}
-                    text={m.text}
-                    className={
-                      answersLit && m.id <= START.length
-                        ? 'border-accent-line ring-2 ring-accent-soft'
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <AssistantMessage key={m.id} text={m.text}>
-                    {m.action === 'team' ? seeTeam : undefined}
-                  </AssistantMessage>
-                )
+            <Thread density="main">
+              {messages.map((m) => (
+                <Message
+                  key={m.id}
+                  density="main"
+                  enter={m.id > shown}
+                  from={m.from}
+                  text={m.text}
+                  bubbleClassName={
+                    m.from === 'user' && answersLit && m.id <= START.length
+                      ? 'border-accent-line ring-2 ring-accent-soft'
+                      : undefined
+                  }
+                >
+                  {m.action === 'team' ? seeTeam : undefined}
+                </Message>
+              ))}
+              {thinking && (
+                <TypingRow
+                  density="main"
+                  name="Planner"
+                  label="Planner is thinking"
+                />
               )}
-            </ChatThread>
+            </Thread>
           </div>
         </div>
-        <div className="flex w-[620px] max-w-full shrink-0 flex-col items-start pt-3 pb-8 max-md:px-3 max-md:pb-3">
+        <div className="flex w-[620px] max-w-full shrink-0 flex-col items-start pt-3 pb-8 max-md:px-4 max-md:pb-3">
+          {awaitingAnswer && (
+            // The default answer, one tap away; typing your own works too.
+            <div className="flex w-full flex-wrap items-start gap-1.5 pb-2">
+              <Suggestion label={BRIEF_ANSWER} onClick={() => send(BRIEF_ANSWER)} />
+            </div>
+          )}
           <PlanComposer
             onSend={send}
+            placeholder={
+              awaitingAnswer
+                ? 'When is the launch, and who is it for?'
+                : undefined
+            }
             attachOpen={attachOpen}
             onAttachOpenChange={setAttachOpen}
             onAttach={attach}
@@ -314,17 +340,18 @@ function ResourcesBody({
         open={open !== null}
         onClose={() => setOpen(null)}
         label={open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
+        title={open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
+        description={
+          open === 'guide'
+            ? '12 pages. The Planner uses it for tone of voice.'
+            : 'The Planner keeps this up to date as you chat. Every helper reads it.'
+        }
+        footer={
+          <Button variant="secondary" onClick={() => setOpen(null)}>
+            Close
+          </Button>
+        }
       >
-        <div className="flex w-full flex-col items-start gap-1.5">
-          <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-            {open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
-          </p>
-          <p className="w-full text-[13px] leading-[19px] text-ink-2">
-            {open === 'guide'
-              ? '12 pages. The Planner uses it for tone of voice.'
-              : 'The Planner keeps this up to date as you chat. Every helper reads it.'}
-          </p>
-        </div>
         <dl className="flex w-full flex-col items-start gap-1.5 rounded-[10px] bg-well px-3.5 py-3 text-[13px] leading-[19px]">
           {(open === 'guide' ? BRAND_GUIDE : BRIEF_LINES(goal, wf.brief)).map((l) => (
             <div key={l.label} className="flex w-full items-start gap-2">
@@ -341,11 +368,6 @@ function ResourcesBody({
             </div>
           ))}
         </dl>
-        <div className="flex w-full justify-end">
-          <Button variant="secondary" onClick={() => setOpen(null)}>
-            Close
-          </Button>
-        </div>
       </Modal>
     </div>
   );

@@ -1,5 +1,9 @@
 import clsx from 'clsx';
-import { useState, type ReactNode, type Ref } from 'react';
+import { motion } from 'framer-motion';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
+
+import { transitions, useEnter, useTransition, variants } from '@/lib/motion';
+import { useFitInView } from '@/lib/useFitInView';
 
 import checkDark from '@/assets/icons/check-dark.svg';
 
@@ -8,7 +12,8 @@ import { Icon } from './Icon';
 // Popover menu from the attach menus (Figma "Attach menu", e.g. 2362:26459): white, 1px line-2 border (in layout),
 // 12px radius, 6px padding, 2px gap, soft 0/4/16 shadow. The parent positions it (absolute) and owns open state;
 // pair it with useOutsideClick. The highlighted row (well fill) follows the pointer and starts on the first row,
-// as the Figma frames show it.
+// as the Figma frames show it. It stays on screen: it shifts sideways, flips to the other side of its anchor and
+// scrolls when tall (useFitInView).
 export type MenuItemData = {
   key: string;
   label: string;
@@ -39,9 +44,24 @@ export function Menu({
       items.findIndex((i) => i.checked)
     )
   );
+  const own = useRef<HTMLDivElement>(null);
+  useFitInView(own, [items.length]);
+  // Motion: opened while you watch, it scales up from 97% at its top and fades in (150ms). useFitInView shifts it
+  // with `translate`, which the transform doesn't touch.
+  const enter = useEnter();
+  const t = useTransition(transitions.fast);
   return (
-    <div
-      ref={ref}
+    <motion.div
+      variants={variants.scaleIn}
+      initial={enter ? 'hidden' : false}
+      animate="shown"
+      transition={t}
+      style={{ transformOrigin: 'top' }}
+      ref={(el) => {
+        own.current = el;
+        if (typeof ref === 'function') ref(el);
+        else if (ref) ref.current = el;
+      }}
       role="menu"
       aria-label={label}
       className={clsx(
@@ -64,7 +84,7 @@ export function Menu({
           }}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }
 

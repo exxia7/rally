@@ -3,7 +3,7 @@ import { type DragEvent, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import lockDark from '@/assets/icons/lock-dark.svg';
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import {
   AdLimitValue,
   CheckLevelRadios,
@@ -14,6 +14,7 @@ import { PlanCanvas } from '@/components/planning/PlanCanvas';
 import type { PlanNode } from '@/components/planning/PlanMap';
 import { PlanSandboxPanel } from '@/components/planning/PlanSandboxPanel';
 import { PlanTopBar } from '@/components/planning/PlanTopBar';
+import { useConnectTool } from '@/components/planning/useConnectTool';
 import type {
   SandboxItem,
   SandboxSection,
@@ -23,7 +24,7 @@ import { Icon } from '@/components/ui/Icon';
 import type { MenuItemData } from '@/components/ui/Menu';
 import { useGo } from '@/state/nav';
 import { CUSTOM, withPermissionRows } from '@/state/permissions';
-import { estimate, planLayout } from '@/state/planView';
+import { estimate, estimateCost, planLayout } from '@/state/planView';
 import { dispatch, useWorkflow } from '@/state/store';
 import { useWorkflowPermissions } from '@/state/usePermissions';
 
@@ -39,7 +40,9 @@ export const screenId = ['2.6', '2.7'];
 // has no tools yet in focus ("Tools · None yet"); drag any Asset, Skill or Tool row onto a helper card (or click a
 // row for "Add to <helper>") and the helper gains it. 2.7 opens Permissions: preset chips, when the team checks with
 // you, the rules every preset keeps and the ad limit, the same setting 2.8, 2.4e and the drawer show. A card opens
-// that helper's drawer; Chat goes back to the map's chat.
+// that helper's drawer; Chat goes back to the map's chat. A section's "+" adds to it: Assets imports a file, Skills
+// adds a skill, Tools opens the connect step; Launch facts, Permissions and Estimate have none (their values are
+// edited in place or derived). The map's "You approve" gate opens Permissions and points at its Checkpoint row.
 
 type Section = 'assets' | 'skills' | 'tools';
 type Drag = { item: SandboxItem; section: Section };
@@ -155,8 +158,21 @@ export default function PlanSandboxScreen() {
   // The Sandbox is this frame's point, so it starts open at every size (a half-height sheet on phones).
   const [panelOpen, setPanelOpen] = useState(true);
   const [imports, setImports] = useState<string[]>([]);
+  const [skillImports, setSkillImports] = useState<string[]>([]);
+  const [connectDialog, connect] = useConnectTool();
   // The "You approve" gate opens the Sandbox on Permissions (the rule that holds Publisher until you say yes).
-  const [gatePermissions, setGatePermissions] = useState(false);
+  // Counts gate clicks: each one reopens Permissions (even when it's already open) and flashes the Checkpoint row.
+  const [gate, setGate] = useState(0);
+  const [gateFlash, setGateFlash] = useState(false);
+  useEffect(() => {
+    if (!gate) return;
+    document
+      .querySelector('[data-gate-flash]')
+      ?.scrollIntoView({ block: 'nearest' });
+    const t = window.setTimeout(() => setGateFlash(false), 2500);
+    return () => window.clearTimeout(t);
+  }, [gate]);
+  const gatePermissions = gate > 0;
   // The card that just got something from the "Add to…" menu: ringed and scrolled into view for a moment.
   const [flash, setFlash] = useState<string | null>(null);
   useEffect(() => {
@@ -202,22 +218,25 @@ export default function PlanSandboxScreen() {
 
   // Who uses each row: Figma's text, plus every helper you've given it to since.
   const sections = useMemo(() => {
-    const est = estimate(wf)
-      .replace(/^About /, '')
-      .split(' · ');
     const helpers = wf.helperOrder.filter(live);
     const tokens = helpers.reduce((sum, h) => sum + team[h].tokensK, 0);
     const facts = wf.resources.facts;
     return SECTIONS.map((sec) => {
       if (sec.id in ROW_FOR) {
         const key = ROW_FOR[sec.id as Section];
+        const added =
+          sec.id === 'assets'
+            ? imports
+            : sec.id === 'skills'
+              ? skillImports
+              : [];
         const items = [
-          ...imports.map((name) => ({ name, source: 'Not used yet' })),
+          ...added.map((name) => ({ name, source: 'Not used yet' })),
           ...sec.items,
         ];
         return {
           ...sec,
-          items: (sec.id === 'assets' ? items : sec.items).map((i) => {
+          items: items.map((i) => {
             const users = helpers
               // Given here (the plan's own setup is already in Figma's text).
               .filter(
@@ -254,12 +273,12 @@ export default function PlanSandboxScreen() {
         return {
           ...sec,
           items: [
-            { name: `About ${est[0]}`, source: 'Run time' },
+            { name: estimate(wf), source: 'Run time' },
             {
               name: `~${Math.round((38 * tokens) / BASE_TOKENS)}k tokens`,
               source: `${helpers.length} helpers`,
             },
-            { name: est[1], source: 'AI cost' },
+            { name: estimateCost(wf), source: 'AI cost' },
           ],
         };
       return sec;
@@ -268,13 +287,21 @@ export default function PlanSandboxScreen() {
       open:
         sec.id === (id === '2.6' ? 'tools' : 'permissions') ||
         (sec.id === 'permissions' && gatePermissions) ||
-        (sec.id === 'assets' && imports.length > 0),
+        (sec.id === 'assets' && imports.length > 0) ||
+        (sec.id === 'skills' && skillImports.length > 0),
+      addable: sec.id in ROW_FOR,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `live` reads wf
-  }, [wf, imports, id, gatePermissions]);
+  }, [wf, imports, skillImports, id, gatePermissions]);
 
   const importFile = () =>
     setImports((all) => [`Upload ${all.length + 1}.pdf`, ...all]);
+  const addToSection = (section: SandboxSection) => {
+    if (section.id === 'assets') importFile();
+    else if (section.id === 'skills')
+      setSkillImports((all) => [`New skill ${all.length + 1}`, ...all]);
+    else if (section.id === 'tools') connect();
+  };
 
   const rowMenu = (
     item: SandboxItem,
@@ -365,19 +392,19 @@ export default function PlanSandboxScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         panelOpen && (
           <PlanSandboxPanel
             sections={sections.map((sec) =>
               sec.id === 'permissions'
-                ? { ...sec, content: <PermissionsSettings /> }
+                ? { ...sec, content: <PermissionsSettings flash={gateFlash} /> }
                 : sec
             )}
-            sectionsKey={`${imports.length}-${gatePermissions}`}
+            sectionsKey={`${imports.length}-${skillImports.length}-${gate}`}
             // Chat and Sandbox are two tabs on the same workflow: swap in place, no new history entry.
             onTabChange={(t) => t === 'chat' && go('2.3', { replace: true })}
             onImport={importFile}
+            onAdd={addToSection}
             onClose={() => setPanelOpen(false)}
             onRowDragStart={(item, section) =>
               ['assets', 'skills', 'tools'].includes(section.id)
@@ -401,7 +428,6 @@ export default function PlanSandboxScreen() {
         layout={layout}
         nodes={nodes}
         outputs={wf.outputs as OutputItem[]}
-        outputsKey={wf.outputs.map((o) => o.id).join()}
         onOutputsChange={(items) =>
           dispatch({
             type: 'outputs/set',
@@ -410,18 +436,19 @@ export default function PlanSandboxScreen() {
             ),
           })
         }
-        zoomLabelBase={83}
         // That helper's drawer, on the map with the chat (2.4).
         onNodeClick={(n) =>
           team[n.id] && go('2.4', { state: { drawer: n.id } })
         }
         onGateClick={() => {
-          setGatePermissions(true);
+          setGate((g) => g + 1);
+          setGateFlash(true);
           setPanelOpen(true);
         }}
         overlays={dropZones ?? flashRing}
         focus={{ x: 330, y: 300 }}
       />
+      {connectDialog}
     </AppShell>
   );
 }
@@ -432,7 +459,8 @@ const muted = 'text-[12px] leading-[18px] tracking-[-0.08px] text-muted';
 // your team check with you?" radios (Recommended on the Balanced choice); the rules every preset keeps and the ad
 // limit; a note on where the preset comes from and "Save as a new preset", which names it right here and adds it
 // to the workspace's presets (1.2). All of it is the workflow's permissions in the store (useWorkflowPermissions).
-function PermissionsSettings() {
+// `flash` highlights the Checkpoint row (the map's "You approve" gate was clicked).
+function PermissionsSettings({ flash }: { flash?: boolean }) {
   const p = useWorkflowPermissions();
   const [naming, setNaming] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
@@ -476,7 +504,14 @@ function PermissionsSettings() {
             onChange={p.setAdLimit}
           />
         </div>
-        <div className="flex w-full items-start justify-between gap-2">
+        <div
+          data-gate-flash={flash || undefined}
+          className={clsx(
+            'flex w-full items-start justify-between gap-2',
+            flash &&
+              '-mx-1.5 -my-0.5 rounded-[6px] bg-accent-soft px-1.5 py-0.5'
+          )}
+        >
           <p className="text-muted">Checkpoint</p>
           <p className="truncate font-medium text-ink">
             You approve before step 4

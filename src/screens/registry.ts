@@ -177,4 +177,81 @@ export const SCREENS: ScreenMeta[] = [
 
 export type ScreenId = (typeof SCREENS)[number]['id'];
 
-export const screenPath = (id: string) => (id === '1.1' ? '/' : `/s/${id}`);
+// ---- URLs ------------------------------------------------------------------------------------------------------
+// The app's URLs. Home is '/', workspace settings '/settings', and every workflow screen lives under its
+// workflow: '/w/<workflow id>/<page>' ('/w/ai-coach/run'). Screens still move by frame id (`go('3.2')`); these
+// tables translate between the two. Frame ids are internal: they name the Figma frame a screen was built from.
+
+/** Frame id → the page part of a workflow URL. */
+export const PAGE_OF: Record<string, string> = {
+  '2.1': 'brief',
+  '2.1-attach': 'brief-attach',
+  '2.2': 'chat',
+  '2.2-attach': 'chat-attach',
+  '2.3': 'team',
+  '2.4': 'team-helper',
+  '2.4b': 'team-edit',
+  '2.4b-full': 'team-edit-full',
+  '2.4c': 'team-add-step',
+  '2.4d': 'team-chat-edit',
+  '2.4e': 'team-ask-first',
+  '2.5': 'team-add-helper',
+  '2.6': 'sandbox',
+  '2.7': 'permissions',
+  '2.8': 'settings',
+  '3.1': 'flowchart',
+  '3.2': 'run',
+  '3.2-tasks': 'run-tasks',
+  '3.3': 'run-sandbox',
+  '3.3-tasks': 'run-sandbox-tasks',
+  '3.4': 'decisions',
+  '3.4-tasks': 'decisions-tasks',
+  '3.5': 'inspector',
+  '3.5-tasks': 'inspector-tasks',
+  '4.1': 'needs-you',
+  '4.1b': 'rerun-confirm',
+  '4.2': 'rerun',
+  '4.2-tasks': 'rerun-tasks',
+  '4.3': 'price-check',
+  '5.1': 'approve',
+  '5.2': 'summary',
+  '6.1': 'inspector-options',
+  '6.2': 'rerun-from-here',
+  '6.3': 'rerunning',
+  '4.4': 'fork',
+  '4.5': 'fork-decision',
+  '6.4': 'fork-from-here',
+  '6.5': 'fork-running',
+  '6.6': 'fork-from-fork',
+};
+const FRAME_OF: Record<string, string> = Object.fromEntries(
+  Object.entries(PAGE_OF).map(([id, page]) => [page, id])
+);
+
+/** The frame id a workflow page shows ('run' → '3.2'), or undefined for an unknown page. */
+export const frameOfPage = (page: string): string | undefined => FRAME_OF[page];
+
+/** The URL of frame `id` for workflow `wf` (Home and workspace settings aren't a workflow's). */
+export function screenPath(id: string, wf?: string) {
+  if (id === '1.1') return '/';
+  if (id === '1.2') return '/settings';
+  const page = PAGE_OF[id];
+  if (!page || !wf) return '/';
+  return `/w/${encodeURIComponent(wf)}/${page}`;
+}
+
+/** What a URL shows: its frame id and, for a workflow page, the workflow; null when it's no screen. */
+export function parsePath(
+  pathname: string
+): { id: string; wf?: string } | null {
+  if (pathname === '/' || pathname === '') return { id: '1.1' };
+  if (pathname === '/settings') return { id: '1.2' };
+  const m = /^\/w\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
+  if (m) {
+    const id = FRAME_OF[m[2]];
+    return id ? { id, wf: decodeURIComponent(m[1]) } : null;
+  }
+  // Dev only: '/s/<frame id>' loads that frame's sample state (the pixel tools use it).
+  if (pathname.startsWith('/s/')) return { id: decodeURIComponent(pathname.slice(3)) };
+  return null;
+}

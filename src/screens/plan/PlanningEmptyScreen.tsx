@@ -47,7 +47,7 @@ export default function PlanningEmptyScreen() {
   };
 
   return (
-    <AppShell sidebar="none">
+    <AppShell>
       <WorkflowTopBar
         title={wf.title}
         hideTitleMenu={wf.isNew}

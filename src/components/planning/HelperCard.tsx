@@ -192,7 +192,10 @@ export function HelperCard({
     >
       <div className="flex h-[36.3px] w-full shrink-0 items-center gap-[6.6px] pr-[34px] pl-[8.25px] shadow-[inset_0_-0.825px_0_0_var(--color-line)]">
         <NodeKindTile kind={kind} size={18.15} />
-        <p className="min-w-px flex-1 text-[11.55px] leading-[17.325px] font-semibold tracking-[-0.1155px] whitespace-nowrap text-ink">
+        <p
+          title={name}
+          className="min-w-0 flex-1 truncate text-[11.55px] leading-[17.325px] font-semibold tracking-[-0.1155px] text-ink"
+        >
           {name}
         </p>
         {badge ? (
@@ -202,9 +205,7 @@ export function HelperCard({
               {badge}
             </p>
           </div>
-        ) : (
-          <div className="h-[14.8px] w-[48.2px] shrink-0" />
-        )}
+        ) : null}
       </div>
       <div className="flex w-full shrink-0 flex-col items-start p-[6.6px]">
         {/* 14px lines: Figma rounds the 13.6px text box up to whole pixels (1 line = 14, 2 = 28). */}

@@ -1,9 +1,9 @@
 # Pathfinder
 
-Clickable prototype of Pathfinder, built pixel-exact from the Figma wireframes
+Pathfinder, a working app built pixel-exact from the Figma wireframes
 (file `uL2LNYWjWvYM9rPXjwDwAr`, section `2362:50744` "emily's pass"). Vite + React 19 + TypeScript +
-Tailwind v4. No backend: data is mock, state lives in one store (`src/state`, see "App state"), every frame is a
-route.
+Tailwind v4. No backend: state lives in one store (`src/state`, see "App state") saved to localStorage; every
+screen has a real URL (`/w/<workflow>/<page>`).
 
 Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
 
@@ -15,14 +15,37 @@ Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
   It must `export const screenId = '3.2'` (or `['3.2', '3.2-tasks']`) and default-export the component.
   `App.tsx` picks it up automatically through `import.meta.glob`; never edit App.tsx to register a screen.
 - `src/components/ui`: primitives (Button, Badge, ChoiceChip, Avatar, Icon, …).
-- `src/components/shell`: AppShell (1440×900 frame, sidebar, main panel) and TopBar.
+- `src/components/shell`: AppShell (1440×900 frame: sidebar + main panel), TopBar, and Sidebar (Figma-file-browser
+  style: workspace menu → 1.2, search, Home, Needs you, the Workflows list, New workflow, account menu with workspace
+  settings; its collapse/drawer state is in `sidebarUi.ts`). The wireframes' 52px rail is the collapsed state.
 - `src/components/<area>`: shared composites (map, panels, planning, agents, …).
 - `src/assets/icons`, `src/assets/art`: SVG/PNG downloaded from Figma. Never reference figma.com URLs at runtime.
 - `design/ref/<id>.png`: Figma render of each frame (1440×900). `design/notes.md`: notes from the canvas.
 
-## Pixel-exact rules
+## The bar: Figma's sizing and spacing, built like a real app
 
-The bar is "looks exactly like Figma". Verify each screen with the diff harness, not by eye alone:
+Updated by the user after the first build. **Figma's sizing and spacing are the spec**: paddings, gaps, margins,
+control heights, card and panel widths, radii, type sizes and colours come from the design and its tokens. **Pixel
+exactness is not the goal**: don't chase antialiasing or sub-pixel text widths, and don't add hacks to match a
+render (fractional pinned widths like `w-[148.031px]`, text-box rounding tricks, hand-tuned 0.25px offsets).
+Where an earlier hack hurts real behaviour, replace it with the system value.
+
+Build it the way a developer would ship it:
+- Anything that can outgrow its box scrolls in its own container (`min-h-0` + `overflow-y-auto` on the flex child),
+  with headers, tab rows, composers and footers staying put (sticky or outside the scroll area) and the last item
+  clearing them. A scroll area that cuts content shows it's scrollable (a fade or a shadow at the edge), never a
+  hard slice with a dead band under it.
+- No fixed heights that clip content; heights hug content unless the design is a fixed-size control.
+- Long names, long copy, many items and empty states all lay out cleanly; text wraps or truncates on purpose.
+- Menus, popovers and modals stay inside the viewport and scroll inside themselves when tall.
+
+The pixel tools below are still useful as a **visual check** (use the diff images to spot spacing or sizing that
+drifted from Figma), but a few percent of difference is fine and a frame doesn't have to stay identical to the
+baseline.
+
+## Pixel tools (visual check only)
+
+Verify each screen with the diff harness, not by eye alone:
 
 1. Dev server: `npm run dev` (port 5173, already running in most sessions; check with `curl -s localhost:5173`).
 2. Reference: `get_screenshot` on the frame node with `maxDimension: 1440`, then
@@ -95,7 +118,7 @@ to "show" a state: change the store and let the screen render it.
   per-step overrides), `handRaises`, `decisions` (yours), `reruns`, `approvals`, `forks` + `chosenVersion`.
 - `src/state/store.ts`: `useAppState()`, `useWorkflow()` (the active workflow), `dispatch(action)`. Every change is
   an `Action` handled in `reduce`; add a new action there rather than mutating state anywhere else. The store is
-  persisted to sessionStorage (reload and Back keep it). Additive fields are fine; give them a default in
+  saved to localStorage (`pathfinder:app`); a first visit starts from `initialState()` (Home's scene, live). Additive fields are fine; give them a default in
   `scenes.ts` so every scene sets them.
 - `src/state/scenes.ts`: `sceneFor(id)` builds the whole store state for Figma frame `id` from the screens' data
   files (`aiCoachPlan`, `communityPlan`, `aiCoachMap`, `stuck/data`, `launchMap`…). Data lives in those files;
@@ -108,15 +131,16 @@ to "show" a state: change the store and let the screen render it.
   where Figma disagrees with its own data (counts, the estimate, 4.1b's list). The first action that changes the
   workflow clears it. This is what keeps direct loads pixel-exact while live flows stay consistent.
 
-### Seeded vs carried navigation
+### URLs and navigation
 
-- A direct load (typed URL, `/`, a link from `/screens`) has no carried history state, so `Seeded` in `App.tsx` seeds
-  the store from that frame's scene, then marks the entry carried. The pixel diff therefore always sees the scene.
-- In-app moves use `useGo()` from `src/state/nav.ts`: `go('3.2')` navigates with `{ carried: true }`, so the next
-  screen renders the live store. `go(id, { returnHere: true })` pushes the current screen on the return-to stack and
-  `go.back('2.3')` pops back to it (fallback if empty). `go(id, { state })` adds history state (6.3's note). Links
-  use `state={CARRY}`. Never call `navigate(screenPath(…))` directly.
-- `/screens` has "Reset demo" (clears the session and reseeds Home).
+- Screens are still keyed by frame id internally. `src/screens/registry.ts` maps them to URLs: `/` (1.1),
+  `/settings` (1.2), `/w/<workflow id>/<page>` for the rest (`PAGE_OF`: '3.2' → `run`, '5.1' → `approve`…).
+  `/w/<id>` resumes the workflow where it was. A workflow URL opens that workflow (`wf/open`); unknown ones go Home.
+- In-app moves use `useGo()` from `src/state/nav.ts`: `go('3.2')` goes to that frame's URL for the active workflow.
+  `go(id, { returnHere: true })` pushes the current screen on the return-to stack and `go.back('2.3')` pops back to
+  it. `go(id, { state })` adds history state (6.3's note). Never call `navigate(screenPath(…))` directly.
+- Dev only: `/s/<frame>` seeds the store from `sceneFor(frame)` without saving (so the pixel tools see the frame
+  exactly and your data survives), and `/screens` lists them.
 
 ### The run timeline
 
@@ -158,7 +182,9 @@ pixel-exact at 1440×900, so:
 - Screen containers never use fixed 1440/900/884 sizes. AppShell fills the viewport (`h-dvh w-full`), and
   content uses `flex-1`, `min-w-0`, `min-h-0`, `max-w-[…]`, `w-full`. Fixed sizes on cards, map nodes and
   controls are fine.
-- AppShell: under 768px the sidebar is a bottom tab bar (56px) and the main panel is full-bleed.
+- AppShell: the sidebar is docked at 240px from 1280px (collapsible to a 52px rail, remembered in localStorage), a
+  52px rail at 768–1279px (expanding opens it over the content), and under 768px a slide-out drawer opened from the
+  menu button TopBar adds on phones; the main panel is full-bleed there. No bottom bar, so nothing offsets for one.
 - Side panel (Chat/Sandbox/Decisions), drawers, inspector: docked beside the content at ≥1280px; under 1280px
   they float over the right of the content with a shadow and × but no scrim (the map stays clickable); under 768px
   they're full-screen sheets.
@@ -172,3 +198,44 @@ pixel-exact at 1440×900, so:
 - Check: `node scripts/responsive-check.mjs <id>` renders 375/768/1024/1280/1920, saves
   `design/out/<id>@<w>.png` and flags horizontal overflow. Every screen must pass with no overflow, and the
   375 and 768 renders must look deliberate: nothing clipped, overlapping or unreachable.
+
+## Motion
+
+All animation is **framer-motion** (pinned in package.json); there are no CSS keyframes. Figma has no motion spec, so
+every animation is listed in `design/non-figma-ui.md` ("Motion" rows). Keep it calm and product-grade.
+
+- **Where:** `src/lib/motion.ts` has the timings, variants and hooks; `src/components/motion/Motion.tsx` has the
+  ready-made pieces. `<MotionRoot>` wraps the app in `main.tsx` (`<MotionConfig reducedMotion="user">`). Import from
+  these; don't hand-roll durations or easings.
+- **Timings** (`transitions`): `fast` 150ms (menus, popovers), `base` 240ms (panels, modals, fades, ticks), `slow`
+  450ms (cross-fades, rises), `draw` 600ms (a line drawing in), all ease-out `EASE_OUT` = cubic-bezier(0.22, 1, 0.36,
+  1); `glide` (critically damped spring, ~400ms) for moves; `pop` (spring, small overshoot) for pop-ins. Loops are
+  slow (1.4–2.8s) and subtle and start from the drawn look.
+- **Variants** (`variants.<name>`, each `hidden` → `shown`): `fadeIn`, `rise`, `pop`, `scaleIn`, `slideInRight`,
+  `slideInLeft`, `sheetUp`, `drawIn`. Use `initial="hidden" animate="shown" exit="hidden"`.
+- **Pieces** (Motion.tsx), each still on a first paint and instant under reduced motion:
+  - `<FadePresence show variant?>`: AnimatePresence + fade (or any variant) in and out.
+  - `<Pop show? origin?>`: popovers, menus, dialog boxes; scales from 97% and fades (150ms). Without `show`, only
+    its entrance plays (for a parent that mounts it conditionally).
+  - `<SlidePanel open side="right"|"left">`: drawers and panels, 24px slide + fade, and back out.
+  - `<Sheet open>`: a bottom sheet that rises from below the screen.
+  - `<Expand open>`: expand/collapse to `height: auto` with a fade (220ms): dropdown bodies, accordions, the Tasks
+    list.
+  - `<Rise play?>`: rise 6px + fade on mount (new chat message, new card).
+  - `<TickText text play?>`: text that ticks up when it changes ("3 of 9 done" → "4 of 9 done").
+  - `<ThinkingDots char? dotClassName? still?>`: three dots pulsing in turn (working badge, chat typing row).
+  - Already wired: SidePanel (slides in when the panel slot opens while you watch, via AppShell's `PanelEnter`;
+    sheets rise on phones; scrim fades), Modal (scrim fade + `scaleIn` box, both ways), Menu (`scaleIn` entrance),
+    the Tasks dropdown (`Expand`), chat `Message enter` and `TypingRow`.
+- **Reduced motion:** nothing moves. `MotionConfig reducedMotion="user"` stops transforms and layout animations;
+  our pieces also make opacity instant and drop loops (`useMotionOn()`, `useTransition(t)`). Anything you write
+  directly with `motion.*` must do the same: `initial={on && play ? 'hidden' : false}` and loops only when `on`.
+- **First paint:** a direct load paints its frame still. Overlays animate only when they mount after the app's first
+  paint (`useEnter()`; AnimatePresence `initial={appear}`). The run and plan maps remember what the viewer saw,
+  outside React, so a change animates even across the route swaps between beats: `useChangedFrom(key, value)` (state
+  changes), `useAdded(scope, ids)` (what appeared), keyed by workflow (`map:<activeId>`).
+- **Performance:** animate `transform`, `opacity` and SVG `pathLength` / `pathOffset` (plus `d`, `cx`, `cy` on
+  re-routed connectors, the 40px Tasks bar's width and `height: auto` in `Expand`). Map cards keep their left/top
+  and glide with `useGlide(x, y)` (FLIP on `x`/`y` motion values); don't use the `layout` prop on the zoomed,
+  pannable maps. No `will-change` unless a profile asks for it.
+- **Checks:** the pixel scripts render with `reducedMotion: 'reduce'`, so they see the still frame.

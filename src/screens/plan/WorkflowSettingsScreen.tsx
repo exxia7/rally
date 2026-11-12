@@ -94,7 +94,7 @@ const TOOLS = [
 ];
 
 const label =
-  'min-w-px flex-1 text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink-2';
+  'min-w-[120px] flex-1 text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink-2';
 const value =
   'text-[13px] leading-[19.5px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink';
 
@@ -108,20 +108,23 @@ function SettingRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex w-full items-center gap-2">
+    // The name keeps at least 120px; when the value doesn't fit beside it, the value wraps below, right-aligned.
+    <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1">
       {hint ? (
-        <div className="flex min-w-px flex-1 flex-col items-start tracking-[-0.08px]">
-          <p className="min-h-5 w-full text-[13px] leading-[19.5px] text-ink-2">
+        <div className="flex min-w-[120px] flex-1 flex-col items-start tracking-[-0.08px]">
+          <p className="w-full text-[13px] leading-[19.5px] text-ink-2">
             {name}
           </p>
-          <p className="min-h-[17px] w-full text-[11px] leading-[16.5px] text-muted">
+          <p className="w-full text-[11px] leading-[16.5px] text-muted">
             {hint}
           </p>
         </div>
       ) : (
         <p className={label}>{name}</p>
       )}
-      {children}
+      <div className="ml-auto flex max-w-full min-w-0 flex-wrap items-center justify-end gap-2">
+        {children}
+      </div>
     </div>
   );
 }
@@ -186,7 +189,7 @@ export default function WorkflowSettingsScreen() {
   const backText = backLabel(go.backTarget('2.3'));
 
   return (
-    <AppShell sidebar="none">
+    <AppShell>
       <WorkflowTopBar
         view="planning"
         onViewChange={(v) =>
@@ -229,10 +232,11 @@ export default function WorkflowSettingsScreen() {
             <h1 className="pt-4 text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
               Workflow settings
             </h1>
-            <p className="h-[26px] w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-muted max-xl:h-auto max-xl:whitespace-normal">
+            <p className="w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] text-muted">
               {`Only for ${wf.title}. Anything you don't change follows workspace settings.`}
             </p>
-            <div className="grid w-full grid-cols-[410px_410px] items-start gap-5 pt-8 max-xl:grid-cols-1">
+            {/* As many 360px+ columns as the content area holds (two at 840px, one beside a docked sidebar at 1280). */}
+            <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(360px,100%),1fr))] items-start gap-5 pt-8">
               <div className="flex flex-col items-start gap-5">
                 <SettingsCard
                   id="wf-settings-permissions"
@@ -241,7 +245,7 @@ export default function WorkflowSettingsScreen() {
                 >
                   {/* The same permissions as 2.7's Sandbox section, 2.4e and the drawer (src/state/permissions.ts). */}
                   <PresetChips
-                    className="h-10 pt-3 max-md:h-auto"
+                    className="pt-3"
                     presets={perms.presets}
                     value={perms.preset}
                     onChange={perms.setPreset}
@@ -250,11 +254,11 @@ export default function WorkflowSettingsScreen() {
                     <SettingRow name="Check with you">
                       <p className={value}>{CHECK_SHORT[perms.check]}</p>
                       {perms.checkChanged ? (
-                        <Badge tone="blue" className="w-[87px]">
+                        <Badge tone="blue">
                           Changed here
                         </Badge>
                       ) : (
-                        <Badge tone="subtle" className="w-[76px]">
+                        <Badge tone="subtle">
                           From preset
                         </Badge>
                       )}
@@ -283,18 +287,18 @@ export default function WorkflowSettingsScreen() {
                         onChange={perms.setAdLimit}
                       />
                       {perms.adLimitChanged ? (
-                        <Badge tone="blue" className="w-[87px]">
+                        <Badge tone="blue">
                           Changed here
                         </Badge>
                       ) : (
-                        <Badge tone="subtle" className="w-[76px]">
+                        <Badge tone="subtle">
                           From preset
                         </Badge>
                       )}
                     </SettingRow>
                     <SettingRow name="Checkpoint">
                       <p className={value}>You approve before step 4</p>
-                      <Badge tone="blue" className="w-[111px] max-md:hidden">
+                      <Badge tone="blue" className="max-md:hidden">
                         This workflow only
                       </Badge>
                     </SettingRow>
@@ -389,7 +393,7 @@ export default function WorkflowSettingsScreen() {
                       >
                         <div className="flex min-w-px flex-1 flex-col items-start">
                           <p className={clsx(value, 'h-5')}>{t.name}</p>
-                          <p className="h-[17px] text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+                          <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                             {t.helper}
                           </p>
                         </div>
@@ -417,7 +421,7 @@ export default function WorkflowSettingsScreen() {
                         >
                           LinkedIn
                         </p>
-                        <p className="h-[17px] truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted max-md:w-full">
+                        <p className="truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted max-md:w-full">
                           {linkedIn
                             ? 'Publisher'
                             : 'Not connected · connect in workspace settings'}
@@ -447,14 +451,14 @@ export default function WorkflowSettingsScreen() {
                   <div className="flex w-full items-center pt-3">
                     <div className="flex min-w-px flex-1 flex-col items-start">
                       <p className={clsx(value, 'h-5')}>Spending cap</p>
-                      <p className="min-h-[33px] w-full text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
+                      <p className="w-full text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
                         {`Used ${budgetUsed(wf)} so far · pauses and asks you at the cap`}
                       </p>
                     </div>
-                    <p className="h-[21px] w-12 shrink-0 pr-2 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
+                    <p className="shrink-0 pr-2 text-[14px] leading-5 font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
                       $2.00
                     </p>
-                    <Badge tone="blue" className="w-[87px]">
+                    <Badge tone="blue">
                       Changed here
                     </Badge>
                   </div>

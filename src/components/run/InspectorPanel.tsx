@@ -114,7 +114,7 @@ export function InspectorPanel({
     <SidePanel
       sheet="half"
       onClose={onClose}
-      bodyClassName="px-6 py-5 max-md:px-4"
+      bodyClassName="px-6 pb-5 max-md:px-4"
       header={
         <InspectorHeader
           eyebrow={data.eyebrow}
@@ -217,8 +217,7 @@ export function InspectorPanel({
             <p className="text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted">
               {data.extras.label}
             </p>
-            {/* Figma keeps this row 24px (the 28px Add button hangs 4px below it); it grows when the items wrap. */}
-            <div className="flex min-h-6 w-full flex-wrap items-start gap-1.5 pt-1">
+            <div className="flex w-full flex-wrap items-center gap-1.5 pt-1">
               {data.extras.items.map((item) => (
                 <Badge key={item} tone="subtle">
                   {item}

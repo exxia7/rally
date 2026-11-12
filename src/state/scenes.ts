@@ -308,6 +308,7 @@ function app(active: Workflow, extra: Workflow[] = []): AppState {
     activeId: active.id,
     returnTo: [],
     speed: 'normal',
+    lastScreen: {},
   };
 }
 

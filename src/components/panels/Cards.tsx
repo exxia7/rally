@@ -48,7 +48,7 @@ export function HandoffProblemCard({
   return (
     <div
       className={clsx(
-        'flex w-[350px] max-w-full flex-col items-start rounded-[10px] border border-problem bg-[#fff1f1] p-4',
+        'flex w-full flex-col items-start rounded-[10px] border border-problem bg-[#fff1f1] p-4',
         className
       )}
       style={style}
@@ -158,7 +158,7 @@ export function ResourceRow({
       <p className="h-[18px] min-w-px flex-1 truncate text-[12px] leading-[18px] tracking-[-0.08px] text-ink">
         {name}
       </p>
-      <p className="text-right text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+      <p className="max-w-[55%] truncate text-right text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
         {source}
       </p>
     </div>
@@ -189,7 +189,7 @@ export function OutputPreview({
   return (
     <div
       className={clsx(
-        'flex w-[350px] max-w-full flex-col items-start gap-1 rounded-[10px] border border-line bg-white p-4',
+        'flex w-full flex-col items-start gap-1 rounded-[10px] border border-line bg-white p-4',
         className
       )}
     >
@@ -295,25 +295,25 @@ export function ApprovalItem({
         className
       )}
     >
-      {/* Figma rounds text boxes up to whole pixels: the title row is 21px, and the body gets ~0.7px below
-          its last line (17.188px lines → 18 / 35px boxes). */}
-      <div className="flex w-[320px] max-w-full items-center gap-2">
+      <div className="flex w-full items-center gap-2">
         <p
           className={clsx(
-            'min-h-[21px] min-w-px flex-1 text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] whitespace-nowrap',
+            'min-h-[21px] min-w-0 flex-1 truncate text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px]',
             off ? 'text-muted-2' : 'text-ink'
           )}
         >
           {title}
         </p>
-        <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+        <p className="shrink-0 text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
           {when}
         </p>
       </div>
       {channelNote && (
         <div className="flex w-full items-center gap-2 pt-1.5">
-          <Badge tone="blue">Sends for real</Badge>
-          <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+          <Badge tone="blue" className="shrink-0">
+            Sends for real
+          </Badge>
+          <p className="min-w-0 truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
             {channelNote}
           </p>
         </div>
@@ -340,7 +340,7 @@ export function ApprovalItem({
       ) : (
         <p
           className={clsx(
-            'w-[320px] max-w-full pt-1.5 pb-[0.7px] text-[13px] leading-[17.188px] tracking-[-0.08px]',
+            'w-full pt-1.5 text-[13px] leading-[17.188px] tracking-[-0.08px] wrap-break-word',
             off ? 'text-[#a0a3aa]' : 'text-ink-2'
           )}
         >

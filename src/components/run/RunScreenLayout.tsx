@@ -1,5 +1,4 @@
-import clsx from 'clsx';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
 import outputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
@@ -9,7 +8,6 @@ import type { AgentName } from '@/components/agents/characters';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
 import type { Branch } from '@/components/fork/branches';
 import { useForkRunView } from '@/components/fork/useForkRunView';
-import { TaskProgressChip } from '@/components/map/CanvasControls';
 import {
   FlowMap,
   type ForkLine,
@@ -20,6 +18,7 @@ import {
 import type { ForkNumber } from '@/components/map/forks';
 import { MapCanvas } from '@/components/map/MapCanvas';
 import type { NodeKindName } from '@/components/map/NodeKind';
+import { RUN_MAP_SCALE, runMapFocus } from '@/components/map/runMapView';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import type { Decision } from '@/components/panels/DecisionLog';
 import type { PanelTab } from '@/components/panels/PanelTabs';
@@ -28,10 +27,12 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PauseIcon } from '@/components/ui/PauseIcon';
 import type { RunState } from '@/components/ui/RunStatus';
+import { useChangedFrom } from '@/lib/motion';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { chatContext, useChatChips } from '@/state/chatContext';
 import { useGo } from '@/state/nav';
-import { helperOfStep } from '@/state/runView';
-import { useWorkflow } from '@/state/store';
+import { goesOut, helperOfStep } from '@/state/runView';
+import { useAppState, useWorkflow } from '@/state/store';
 
 import { HandRaisePanel, type HandRaiseData } from './HandRaisePanel';
 import { InspectorPanel, type InspectorData } from './InspectorPanel';
@@ -41,7 +42,7 @@ import {
   type SandboxStep,
 } from './RunSidePanel';
 import type { SandboxSection } from './SandboxPanel';
-import { TasksOverlay, type TaskItem } from './TasksOverlay';
+import { TasksDropdown, type TaskItem } from './TasksDropdown';
 
 export type RunMap = {
   nodes: MapNode[];
@@ -76,16 +77,13 @@ export type RunData = {
   inspectors?: Record<string, InspectorData>;
   /** A helper raised its hand (4.1, 4.3): the side panel's hand-raise content. */
   handRaise?: HandRaiseData;
-  /** Tasks chip text and bar during a rerun ("Rerunning", no bar); `width` pins Figma's chip width. */
+  /** Tasks header text and bar during a rerun ("Rerunning", no bar). */
   tasksChip?: {
     label?: string;
     progress?: number | null;
-    width?: number;
     /** On a fork the bar takes the fork's colour (6.5: "Vs Penny · 1 of 3 done"). */
     fork?: ForkNumber;
   };
-  /** Tasks overlay variant (4.2-tasks: a Close link, no progress bar). */
-  tasksOverlay?: { showClose?: boolean; showProgress?: boolean };
 };
 
 export type RunPanel =
@@ -96,29 +94,14 @@ export type RunPanel =
   | { kind: 'approval'; branch: string }
   | null;
 
-const STAGE = { width: 1362, docked: 954, height: 830 };
-const DEFAULT_DOCKED = { x: 43, y: 165, width: 874 };
+const STAGE = { width: 1362, height: 830 };
 const XL = '(min-width: 1280px)';
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window === 'undefined' || window.matchMedia(query).matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const onChange = () => setMatches(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
 
 // The run screen (3.2–3.5, reused by Stuck 4.x and Rerun/fork 6.x with their own data): workflow top bar, the
 // pannable run map with its canvas overlays (Tasks chip and anchored Tasks overlay, Completed agents, zoom), and
 // an optional side panel: the Chat · Sandbox · Decisions tabs or a node's inspector. All of it is local state;
-// `initial*` props pick the frame a route opens on. With the panel docked (≥1280px) the canvas narrows to 954px
-// and the map is redrawn at `map.docked`; below 1280 the panel overlays the full-size map. Between 1280 and 1440 the
-// docked canvas is narrower than 954px, so the stage starts scaled down to fit its width (as Fit view would).
+// `initial*` props pick the frame a route opens on. With the panel docked (≥1280px) the canvas narrows; below 1280
+// the panel overlays the map. The map is drawn the same way in both; MapCanvas picks a readable zoom and keeps it.
 // A helper's raised hand opens `data.handRaise` in the side panel (or `handRaisedScreen` when there is none).
 export function RunScreenLayout({
   data: frameData,
@@ -154,7 +137,7 @@ export function RunScreenLayout({
   /** Spend shown in the status pill. */
   cost?: string;
   /** Override the status pill (e.g. a hand-raised run). Default: running / paused from the Pause button. */
-  status?: { state: RunState; label: string };
+  status?: { state: RunState; label: string; hidden?: boolean };
   /** Where a node whose helper raised its hand leads. */
   handRaisedScreen?: string;
   /** Extra canvas overlays (pinned to the viewport); a function gets the open panel (6.4's Branches row shows
@@ -186,14 +169,24 @@ export function RunScreenLayout({
   const xl = useMediaQuery(XL);
   const [localPaused, setPaused] = useState(initialPaused);
   const paused = pausedProp ?? localPaused;
-  // While a hand is raised the run waits for you: Resume opens the hand-raise panel instead.
+  // While a hand is raised the run waits for you: Resume (and the card with the raised hand) opens the hand-raise
+  // panel instead, or, when it's already open, brings it to the step you haven't answered (HandRaisePanel `nudge`).
+  const [handNudge, setHandNudge] = useState(0);
+  const showHandRaise = () => {
+    setPanel({ kind: 'hand-raise' });
+    setHandNudge((n) => n + 1);
+  };
   const togglePause = () => {
     if (status?.state === 'waiting' && data.handRaise && paused)
-      setPanel({ kind: 'hand-raise' });
+      showHandRaise();
     else if (onPauseToggle) onPauseToggle();
     else setPaused((p) => !p);
   };
-  const [panel, setPanel] = useState<RunPanel>(initialPanel);
+  // Under 1280px a panel covers the map, so a `*-tasks` frame opens only the Tasks list there.
+  const [panel, setPanel] = useState<RunPanel>(
+    initialTasksOpen && !xl ? null : initialPanel
+  );
+  // Tasks list → card: MapCanvas glides it into view and pulses it.
   const [reveal, setReveal] = useState<{ id: string; n: number }>();
   // Forks (store): every branch drawn, the Branches row, fork-scoped approval, the inline Fork card.
   const forks = useForkRunView({
@@ -204,16 +197,22 @@ export function RunScreenLayout({
     inline: !onInspectorFork,
   });
   const data = forks.data;
-  const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
+  // Motion memory for this workflow's run (src/lib/motion.ts): a hand raised while you watch slides its panel in.
+  const { activeId } = useAppState();
+  const scope = `run:${activeId}`;
+  // The Tasks list's "Goes out": the plan's outputs and where each is in the run.
+  const wf = useWorkflow();
+  const outputs = useMemo(() => goesOut(wf), [wf]);
+  const asideFrom = useChangedFrom(`${scope}:aside`, panel?.kind ?? 'none');
   const [takenOver, setTakenOver] = useState<Set<string>>(() => new Set());
 
   const { map } = data;
-  const docked = xl && panel !== null;
-  const place = docked ? (map.docked ?? DEFAULT_DOCKED) : (map.full ?? map);
+  // One placement whatever the panel does: the canvas keeps its zoom as the panel docks (MapCanvas), instead of
+  // Figma's smaller redraw of the map beside a docked panel (`map.docked`).
+  const place = map.full ?? map;
   const scale = place.width / map.width;
 
   const inspect = (nodeId: string) => setPanel({ kind: 'inspector', nodeId });
-  const wf = useWorkflow();
   const chips = useChatChips();
   const chatOpen = panel?.kind === 'tabs' && panel.tab === 'chat';
   const onNodeClick = (node: MapNode) => {
@@ -233,25 +232,22 @@ export function RunScreenLayout({
       });
       return;
     }
+    openNode(node);
+  };
+  // What clicking a card does outside the chat: its inspector, the hand-raise panel, a fork's approval.
+  const openNode = (node: MapNode) => {
     const branchPanel = forks.nodePanel(node);
     if (branchPanel) setPanel(branchPanel);
     else if (nodeLinks?.[node.id]) go(nodeLinks[node.id]);
     else if (node.avatar?.state === 'hand-raised') {
-      if (data.handRaise) setPanel({ kind: 'hand-raise' });
+      if (data.handRaise) showHandRaise();
       else go(handRaisedScreen);
     } else inspect(node.id);
   };
   const confirmHandRaise = onHandRaiseConfirm ?? (() => go('4.1b'));
 
-  // Phones open the map on the node that needs you, else the first one working.
-  const focusNode =
-    map.nodes.find(
-      (n) => n.state === 'needs-you' || n.avatar?.state === 'hand-raised'
-    ) ?? map.nodes.find((n) => n.state === 'working');
-  const focus = focusNode && {
-    x: map.x + focusNode.x + (focusNode.width ?? 175.2) / 2,
-    y: map.y + focusNode.y + 60,
-  };
+  // The map keeps the node that needs you in view (else the first one working, else Ready to post).
+  const focus = runMapFocus(map.nodes, place, scale);
 
   const inspected =
     panel?.kind === 'inspector'
@@ -263,6 +259,9 @@ export function RunScreenLayout({
     aside = (
       <HandRaisePanel
         data={data.handRaise}
+        // A hand raised while you watch slides its panel in, even over another open panel.
+        enter={asideFrom !== undefined && asideFrom !== 'hand-raise'}
+        nudge={handNudge}
         onClose={() => setPanel(null)}
         onConfirm={confirmHandRaise}
       />
@@ -283,6 +282,11 @@ export function RunScreenLayout({
         onDecisionChange={() => setPanel({ kind: 'tabs', tab: 'chat' })}
         steps={notStartedSteps(data)}
         onDecisionFork={() => go('4.4')}
+        typing={
+          paused || status?.state === 'waiting'
+            ? undefined
+            : typingHelper(data, agentNames)
+        }
       />
     );
   const inspectorData =
@@ -329,15 +333,23 @@ export function RunScreenLayout({
     );
 
   return (
-    <AppShell sidebar="none" aside={aside}>
+    <AppShell aside={aside}>
       <WorkflowTopBar
         title={title}
         view="flowchart"
         onViewChange={(v) => v === 'planning' && go(planningTarget)}
-        status={status?.state ?? (paused ? 'paused' : 'running')}
-        statusLabel={forks.costLabel(
-          status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
-        )}
+        status={
+          status?.hidden
+            ? undefined
+            : (status?.state ?? (paused ? 'paused' : 'running'))
+        }
+        statusLabel={
+          status?.hidden
+            ? undefined
+            : forks.costLabel(
+                status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
+              )
+        }
         onSettings={() => go('2.8', { returnHere: true })}
         panelOpen={panel !== null}
         onTogglePanel={() =>
@@ -357,10 +369,10 @@ export function RunScreenLayout({
       />
       <MapCanvas
         // Remount on dock/undock so the stage re-centres at its new size.
-        key={docked ? 'docked' : 'full'}
-        stageWidth={docked ? STAGE.docked : STAGE.width}
+        stageWidth={STAGE.width}
         stageHeight={STAGE.height}
-        fitWidth={docked}
+        contentScale={RUN_MAP_SCALE * scale}
+        viewKey={`run:${activeId}`}
         focus={focus}
         // Tasks list → card: glide it to the middle of the map, then pulse it.
         reveal={reveal}
@@ -369,49 +381,36 @@ export function RunScreenLayout({
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
-            <TaskProgressChip
-              done={data.tasks.filter((t) => t.state === 'done').length}
-              total={data.tasks.length}
+            <TasksDropdown
+              outputs={outputs}
+              motionKey={`${scope}:tasks`}
+              tasks={data.tasks}
+              note={data.tasksSummary}
               label={data.tasksChip?.label}
               progress={data.tasksChip?.progress}
               fork={data.tasksChip?.fork}
-              open={tasksOpen}
-              onClick={() => setTasksOpen((o) => !o)}
-              className={clsx(
-                'absolute top-4 left-4',
-                !data.tasksChip && 'w-[208px]'
-              )}
-              style={
-                data.tasksChip?.width
-                  ? { width: data.tasksChip.width }
-                  : undefined
-              }
+              defaultOpen={initialTasksOpen}
+              // Under 1280px the panel covers the map: opening the list closes it.
+              onOpen={() => !xl && setPanel(null)}
+              // A row does what clicking its card does (inspector, hand-raise panel, a fork's approval).
+              // Also glides the map to the card and pulses it (even with the chat open).
+              onSelectTask={(t) => {
+                const node = map.nodes.find((n) => n.id === t.id);
+                if (!node) return;
+                openNode(node);
+                setReveal((r) => ({ id: node.id, n: (r?.n ?? 0) + 1 }));
+              }}
             />
             <CompletedAgents
+              motionKey={`${scope}:done`}
               agents={data.completed}
               names={agentNames}
-              className="absolute bottom-[16.26px] left-4 max-md:right-4"
+              className="absolute bottom-4 left-4 max-md:right-4"
             />
             {typeof canvasOverlay === 'function'
               ? canvasOverlay(panel)
               : canvasOverlay}
             {forks.overlay}
-            {tasksOpen && (
-              <TasksOverlay
-                tasks={data.tasks}
-                summary={data.tasksSummary}
-                showClose={data.tasksOverlay?.showClose}
-                showProgress={data.tasksOverlay?.showProgress}
-                onClose={() => setTasksOpen(false)}
-                onSelect={(t) => {
-                  setTasksOpen(false);
-                  if (t.id) {
-                    inspect(t.id);
-                    setReveal((r) => ({ id: t.id!, n: (r?.n ?? 0) + 1 }));
-                  }
-                }}
-              />
-            )}
           </>
         }
       >
@@ -463,6 +462,19 @@ const KIND_GLYPH: Record<NodeKindName, string | null> = {
   decision: null,
   output: outputGlyph,
 };
+
+// The helper the run Chat shows typing: the first one working on the map.
+function typingHelper(
+  data: RunData,
+  names?: Partial<Record<AgentName, string>>
+) {
+  const n = data.map.nodes.find(
+    (x) => x.avatar?.state === 'working' || (x.state === 'working' && x.avatar)
+  );
+  if (!n?.avatar) return undefined;
+  const agent = n.avatar.agent;
+  return { agent, name: names?.[agent] ?? n.agent ?? agent };
+}
 
 // Steps the Sandbox's "Add to…" menu offers: tasks that haven't started, named by their helper.
 function notStartedSteps(data: RunData): SandboxStep[] {

@@ -1,9 +1,9 @@
 # Pathfinder
 
-A clickable prototype of Pathfinder, built from the Figma wireframes
+Pathfinder, built from the Figma wireframes
 ([file](https://www.figma.com/design/uL2LNYWjWvYM9rPXjwDwAr/Wireframes?node-id=2362-50744), section
-"emily's pass"). Every Figma frame is a screen you can open and click through. There's no backend:
-data is mock and state is local.
+"emily's pass"). It runs as a working app with no backend: your workflows, edits and runs are saved in the
+browser (localStorage) and stay across reloads. A first visit starts from a starter workspace.
 
 ## Run it
 
@@ -14,11 +14,15 @@ npm install
 npm run dev
 ```
 
-Then open:
+Then open http://localhost:5173. URLs:
 
-- http://localhost:5173: Home, the start of the flow
-- http://localhost:5173/screens: every screen, grouped by chapter (Home → Plan → Run → Stuck → Approve →
-  Rerun & fork). Each one is also at `/s/<frame number>`, e.g. `/s/3.2`.
+- `/`: Home · `/settings`: workspace settings
+- `/w/<workflow id>`: reopens a workflow where you left it; `/w/<workflow id>/<page>` for a page (`brief`, `chat`,
+  `team`, `run`, `decisions`, `approve`, `summary`…; the full table is `PAGE_OF` in `src/screens/registry.ts`).
+- Dev only: `/screens` lists every Figma frame and `/s/<frame number>` (e.g. `/s/3.2`) opens it with its sample
+  state. Sample states aren't saved, so they never overwrite your data; reload to get it back.
+
+To start over, clear the site's storage in the browser.
 
 It works from phone width up to large desktop; at 1440×900 it matches the Figma frames.
 

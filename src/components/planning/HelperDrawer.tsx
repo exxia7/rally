@@ -1,5 +1,11 @@
 import clsx from 'clsx';
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import chevronDownDark from '@/assets/icons/chevron-down-dark-14.svg';
 import close from '@/assets/icons/close.svg';
@@ -38,6 +44,9 @@ const CHECKS_OPTIONS = [
 
 export type DrawerResource = { name: string; type: string };
 
+/** A drawer field the screen can send you to (a card's "Edit Model" row, the card itself). */
+export type DrawerField = 'name' | 'model' | 'tools' | 'resources';
+
 export type HelperDraft = {
   name: string;
   agent?: AgentName;
@@ -58,8 +67,11 @@ export type HelperDraft = {
 // glyph + label, "Saved", ×), then name, What it does, Model, Tools (when the helper has a tool list), Resources,
 // Checks with you and the Gets from / Passes on card, and a footer with Remove helper / Duplicate. Resources
 // add by Upload only (a real file picker; the file joins the list): the user asked to drop "Add from Sandbox". A helper with
-// tools (2.4b-full) packs its sections 16px apart and puts Checks with you last; one without (2.4) uses 20px.
-// Every field is live: the screen gets each change through `onChange`.
+// tools (2.4b-full) puts Checks with you last. Sections sit 16px apart in both (2.4b-full's spacing; 2.4 drew 20px, and one
+// component keeps one rhythm). Everything hugs its content: What it does grows with its text (then scrolls), handoff
+// values wrap, and the body scrolls between the header and the footer. Every field is live: the screen gets each change
+// through `onChange`. `focus` scrolls to a field and focuses it (a new `key` asks again, e.g. a second click on the
+// same card row).
 export function HelperDrawer({
   helper,
   onChange,
@@ -69,6 +81,7 @@ export function HelperDrawer({
   onConnectTool,
   checksOptions = CHECKS_OPTIONS,
   toolSource,
+  focus,
 }: {
   helper: HelperDraft;
   onChange: (patch: Partial<HelperDraft>) => void;
@@ -80,16 +93,32 @@ export function HelperDrawer({
   checksOptions?: string[];
   /** A tool row's source text ("Connected", "Not connected"); defaults to the tool list's. */
   toolSource?: (name: string) => string;
+  /** Scroll to this field and focus it. */
+  focus?: { field: DrawerField; key: number };
 }) {
   const hasTools = helper.tools !== undefined;
   const fileInput = useRef<HTMLInputElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focus) return;
+    const section = body.current?.querySelector<HTMLElement>(
+      `[data-drawer-field="${focus.field}"]`
+    );
+    if (!section) return;
+    section.scrollIntoView({ block: 'nearest' });
+    section
+      .querySelector<HTMLElement>(
+        'input, [aria-selected="true"], [role="checkbox"], [data-drawer-focus]'
+      )
+      ?.focus({ preventScroll: true });
+  }, [focus]);
 
   const header = (
-    <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 max-md:px-4">
+    <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-4 max-md:px-4">
       {helper.kind === 'decision' ? (
         <Icon src={decisionGlyph} size={16} />
       ) : helper.kind === 'output' ? (
-        <Icon src={outputGlyph} size={11.99} />
+        <Icon src={outputGlyph} size={12} />
       ) : (
         <NodeKindGlyph kind="action" />
       )}
@@ -121,19 +150,16 @@ export function HelperDrawer({
       value={helper.checks}
       options={checksOptions}
       onChange={(v) => onChange({ checks: v })}
-      hintClassName={hasTools ? 'h-[22px]' : 'h-[23px]'}
     />
   );
 
   return (
-    <SidePanel header={header} footer={footer} onClose={onClose}>
-      <div
-        className={clsx(
-          'flex w-full flex-col items-start px-6 py-4 max-md:px-4',
-          hasTools ? 'gap-4' : 'gap-5'
-        )}
-      >
-        <div className="flex w-full items-center gap-3">
+    <SidePanel header={header} footer={footer} onClose={onClose} bodyRef={body}>
+      <div className="flex w-full flex-col items-start gap-4 px-6 pb-5 max-md:px-4">
+        <div
+          data-drawer-field="name"
+          className="flex w-full items-center gap-3"
+        >
           {helper.agent && <AgentAvatar agent={helper.agent} size={40} />}
           <TextInput
             aria-label="Helper name"
@@ -146,18 +172,18 @@ export function HelperDrawer({
         <label className="flex w-full flex-col items-start gap-1.5">
           <FieldLabel>What it does</FieldLabel>
           <TextArea
+            // Grows with its text up to ~8 lines, then scrolls (the primitive is a fixed 57px that clips).
+            className="field-sizing-content min-h-[57px] max-h-[180px] overflow-y-auto"
             value={helper.description}
             onChange={(e) => onChange({ description: e.target.value })}
           />
         </label>
-        <div className="flex w-full flex-col items-start">
+        <div
+          data-drawer-field="model"
+          className="flex w-full flex-col items-start"
+        >
           <FieldLabel>Model</FieldLabel>
-          <div
-            className={clsx(
-              'flex w-full items-center gap-3 pt-1.5',
-              hasTools ? 'h-[38px]' : 'h-9'
-            )}
-          >
+          <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 pt-1.5">
             <SegmentedControl
               label="Model"
               options={[
@@ -173,7 +199,10 @@ export function HelperDrawer({
           </div>
         </div>
         {helper.tools && (
-          <div className="flex w-full flex-col items-start">
+          <div
+            data-drawer-field="tools"
+            className="flex w-full flex-col items-start"
+          >
             <FieldLabel>Tools</FieldLabel>
             <div className="flex w-full flex-col items-start pt-1.5">
               <div className="flex w-full flex-col items-start overflow-clip rounded-[10px] border border-line py-0.5">
@@ -206,21 +235,25 @@ export function HelperDrawer({
             </div>
           </div>
         )}
-        <div className="flex w-full flex-col items-start">
+        <div
+          data-drawer-field="resources"
+          className="flex w-full flex-col items-start"
+        >
           <FieldLabel>Resources</FieldLabel>
           {helper.resources.length > 0 && (
             <div className="flex w-full flex-col items-start gap-1 pt-1.5">
               {helper.resources.map((r) => (
                 <div
                   key={r.name}
+                  title={r.name}
                   className="flex h-11 w-full items-center gap-2 rounded-[11px] bg-well px-2.5"
                 >
                   <Icon src={dragHandle} size={14} />
                   <div className="flex min-w-px flex-1 flex-col items-start">
-                    <p className="truncate text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink">
+                    <p className="w-full truncate text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink">
                       {r.name}
                     </p>
-                    <p className="text-[12px] leading-4 tracking-[-0.08px] whitespace-nowrap text-muted">
+                    <p className="w-full truncate text-[12px] leading-4 tracking-[-0.08px] text-muted">
                       {r.type}
                     </p>
                   </div>
@@ -244,6 +277,7 @@ export function HelperDrawer({
             )}
           >
             <Button
+              data-drawer-focus
               size="sm"
               leading={<Icon src={upload} size={16} />}
               onClick={() => fileInput.current?.click()}
@@ -273,17 +307,12 @@ export function HelperDrawer({
             label="Gets from"
             value={helper.getsFrom}
             onChange={(v) => onChange({ getsFrom: v })}
-            // 2.4 draws these rows at 62.25 / 61.25px, 2.4b-full at 62 / 61.
-            className={clsx(
-              'border-b border-line',
-              hasTools ? 'h-[62px]' : 'h-[62.25px]'
-            )}
+            className="border-b border-line"
           />
           <HandoffRow
             label={`Passes on · to ${helper.passesTo}`}
             value={helper.passes}
             onChange={(v) => onChange({ passes: v })}
-            className={hasTools ? 'h-[61px]' : 'h-[61.25px]'}
           />
         </div>
         {hasTools && checks}
@@ -305,12 +334,10 @@ function ChecksWithYou({
   value,
   options,
   onChange,
-  hintClassName,
 }: {
   value: string;
   options: string[];
   onChange: (v: string) => void;
-  hintClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -318,7 +345,7 @@ function ChecksWithYou({
   useOutsideClick([ref], open, closeMenu);
   return (
     <div className="flex w-full flex-col items-start">
-      <div className="flex h-6 w-full flex-col items-start pb-1.5">
+      <div className="flex w-full flex-col items-start pb-1.5">
         <FieldLabel>Checks with you</FieldLabel>
       </div>
       <div ref={ref} className="relative w-full">
@@ -347,12 +374,7 @@ function ChecksWithYou({
           />
         )}
       </div>
-      <p
-        className={clsx(
-          'w-full pt-1.5 text-[12px] leading-4 tracking-[-0.08px] text-muted',
-          hintClassName
-        )}
-      >
+      <p className="w-full pt-1.5 text-[12px] leading-4 tracking-[-0.08px] text-muted">
         Overrides the team rule for this helper only.
       </p>
     </div>
@@ -360,7 +382,8 @@ function ChecksWithYou({
 }
 
 // One handoff in the Gets from / Passes on card: muted label, Medium 13 value, Secondary Small "Edit" that turns
-// the value into a field (Enter or Done saves).
+// the value into a field (Enter or Done saves). It hugs its content (12px padding), so a long value wraps instead of
+// being cut.
 function HandoffRow({
   label,
   value,
@@ -375,11 +398,11 @@ function HandoffRow({
   const [editing, setEditing] = useState(false);
   return (
     <div className={clsx('flex w-full items-start gap-2 p-3', className)}>
-      <div className="flex h-full min-w-px flex-1 flex-col items-start">
-        <p className="text-[12px] leading-4 tracking-[-0.08px] whitespace-nowrap text-muted">
+      <div className="flex min-w-px flex-1 flex-col items-start">
+        <p className="w-full truncate text-[12px] leading-4 tracking-[-0.08px] text-muted">
           {label}
         </p>
-        <div className="flex h-[21px] w-full items-start pt-0.5">
+        <div className="flex w-full items-start pt-0.5">
           {editing ? (
             <input
               autoFocus
@@ -390,7 +413,7 @@ function HandoffRow({
               className="w-full bg-transparent text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink outline-none"
             />
           ) : (
-            <p className="truncate text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink">
+            <p className="w-full text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] break-words text-ink">
               {value}
             </p>
           )}

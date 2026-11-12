@@ -41,9 +41,12 @@ function useComposer(onSend: (text: string) => void, initial = '') {
 // 10px radius, 6px padding, 8px gaps, faint shadow) holding the attach button, a borderless Text Input and a
 // Primary "Send". The attach button is a ghost 32px square; while its menu is open it is Outlined.
 // The attach menu opens 8px above the button (Figma: menu bottom 808, button top 816), left-aligned with it.
+// Send with nothing typed does what 2.1's brief composer does: focuses the field and swaps the placeholder for
+// `emptyPlaceholder` until you type.
 export function PlanComposer({
   onSend,
   placeholder = 'Add goals or channels (optional)',
+  emptyPlaceholder = 'Type a goal or a channel first.',
   attachOpen,
   onAttachOpenChange,
   onAttach,
@@ -51,13 +54,26 @@ export function PlanComposer({
 }: {
   onSend: (text: string) => void;
   placeholder?: string;
+  /** The placeholder after Send with nothing typed. */
+  emptyPlaceholder?: string;
   attachOpen: boolean;
   onAttachOpenChange: (open: boolean) => void;
   onAttach?: (kind: 'upload' | 'link' | 'skill') => void;
   className?: string;
 }) {
-  const { text, setText, send } = useComposer(onSend);
+  const { text, setText, send: sendText } = useComposer(onSend);
   const anchor = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [nudge, setNudge] = useState(false);
+  // Any text ends the nudge.
+  if (nudge && text.trim()) setNudge(false);
+  const send = () => {
+    if (text.trim()) sendText();
+    else {
+      setNudge(true);
+      box.current?.querySelector('input')?.focus();
+    }
+  };
   const close = useCallback(
     () => onAttachOpenChange(false),
     [onAttachOpenChange]
@@ -65,6 +81,7 @@ export function PlanComposer({
   useOutsideClick([anchor], attachOpen, close);
   return (
     <div
+      ref={box}
       className={clsx(
         'flex w-full items-center gap-2 rounded-[10px] border border-line-2 bg-white p-1.5 drop-shadow-[0px_1px_1px_rgba(16,18,24,0.04)]',
         className
@@ -95,7 +112,8 @@ export function PlanComposer({
       <TextInput
         appearance="borderless"
         className="flex-1"
-        placeholder={placeholder}
+        placeholder={nudge ? emptyPlaceholder : placeholder}
+        aria-label={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
@@ -114,8 +132,9 @@ export function PlanComposer({
 
 // Figma "Chat composer" (2362:28991): pinned to the bottom of the side panel's Chat tab. 1px top line,
 // 24px sides, 12px top / 16px bottom, optional Suggestions (6px apart), then one outlined box (control border,
-// 8px radius, 12px left / 4px other padding) with a borderless 30px message field and a ghost send icon button.
-// Clicking a suggestion sends it. `defaultText` opens it prefilled and focused, caret at the end (a decision's
+// 8px radius, 12px left / 4px other padding) with a borderless message field (30px for one line, growing with what
+// you type up to 5 lines, then scrolling; Shift+Enter is a new line) and a ghost send icon button, which stays on
+// the last line. Under 768px the sides are 16px, the panel's phone inset. Clicking a suggestion sends it. `defaultText` opens it prefilled and focused, caret at the end (a decision's
 // "Change" starts "Change: <decision> → ").
 export function ChatComposer({
   onSend,
@@ -192,9 +211,11 @@ export function ChatComposer({
   };
 
   const field = (
-    <TextInput
-      appearance="borderless"
-      className="h-[30px] flex-1"
+    // Grows with what you type, up to 5 lines (main's chat field), then scrolls.
+    <textarea
+      rows={1}
+      aria-label={placeholder}
+      className="field-sizing-content block max-h-[102px] min-h-[30px] min-w-px flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-[18px] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
       placeholder={placeholder}
       autoFocus={!!defaultText}
       aria-autocomplete={mentions ? 'list' : undefined}
@@ -291,8 +312,8 @@ export function ChatComposer({
   return (
     <div
       className={clsx(
-        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white pt-3 pb-4 max-md:px-3',
-        narrow ? 'px-3' : 'px-6',
+        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white pt-3 pb-4',
+        narrow ? 'px-3' : 'px-6 max-md:px-4',
         className
       )}
     >
@@ -368,7 +389,7 @@ export function ChatComposer({
           </div>
         </div>
       ) : (
-        <div className="relative flex w-full items-center gap-1 rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
+        <div className="relative flex w-full items-end gap-1 rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
           {mentionList}
           {field}
           {sendButton}

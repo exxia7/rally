@@ -3,9 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import checkBadge from '@/assets/icons/check-badge.svg';
 import lockAmber from '@/assets/icons/lock-amber-10.svg';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
-import { TaskProgressChip } from '@/components/map/CanvasControls';
 import { FlowMap } from '@/components/map/FlowMap';
 import { MapCanvas } from '@/components/map/MapCanvas';
+import { RUN_MAP_SCALE, runMapFocus } from '@/components/map/runMapView';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { ApprovalItem, type ApprovalState } from '@/components/panels/Cards';
 import { InspectorHeader } from '@/components/panels/Inspector';
@@ -13,11 +13,12 @@ import { SidePanel } from '@/components/panels/SidePanel';
 import { useConnectTool } from '@/components/planning/useConnectTool';
 import { InspectorPanel } from '@/components/run/InspectorPanel';
 import { inspectorFromNode } from '@/components/run/RunScreenLayout';
-import { TasksOverlay } from '@/components/run/TasksOverlay';
+import { TasksDropdown } from '@/components/run/TasksDropdown';
 import { AppShell } from '@/components/shell/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
 import {
   AD_TEST,
@@ -31,13 +32,14 @@ import {
   approvalsOf,
   approvalWaiting,
   chosenFork,
+  goesOut,
   money,
   runCost,
   runData,
 } from '@/state/runView';
 import { dispatch, useAppState, useWorkflow } from '@/state/store';
 
-import { APPROVAL_MAP_SCALE, LAUNCH_MAP } from './launchMap';
+import { LAUNCH_MAP } from './launchMap';
 
 export const screenId = '5.1';
 
@@ -54,9 +56,9 @@ export default function ApprovalScreen() {
   const [connectDialog, connect] = useConnectTool();
   const blockedBy = (id: string) => !!blockedOutput(app, wf, id);
   const [panelOpen, setPanelOpen] = useState(true);
+  const xl = useMediaQuery('(min-width: 1280px)');
   // A map card other than "Ready to post" opens its own (read-only) inspector instead of the approval panel.
   const [inspecting, setInspecting] = useState<string | null>(null);
-  const [tasksOpen, setTasksOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -72,10 +74,16 @@ export default function ApprovalScreen() {
   const pill = approvalWaiting(wf);
   const cost = money(runCost(wf));
   const publisher = wf.helpers.publisher?.name ?? 'Publisher';
-  const done = run.tasks.filter((t) => t.state === 'done').length;
   const inspected = inspecting
     ? run.map.nodes.find((n) => n.id === inspecting)
     : undefined;
+  // A map card or its Tasks row: "Ready to post" opens the approval panel, any other step its inspector.
+  const openNode = (id: string) => {
+    if (id === 'ready') {
+      setInspecting(null);
+      setPanelOpen(true);
+    } else setInspecting(id);
+  };
   const launch = () => {
     for (const i of items)
       if (stateOf(i.id) === 'waiting')
@@ -97,7 +105,6 @@ export default function ApprovalScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         inspected ? (
           <InspectorPanel
@@ -116,7 +123,7 @@ export default function ApprovalScreen() {
               sheet="half"
               onClose={() => setPanelOpen(false)}
               header={
-                <div className="flex min-h-[113px] w-full shrink-0 flex-col">
+                <div className="flex w-full shrink-0 flex-col">
                   <InspectorHeader
                     eyebrow={`Approval · ${publisher}`}
                     kindIcon={null}
@@ -129,7 +136,7 @@ export default function ApprovalScreen() {
                   />
                 </div>
               }
-              bodyClassName="px-6 py-5 max-md:px-4"
+              bodyClassName="px-6 pb-5 max-md:px-4"
               footer={
                 <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
                   <Button
@@ -186,8 +193,8 @@ export default function ApprovalScreen() {
                   />
                 ))}
                 <div className="flex w-full shrink-0 flex-col items-start rounded-[10px] border border-dashed border-line-2 p-3.5">
-                  <div className="flex w-[320px] max-w-full items-center gap-2">
-                    <p className="min-w-px flex-1 text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] whitespace-nowrap text-muted">
+                  <div className="flex w-full items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] text-muted">
                       $300 ad test
                     </p>
                     {wf.asDrawn || overAdLimit(wf) ? (
@@ -254,50 +261,44 @@ export default function ApprovalScreen() {
         }}
       />
       <MapCanvas
-        stageWidth={954}
+        contentScale={RUN_MAP_SCALE}
+        viewKey={`run:${app.activeId}`}
+        focus={runMapFocus(run.map.nodes, LAUNCH_MAP)}
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
-            <TaskProgressChip
-              done={wf.asDrawn ? 9 : done}
-              total={wf.asDrawn ? 10 : run.tasks.length}
-              open={tasksOpen}
-              onClick={() => setTasksOpen((o) => !o)}
-              className="absolute top-4 left-4 w-[208px]"
+            <TasksDropdown
+              outputs={goesOut(wf)}
+              motionKey={`run:${app.activeId}:tasks`}
+              tasks={run.tasks}
+              done={wf.asDrawn ? 9 : undefined}
+              total={wf.asDrawn ? 10 : undefined}
+              onSelectTask={(t) => t.id && openNode(t.id)}
+              // Under 1280px the panel covers the map: opening the list closes it.
+              onOpen={() => {
+                if (xl) return;
+                setInspecting(null);
+                setPanelOpen(false);
+              }}
             />
             <CompletedAgents
               agents={run.completed}
               names={names}
-              className="absolute bottom-[16.26px] left-4 max-md:right-4"
+              className="absolute bottom-4 left-4 max-md:right-4"
             />
-            {tasksOpen && (
-              <TasksOverlay
-                tasks={run.tasks}
-                summary={run.tasksSummary}
-                onClose={() => setTasksOpen(false)}
-                onSelect={() => setTasksOpen(false)}
-              />
-            )}
           </>
         }
       >
-        <div
-          className="absolute top-[165px] left-[43px] origin-top-left"
-          style={{ transform: `scale(${APPROVAL_MAP_SCALE})` }}
-        >
-          <FlowMap
-            nodes={run.map.nodes}
-            edges={run.map.edges}
-            width={LAUNCH_MAP.width}
-            height={LAUNCH_MAP.height}
-            onNodeClick={(n) => {
-              if (n.id === 'ready') {
-                setInspecting(null);
-                setPanelOpen(true);
-              } else setInspecting(n.id);
-            }}
-          />
-        </div>
+        {/* Drawn as on every run screen (5.2 too), not Figma's smaller redraw beside the docked panel. */}
+        <FlowMap
+          x={LAUNCH_MAP.x}
+          y={LAUNCH_MAP.y}
+          nodes={run.map.nodes}
+          edges={run.map.edges}
+          width={LAUNCH_MAP.width}
+          height={LAUNCH_MAP.height}
+          onNodeClick={(n) => openNode(n.id)}
+        />
       </MapCanvas>
       {/* Permissions/settings agent (3d): the connect step for "Connect LinkedIn to post". */}
       {connectDialog}

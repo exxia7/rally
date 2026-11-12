@@ -1,71 +1,8 @@
 import clsx from 'clsx';
-import type { CSSProperties } from 'react';
 
-import chevronDown from '@/assets/icons/chevron-down-14.svg';
-import chevronUp from '@/assets/icons/chevron-up.svg';
 import minus from '@/assets/icons/minus.svg';
 import plus from '@/assets/icons/plus-dark.svg';
 import { Icon } from '@/components/ui/Icon';
-import { Progress } from '@/components/ui/Progress';
-
-import { FORK_COLOR, type ForkNumber } from './forks';
-
-// Figma "Task progress chip" (2362:30092): collapsed run progress on the canvas. Opens the task list.
-// A rerun swaps the "N of M done" text for its own `label` ("Rerunning", 4.2) and may drop the bar
-// (`progress={null}`), or keep it for the rerun's own steps ("Rerunning · 1 of 3 done", 6.3).
-export function TaskProgressChip({
-  done,
-  total,
-  label,
-  progress,
-  fork,
-  open,
-  onClick,
-  className,
-  style,
-}: {
-  done: number;
-  total: number;
-  /** Replaces "N of M done". */
-  label?: string;
-  /** Bar value 0–100 (default done/total); null hides the bar. */
-  progress?: number | null;
-  /** On a fork (4.5, 6.5: "Vs Penny · 1 of 3 done") the bar takes the fork's colour. */
-  fork?: ForkNumber;
-  open?: boolean;
-  onClick?: () => void;
-  className?: string;
-  style?: CSSProperties;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={style}
-      aria-expanded={open}
-      className={clsx(
-        'flex items-center gap-2 rounded-control border border-control-border bg-white py-2 pr-2.5 pl-3 hover:bg-hover',
-        className
-      )}
-    >
-      <span className="text-[12px] leading-[18px] font-semibold whitespace-nowrap text-ink">
-        Tasks
-      </span>
-      {progress !== null && (
-        <Progress
-          value={progress ?? (done / total) * 100}
-          height={4}
-          fillColor={fork && FORK_COLOR[fork]}
-          className="w-10! shrink-0"
-        />
-      )}
-      <span className="text-[12px] leading-[18px] font-medium whitespace-nowrap text-muted">
-        {label ?? `${done} of ${total} done`}
-      </span>
-      <Icon src={open ? chevronUp : chevronDown} size={14} />
-    </button>
-  );
-}
 
 // Figma "Zoom controls" (2362:30112): canvas zoom. 16px from the canvas bottom-right.
 export function ZoomControls({

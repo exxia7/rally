@@ -1,7 +1,19 @@
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 import { AgentAvatar, type AgentState } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
+import {
+  EASE_OUT,
+  transitions,
+  useAdded,
+  useChangedFrom,
+  useGlide,
+  useMotionOn,
+  useTransition,
+  variants,
+} from '@/lib/motion';
+import { useAppState } from '@/state/store';
 
 import { FORK_COLOR, type ForkNumber } from './forks';
 import { HandoffMarker, type HandoffStatus } from './HandoffMarker';
@@ -15,7 +27,7 @@ const PORT_R = 3.68921;
 const MARKER = 18.446;
 const AVATAR = 36.673;
 const DASH = 3.68921;
-const DEFAULT_PORT_DY = 20.52;
+export const DEFAULT_PORT_DY = 20.52;
 // Fork lanes exist only in the docked frames (4.5, 6.5, 6.6), where Figma draws the map at 874/1282 and gives the
 // fork line, its corners and the 5px fork handles round sizes at that scale.
 const FORK_K = 874 / 1282;
@@ -89,6 +101,18 @@ export type MapOverlay = {
 
 const BLOCKED_STROKE = 1.84455;
 
+// Motion (CLAUDE.md "Motion"): connectors interpolate to a new route and ports move with them, in step with the
+// cards' glide; the flow pulse is FLOW_LEN of the line.
+const REROUTE = { duration: 0.42, ease: EASE_OUT } as const;
+const FLOW_LEN = 0.16;
+const isWorking = (n: MapNode) =>
+  n.state === 'working' || n.avatar?.state === 'working';
+// A step that waits on you (an approval, a raised hand), not on another helper: nothing flows into it.
+const waitsOnYou = (n: MapNode) =>
+  n.state === 'needs-you' ||
+  n.avatar?.state === 'hand-raised' ||
+  /your OK|for you\b|approv/i.test(n.status?.text ?? '');
+
 const edgeColor = (e: MapEdge) => {
   if (e.fork) return FORK_COLOR[e.fork];
   if (e.status === 'blocked') return '#e5484d';
@@ -125,6 +149,16 @@ export function FlowMap({
   onNodeRerun?: (node: MapNode) => void;
   className?: string;
 }) {
+  // Motion memory for this workflow's map: a change the viewer saw animates, a direct load paints as drawn.
+  const app = useAppState();
+  const scope = `map:${app.activeId}`;
+  // Work only flows while the run is actually running: not before it starts, not while a hand is raised or it waits
+  // for approval, not after launch, and not while paused.
+  const run = app.workflows[app.activeId]?.run;
+  const live =
+    !!run &&
+    !run.paused &&
+    (run.phase === 'running' || run.phase === 'rerunning');
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const ports = new Map<string, { x: number; y: number; color: string }>();
   // Fork handles, drawn over the cards like Figma's "Fork handle" ellipses.
@@ -144,19 +178,33 @@ export function FlowMap({
     // A blocked line's ports stay the passed blue (Figma draws only the line red).
     const portColor =
       e.status === 'blocked' ? edgeColor({ ...e, status: 'passed' }) : color;
-    for (const [x, y] of [
-      [x1, y1],
-      [x2, y2],
-    ]) {
+    for (const [x, y, side] of [
+      [x1, y1, `${e.from}:out`],
+      [x2, y2, `${e.to}:in`],
+    ] as const) {
       const key = `${x.toFixed(2)},${y.toFixed(2)}`;
       if (e.handles) {
         if (!handles.has(key)) handles.set(key, { x, y, color: portColor });
         continue;
       }
+      // Ports are keyed by their node side (one per position, as before), so a moved node's port glides.
+      const portKey = side;
       // A port shared by a passed and a pending line takes the passed (blue) colour.
-      if (!ports.has(key) || e.status !== 'pending')
-        ports.set(key, { x, y, color: portColor });
+      if (!ports.has(portKey) || e.status !== 'pending')
+        ports.set(portKey, { x, y, color: portColor });
     }
+    // Work flowing (live runs only): out of a working step, or out of a finished one into a step that waits on it
+    // and is about to work; never into a step that waits on you.
+    const flow =
+      live &&
+      !e.dimmed &&
+      !waitsOnYou(b) &&
+      e.status !== 'blocked' &&
+      b.state !== 'done' &&
+      (isWorking(a) ||
+        (e.status === 'passed' &&
+          a.state !== 'waiting' &&
+          b.state === 'waiting'));
     return [
       {
         e,
@@ -165,10 +213,25 @@ export function FlowMap({
         x2,
         y2,
         color,
+        flow,
         d: edgePath(x1, y1, x2, y2, e.lane ?? x2 - RADIUS, e.radius ?? RADIUS),
       },
     ];
   });
+
+  // Cards, lines and helpers that appeared since this map was last on screen fade or pop in.
+  const addedNodes = useAdded(
+    `${scope}:nodes`,
+    nodes.map((n) => n.id)
+  );
+  const addedEdges = useAdded(
+    `${scope}:edges`,
+    lines.map((l) => `${l.e.from}>${l.e.to}`)
+  );
+  const addedAvatars = useAdded(
+    `${scope}:avatars`,
+    nodes.filter((n) => n.avatar).map((n) => n.id)
+  );
 
   const forks = (forkLines ?? []).map((f) => {
     const targets = f.to.flatMap((id) => {
@@ -214,16 +277,15 @@ export function FlowMap({
               Number(a.e.status === 'blocked') -
               Number(b.e.status === 'blocked')
           )
-          .map(({ e, d, color }) => (
-            <path
+          .map(({ e, d, color, flow }) => (
+            <Connector
               key={`${e.from}-${e.to}`}
+              scope={scope}
+              edge={e}
               d={d}
-              stroke={color}
-              strokeWidth={e.status === 'blocked' ? BLOCKED_STROKE : STROKE}
-              strokeDasharray={
-                e.status === 'pending' ? `${DASH} ${DASH}` : undefined
-              }
-              strokeDashoffset={e.status === 'pending' ? DASH / 2 : undefined}
+              color={color}
+              flow={flow}
+              isNew={addedEdges.has(`${e.from}>${e.to}`)}
             />
           ))}
         {forks.map(({ f, d, pending }) => (
@@ -237,26 +299,17 @@ export function FlowMap({
           />
         ))}
         {[...ports.entries()].map(([key, p]) => (
-          <circle
-            key={key}
-            cx={p.x}
-            cy={p.y}
-            r={PORT_R}
-            fill="white"
-            stroke={p.color}
-            strokeWidth={STROKE}
-          />
+          <Port key={key} x={p.x} y={p.y} color={p.color} />
         ))}
       </svg>
       {nodes.map((n) => (
-        <NodeCard
+        <MapCard
           key={n.id}
-          {...n}
-          nodeId={n.id}
-          className="absolute!"
+          scope={scope}
+          node={n}
+          isNew={addedNodes.has(n.id)}
           onClick={onNodeClick ? () => onNodeClick(n) : undefined}
           onRerun={onNodeRerun ? () => onNodeRerun(n) : undefined}
-          style={{ left: n.x, top: n.y }}
         />
       ))}
       {handles.size > 0 && (
@@ -285,32 +338,25 @@ export function FlowMap({
       {lines
         .filter((l) => l.e.marker)
         .map(({ e, x1, y1 }) => (
-          <HandoffMarker
+          <MapMarker
             key={`m-${e.from}-${e.to}`}
-            status={e.marker!.status}
-            dimmed={e.marker!.dimmed}
-            size={e.marker!.size ?? MARKER}
-            className="absolute"
-            style={{
-              left: x1 + e.marker!.dx - (e.marker!.size ?? MARKER) / 2,
-              top: y1 - (e.marker!.size ?? MARKER) / 2,
-            }}
+            scope={scope}
+            edge={e}
+            x={x1 + e.marker!.dx - (e.marker!.size ?? MARKER) / 2}
+            y={y1 - (e.marker!.size ?? MARKER) / 2}
           />
         ))}
       {nodes
         .filter((n) => n.avatar)
         .map((n) => (
-          <AgentAvatar
+          <MapAvatar
             key={`a-${n.id}`}
-            agent={n.avatar!.agent}
-            state={n.avatar!.state}
-            size={n.avatar!.at?.size ?? AVATAR}
-            className="absolute!"
-            style={
-              n.avatar!.at
-                ? { left: n.avatar!.at.x, top: n.avatar!.at.y }
-                : { left: n.x + (n.width ?? 175.2) - 30.07, top: n.y - 27.87 }
-            }
+            scope={scope}
+            node={n}
+            isNew={addedAvatars.has(n.id)}
+            {...(n.avatar!.at
+              ? { x: n.avatar!.at.x, y: n.avatar!.at.y }
+              : { x: n.x + (n.width ?? 175.2) - 30.07, y: n.y - 27.87 })}
           />
         ))}
       {overlays?.map((o) => (
@@ -327,5 +373,200 @@ export function FlowMap({
         </div>
       ))}
     </div>
+  );
+}
+
+// A connector (framer-motion). Pending lines stay still; a line out of a working step carries a travelling accent
+// pulse (in the fork's colour on a fork lane); a handoff that completes while you watch draws from source to target
+// (pathLength); a new line fades in and a re-routed one interpolates its path (`d`). Off under reduced motion.
+function Connector({
+  scope,
+  edge: e,
+  d,
+  color,
+  flow,
+  isNew,
+}: {
+  scope: string;
+  edge: MapEdge;
+  d: string;
+  color: string;
+  flow: boolean;
+  isNew: boolean;
+}) {
+  const on = useMotionOn();
+  const key = `${scope}:edge:${e.from}>${e.to}`;
+  const status = e.status ?? 'passed';
+  const from = useChangedFrom(key, status);
+  const draw = on && status === 'passed' && from !== undefined;
+  const width = e.status === 'blocked' ? BLOCKED_STROKE : STROKE;
+  return (
+    <>
+      <motion.path
+        key={draw ? 'drawn' : 'line'}
+        initial={
+          draw ? { pathLength: 0, d } : on && isNew ? { opacity: 0, d } : false
+        }
+        animate={draw ? { pathLength: 1, d } : { opacity: 1, d }}
+        transition={
+          on
+            ? {
+                pathLength: transitions.draw,
+                opacity: transitions.base,
+                d: REROUTE,
+              }
+            : transitions.instant
+        }
+        stroke={color}
+        strokeWidth={width}
+        strokeDasharray={e.status === 'pending' ? `${DASH} ${DASH}` : undefined}
+        strokeDashoffset={e.status === 'pending' ? DASH / 2 : undefined}
+      />
+      {flow && on && (
+        <motion.path
+          d={d}
+          stroke={e.fork ? FORK_COLOR[e.fork] : '#2457d6'}
+          strokeWidth={width * 1.4}
+          strokeLinecap="round"
+          initial={{
+            pathLength: FLOW_LEN,
+            pathSpacing: 2,
+            pathOffset: -FLOW_LEN,
+          }}
+          animate={{ pathOffset: [-FLOW_LEN, 1, 1] }}
+          transition={{
+            duration: 2.2,
+            times: [0, 0.7, 1],
+            ease: 'easeInOut',
+            repeat: Infinity,
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+// A port: moves with its line when a card glides.
+function Port({ x, y, color }: { x: number; y: number; color: string }) {
+  const t = useTransition(REROUTE);
+  return (
+    <motion.circle
+      initial={false}
+      animate={{ cx: x, cy: y }}
+      transition={t}
+      r={PORT_R}
+      fill="white"
+      stroke={color}
+      strokeWidth={STROKE}
+    />
+  );
+}
+
+// A step card on the map: its state cross-fades when it changes (NodeCard), a step inserted while you watch rises in,
+// and a card that moves (a column added before it) glides to its new place on a spring.
+function MapCard({
+  scope,
+  node: n,
+  isNew,
+  onClick,
+  onRerun,
+}: {
+  scope: string;
+  node: MapNode;
+  isNew: boolean;
+  onClick?: () => void;
+  onRerun?: () => void;
+}) {
+  const on = useMotionOn();
+  const glide = useGlide(n.x, n.y);
+  return (
+    <motion.div
+      className="absolute"
+      style={{ left: n.x, top: n.y, ...glide }}
+      variants={variants.rise}
+      initial={on && isNew ? 'hidden' : false}
+      animate="shown"
+      transition={transitions.slow}
+    >
+      <NodeCard
+        {...n}
+        nodeId={n.id}
+        motionKey={`${scope}:state:${n.id}`}
+        onClick={onClick}
+        onRerun={onRerun}
+      />
+    </motion.div>
+  );
+}
+
+// A step's helper over its card: thinking while it works, bouncing once when it raises its hand; one that appears
+// pops in.
+function MapAvatar({
+  scope,
+  node: n,
+  isNew,
+  x,
+  y,
+}: {
+  scope: string;
+  node: MapNode;
+  isNew: boolean;
+  x: number;
+  y: number;
+}) {
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
+  return (
+    <motion.div
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      variants={variants.pop}
+      initial={on && isNew ? 'hidden' : false}
+      animate="shown"
+      transition={transitions.pop}
+    >
+      <AgentAvatar
+        motionKey={`${scope}:avatar-state:${n.id}`}
+        appeared={isNew}
+        agent={n.avatar!.agent}
+        state={n.avatar!.state}
+        size={n.avatar!.at?.size ?? AVATAR}
+      />
+    </motion.div>
+  );
+}
+
+// A handoff marker: the check pops in once the line into it has drawn.
+function MapMarker({
+  scope,
+  edge: e,
+  x,
+  y,
+}: {
+  scope: string;
+  edge: MapEdge;
+  x: number;
+  y: number;
+}) {
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
+  const m = e.marker!;
+  const from = useChangedFrom(`${scope}:marker:${e.from}>${e.to}`, m.status);
+  return (
+    <motion.div
+      key={m.status}
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      variants={variants.pop}
+      initial={on && from !== undefined ? 'hidden' : false}
+      animate="shown"
+      transition={{ ...transitions.pop, delay: 0.26 }}
+    >
+      <HandoffMarker
+        status={m.status}
+        dimmed={m.dimmed}
+        size={m.size ?? MARKER}
+      />
+    </motion.div>
   );
 }

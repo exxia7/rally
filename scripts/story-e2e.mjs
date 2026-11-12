@@ -1,6 +1,6 @@
 // Walks the main story on the live store, with a removed and a renamed helper, and checks that what you did
 // carries through to the end. Needs the dev server on http://localhost:5173 (npm run dev).
-//   node scripts/story-e2e.mjs            (headless; HEADED=1 to watch)
+//   node scripts/story-e2e.mjs [--width=375|1024|1440]   (headless; HEADED=1 to watch)
 // Home → New workflow → brief (2.1) → chat (2.2) → team (2.3: remove Designer, rename Writer → Copywriter) →
 // Start launch → the run plays on its own (?speed=fast) → Strategist's hand (4.1: Mar 14, leave pricing out) →
 // rerun (4.1b, 4.2) → Writer's hand (4.3: $15/mo) → approval (5.1: Don't post the X post) → summary (5.2) → Home.
@@ -10,8 +10,14 @@ import { chromium } from '@playwright/test'
 
 const BASE = 'http://localhost:5173'
 const BRIEF = 'Launch our new Teams plan to existing customers in two weeks'
+// --width=375|1024|1440 (default 1440): the layout to walk. Under 1280 side panels overlay the map, under 768 the
+// sidebar is a drawer and the top bar's secondary buttons sit in its More menu; the steps use those controls there.
+const WIDTH = Number(process.argv.find((a) => a.startsWith('--width='))?.split('=')[1] ?? 1440)
+const HEIGHT = WIDTH < 768 ? 812 : WIDTH < 1280 ? 768 : 900
+const PHONE = WIDTH < 768
 const browser = await chromium.launch({ headless: !process.env.HEADED })
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } })
+console.log(`viewport ${WIDTH}×${HEIGHT}`)
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 const results = []
@@ -32,6 +38,12 @@ const noDesigner = async (where) => {
   check(`no Designer on ${where}`, !/\bDesigner\b/.test(t), /\bDesigner\b/.test(t) ? t.match(/.{0,40}\bDesigner\b.{0,40}/)?.[0] : '')
 }
 const waitPath = (p, timeout = 30000) => page.waitForURL((u) => u.pathname === p, { timeout })
+// Under 1280px a side panel (inspector, approval) overlays the map and the top bar's right end: close it first.
+const closeOverlay = async () => {
+  if (WIDTH >= 1280) return
+  const close = page.getByRole('button', { name: /^Close (inspector|panel)$/ })
+  if (await close.count()) await close.first().click()
+}
 
 try {
   // Home → New workflow
@@ -44,8 +56,14 @@ try {
   await composer.fill(BRIEF)
   await composer.press('Enter')
   await waitPath('/s/2.2')
+  // 2.2 plays as a conversation: the Planner asks when and for whom, and waits for your answer (no reply typed
+  // for you, no "See your team" yet). Answer with the suggestion chip; it fills the brief's When and Who.
+  await page.getByText('Two quick questions').waitFor()
+  check('Planner waits for your answer', (await state()).briefChat.length === 3 && (await page.getByRole('button', { name: 'See your team' }).count()) === 0)
+  await page.getByRole('button', { name: 'Mar 12, to our 2,800 waitlist signups' }).click()
   await page.getByRole('button', { name: 'See your team' }).waitFor()
   let wf = await state()
+  check('your answer is in the chat and the brief', wf.briefChat.length === 5 && wf.briefChat[3].from === 'user' && wf.brief.when === 'Mar 12' && wf.brief.who === '2,800 waitlist signups', `${wf.brief.when} / ${wf.brief.who}`)
   check('brief is the first chat message', (await text()).includes(BRIEF))
   check('workflow titled from the brief', wf.title !== 'New workflow' && BRIEF.startsWith(wf.title), wf.title)
   check('Launch brief "What" is the brief', (await text()).includes(BRIEF[0].toUpperCase() + BRIEF.slice(1)))
@@ -78,6 +96,8 @@ try {
   check('Designer removed, Writer renamed', wf.removed.includes('designer') && wf.helpers.writer.name === 'Copywriter')
   // 2.3: add a Fact-checker on the line Strategist → Copywriter (2.4c's add-step), through the UI when it can.
   try {
+    // The helper drawer animates out and the map redraws at full size: let it settle before using its lines.
+    await page.getByLabel('Helper name').waitFor({ state: 'detached', timeout: 3000 }).catch(() => {})
     const plus = page.getByRole('button', { name: 'Add a step between Strategist and Copywriter' })
     await plus.focus({ timeout: 3000 })
     await plus.click({ force: true, timeout: 3000 })
@@ -101,8 +121,16 @@ try {
   }
   const inserted = (await state()).planSteps[0]?.id
   check('Fact-checker inserted on the plan', !!inserted, inserted)
-  const estimate = await page.getByText(/^About \d+ min · \$/).first().textContent().catch(() => '')
-  check('estimate recalculated', estimate && estimate !== 'About 9 min · $0.30', estimate)
+  // The top bar shows the time ("About 9 min", hidden on phones); the price is the sandbox's. Both come from this
+  // team now, not Figma's literal 2.3 text.
+  const live = await page.evaluate(async () => {
+    const pv = await import('/src/state/planView.ts')
+    const s = window.__pathfinder.store.get()
+    const w = s.workflows[s.activeId]
+    return { asDrawn: w.asDrawn, time: pv.estimate(w), cost: pv.estimateCost(w) }
+  })
+  const shown = PHONE ? live.time : await page.getByText(/^About \d+ min$/).first().textContent().catch(() => '')
+  check('estimate recalculated', !live.asDrawn && live.cost !== '$0.30' && shown === live.time, `${shown} · ${live.cost}`)
 
   // Start launch → the live run (not 3.1)
   await page.getByRole('button', { name: /Start launch|^Start$/ }).first().click()
@@ -145,9 +173,11 @@ try {
   await waitPath('/s/4.3')
   await page.getByText('Copywriter raised its hand').waitFor()
   check('second hand raise is the renamed Copywriter', true)
+  // Under 1280px the hand-raise panel overlays the map: close it to use the map (Resume brings it back below).
+  await closeOverlay()
   await page.getByRole('button', { name: /^Tasks/ }).first().click()
   check('Fact-checker has a task row', (await page.getByText('Fact-checker', { exact: true }).count()) > 1)
-  await page.mouse.click(600, 760) // the overlay's backdrop closes it
+  await page.mouse.click(600, 760) // an outside click folds the Tasks list
   // Fork Schedule launch in place (no detour via 6.1), name it from the instruction, and choose it.
   await page.getByRole('button', { name: /Schedule launch/ }).first().click()
   await page.getByRole('button', { name: /Fork from here/ }).click()
@@ -157,6 +187,7 @@ try {
   await row.waitFor()
   check('fork named from the input, in the Branches row', (await row.innerText()).includes('Post at noon'))
   check('status pill counts the fork', /Post at noon · \$/.test(await text()))
+  await closeOverlay()
   await page.getByRole('button', { name: /Ready to post/ }).last().click()
   await page.getByRole('button', { name: 'Use this version' }).click()
   wf = await state()
@@ -164,6 +195,8 @@ try {
   check('Use this version chooses the fork', fork && wf.chosenVersion === fork.id && fork.name === 'Post at noon', fork?.name)
   check('Chosen version marked on the map', (await page.getByText('Chosen version').count()) > 0)
   check('Fact-checker done by 4.3', (await state()).run.beat === 'handRaise2' && (await page.getByRole('button', { name: /Fact-checker/ }).first().innerText()).includes('Done'))
+  await closeOverlay()
+  // Resume while the hand is raised reopens its panel.
   await page.getByRole('button', { name: 'Resume' }).click()
   await page.getByRole('radio', { name: /Change the launch fact to \$15\/mo/ }).click()
   await page.getByRole('button', { name: 'Confirm' }).click()
@@ -205,7 +238,8 @@ try {
   await page.getByRole('button', { name: 'Done', exact: true }).click()
   await waitPath('/')
   await page.getByText('Your workflows').waitFor()
-  const card = page.getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+  // The Home card, not the sidebar's entry for the same workflow.
+  const card = page.locator('main').getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
   const cardText = await card.first().innerText()
   check('Home card shows Done · Launched Mar 14', /Done/.test(cardText) && cardText.includes('Launched Mar 14'), cardText.replace(/\n/g, ' · '))
   check('Home card names the chosen version', cardText.includes('Post at noon'))
@@ -216,7 +250,7 @@ try {
   check('reload keeps the session', (await text()).includes(title))
 } catch (e) {
   check('story completed', false, e.message.split('\n')[0])
-  await page.screenshot({ path: 'design/out/story-e2e-failure.png' })
+  await page.screenshot({ path: `design/out/story-e2e-failure@${WIDTH}.png` })
 }
 check('no page errors', errors.length === 0, errors[0])
 await browser.close()

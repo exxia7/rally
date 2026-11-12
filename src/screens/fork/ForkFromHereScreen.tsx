@@ -1,6 +1,5 @@
 
 import { useCreateFork } from '@/components/fork/useForkRunView';
-import { BranchTab, Branches } from '@/components/nav/BranchTab';
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
 import { useGo } from '@/state/nav';
 
@@ -29,15 +28,6 @@ export default function ForkFromHereScreen() {
         });
         go('6.5');
       }}
-      canvasOverlay={(panel) =>
-        panel?.kind === 'inspector' &&
-        panel.forkOpen && (
-          <Branches className="absolute top-[62px] left-4 max-w-[calc(100%-32px)]">
-            <BranchTab label="Original" state="selected" />
-            <BranchTab label="+ New fork" state="add" fork={1} />
-          </Branches>
-        )
-      }
     />
   );
 }

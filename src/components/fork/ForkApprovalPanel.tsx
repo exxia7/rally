@@ -75,7 +75,7 @@ export function ForkApprovalPanel({
     <SidePanel
       onClose={onClose}
       header={
-        <div className="flex min-h-[113px] w-full shrink-0 flex-col">
+        <div className="flex w-full shrink-0 flex-col">
           <InspectorHeader
             eyebrow="Approval"
             kindIcon={null}
@@ -92,7 +92,7 @@ export function ForkApprovalPanel({
           />
         </div>
       }
-      bodyClassName="gap-4 px-6 py-5 max-md:px-4"
+      bodyClassName="gap-4 px-6 pb-5 max-md:px-4"
       footer={
         <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
           {chosen ? (
@@ -121,7 +121,7 @@ export function ForkApprovalPanel({
           {compare.map((v) => (
             <p
               key={v.branch.id}
-              className="truncate text-[12px] leading-[18px] tracking-[-0.08px] text-ink-2"
+              className="text-[12px] leading-[18px] tracking-[-0.08px] text-ink-2"
             >
               <span
                 className="font-medium"
@@ -133,7 +133,7 @@ export function ForkApprovalPanel({
               >
                 {v.branch.name}:
               </span>{' '}
-              {v.text}
+              {withoutName(v.text, v.branch.name)}
             </p>
           ))}
         </div>
@@ -156,4 +156,13 @@ export function ForkApprovalPanel({
       </div>
     </SidePanel>
   );
+}
+
+// A fork's brief is often its chip's text ("Post at noon: lunch-break scrollers"), and the fork is named after the
+// chip ("Post at noon"). The line already leads with the name, so drop it from the text rather than say it twice.
+function withoutName(text: string, name: string) {
+  const lead = `${name}:`;
+  return text.toLowerCase().startsWith(lead.toLowerCase())
+    ? text.slice(lead.length).trimStart()
+    : text;
 }

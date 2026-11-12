@@ -50,18 +50,34 @@ export function ConnectToolDialog({
       open={open}
       onClose={close}
       label={tool ? `Connect ${tool}` : 'Connect a tool'}
+      title={tool ? `Connect ${tool}` : 'Connect a tool'}
+      description={
+        tool
+          ? (WHAT[tool] ??
+            'Any helper in the workspace can use it once it’s connected.')
+          : 'Connect once in the workspace, then any helper can use it.'
+      }
+      footer={
+        <>
+          <Button
+            onClick={tool && !initial ? () => setPicked(undefined) : close}
+          >
+            {tool && !initial ? 'Back' : tool ? 'Cancel' : 'Done'}
+          </Button>
+          {tool && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                onConnect(tool, account.trim() || 'Lumen');
+                close();
+              }}
+            >
+              Connect
+            </Button>
+          )}
+        </>
+      }
     >
-      <div className="flex w-full flex-col items-start gap-1.5">
-        <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-          {tool ? `Connect ${tool}` : 'Connect a tool'}
-        </p>
-        <p className="w-full text-[13px] leading-[19px] text-ink-2">
-          {tool
-            ? (WHAT[tool] ??
-              'Any helper in the workspace can use it once it’s connected.')
-            : 'Connect once in the workspace, then any helper can use it.'}
-        </p>
-      </div>
       {tool ? (
         <label className="flex w-full flex-col items-start gap-1.5">
           <span className="text-[12px] leading-[15px] font-medium text-ink">
@@ -101,22 +117,6 @@ export function ConnectToolDialog({
           ))}
         </div>
       )}
-      <div className="flex w-full items-center justify-end gap-2">
-        <Button onClick={tool && !initial ? () => setPicked(undefined) : close}>
-          {tool && !initial ? 'Back' : tool ? 'Cancel' : 'Done'}
-        </Button>
-        {tool && (
-          <Button
-            variant="primary"
-            onClick={() => {
-              onConnect(tool, account.trim() || 'Lumen');
-              close();
-            }}
-          >
-            Connect
-          </Button>
-        )}
-      </div>
     </Modal>
   );
 }

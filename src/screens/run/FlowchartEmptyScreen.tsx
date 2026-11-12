@@ -17,7 +17,7 @@ export default function FlowchartEmptyScreen() {
   // Planning returns to where you came from (2.1, 2.2 or 2.3), not always the empty brief.
   const toPlanning = () => go.back(planFrame(wf.planStage));
   return (
-    <AppShell sidebar="none">
+    <AppShell>
       <WorkflowTopBar
         title={wf.title}
         hideTitleMenu={wf.isNew}

@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 
+import type { AgentName } from '@/components/agents/characters';
 import { ChatComposer } from '@/components/panels/ChatComposer';
 import {
-  AssistantMessage,
+  Message,
   type MessageFrom,
-  UserMessage,
+  Thread,
+  TypingRow,
 } from '@/components/panels/ChatMessage';
 import { helperReply, mentionables } from '@/state/chatContext';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
+import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
 import { dispatch, useWorkflow } from '@/state/store';
@@ -46,7 +49,10 @@ export function RunSidePanel({
   onDecisionChange,
   onDecisionFork,
   steps = [],
+  typing,
 }: {
+  /** The helper working right now: the Chat tab shows it typing under the thread. */
+  typing?: { agent: AgentName; name: string };
   steps?: SandboxStep[];
   tab: PanelTab;
   onTabChange: (tab: PanelTab) => void;
@@ -154,7 +160,6 @@ export function RunSidePanel({
   };
 
   // A decision's "Change" opens the Chat tab with "Change: <decision> → " typed; sending it updates the entry.
-  const [log, setLog] = useState(decisions);
   const [changing, setChanging] = useState<Decision | null>(null);
   const changeDecision = (d: Decision) => {
     setChanging(d);
@@ -170,29 +175,9 @@ export function RunSidePanel({
     if (!to) return null;
     const old = changing.title;
     // The store records it in decisions[] (`decision/change`); a date, time, price or budget in it becomes the
-    // launch fact the steps that haven't run read. The log here updates at once.
-    dispatch({
-      type: 'decision/change',
-      id: changing.id,
-      from: old,
-      title: to,
-    });
-    const time = new Date()
-      .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-      .toLowerCase();
-    setLog((all) =>
-      all.map((d) =>
-        d.id === changing.id
-          ? {
-              ...d,
-              title: to,
-              basis: `You changed it from “${old}”`,
-              tag: 'Changed by you',
-              time,
-            }
-          : d
-      )
-    );
+    // launch fact the steps that haven't run read. The log is the store's (runView), so it shows the change as
+    // yours at once, with the helpers' current names.
+    dispatch({ type: 'decision/change', id: changing.id, from: old, title: to });
     setChanging(null);
     return `Updated: ${to}. It’s in the decision log, and the helpers whose steps haven’t started will use it.`;
   };
@@ -200,6 +185,8 @@ export function RunSidePanel({
   return (
     <SidePanel
       onClose={onClose}
+      // The Chat tab scrolls its own thread above its composer.
+      scroll={tab !== 'chat'}
       tabs={
         <PanelTabs
           phase="run"
@@ -220,7 +207,7 @@ export function RunSidePanel({
       )}
       {tab === 'decisions' && (
         <DecisionLog
-          decisions={log}
+          decisions={decisions}
           more={decisionsMore}
           onChange={changeDecision}
           onFork={onDecisionFork}
@@ -232,19 +219,23 @@ export function RunSidePanel({
           suggestions={chatSuggestions}
           draft={changing ? `Change: ${changing.title} → ` : undefined}
           onSendChange={changing ? applyChange : undefined}
+          typing={typing}
         />
       )}
     </SidePanel>
   );
 }
 
-// The Chat tab while a run is going: the Planner's thread (24px sides) and the Chat composer pinned below.
+// The Chat tab while a run is going: the Planner's thread in the side-panel chat style (PanelThread: 24px sides,
+// 12px between messages, as the plan side panel's Chat) scrolling above the Chat composer, which stays pinned.
 function RunChat({
   initial,
   suggestions,
   draft,
   onSendChange,
+  typing,
 }: {
+  typing?: { agent: AgentName; name: string };
   initial: RunChatMessage[];
   suggestions?: string[];
   /** Prefilled composer text (a decision's Change). */
@@ -292,19 +283,22 @@ function RunChat({
   };
 
   return (
-    <div className="flex min-h-px w-full flex-1 flex-col">
-      <div
-        ref={scroller}
-        className="flex min-h-px w-full flex-1 flex-col items-end gap-4 overflow-y-auto px-6 pt-2 pb-4 max-md:px-4"
-      >
-        {messages.map((m, i) =>
-          m.from === 'user' ? (
-            <UserMessage key={i} text={m.text} wrap />
-          ) : (
-            <AssistantMessage key={i} text={m.text} from={m.sender} />
-          )
-        )}
-      </div>
+    <div className="flex min-h-0 w-full flex-1 flex-col">
+      <ScrollArea ref={scroller}>
+        <Thread>
+          {messages.map((m, i) => (
+            <Message
+              key={i}
+              from={m.from}
+              text={m.text}
+              sender={m.sender}
+              // Messages that arrive while you watch rise in (motion only).
+              enter={i >= initial.length}
+            />
+          ))}
+          {typing && <TypingRow key={typing.agent} {...typing} />}
+        </Thread>
+      </ScrollArea>
       <ChatComposer
         key={draft}
         defaultText={draft}

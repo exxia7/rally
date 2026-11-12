@@ -12,7 +12,8 @@ import { IconButton } from '@/components/ui/IconButton';
 
 // Figma "Inspector header" (2362:30329): 24px sides, 20px top. Eyebrow row (optional 12px node-kind glyph +
 // 12/18 muted kind), branch dot + label and a ghost × on the right; SemiBold 22/27.5 title; 13/18.75 muted meta.
-// Figma rounds those two text boxes up to 28 and 19px; the bottom paddings carry the difference (113px tall).
+// The 20px under the meta belongs to the header (not the scrolling body), so content scrolled under it stops 20px
+// below the meta instead of running into it.
 export function InspectorHeader({
   eyebrow = 'Output',
   kindIcon = nodeKindOutput,
@@ -35,7 +36,7 @@ export function InspectorHeader({
   onClose?: () => void;
 }) {
   return (
-    <div className="flex w-full flex-col items-start px-6 pt-5 max-md:px-4">
+    <div className="flex w-full shrink-0 flex-col items-start px-6 pt-5 pb-5 max-md:px-4">
       <div className="flex w-full items-center gap-2">
         <div className="flex min-w-0 shrink items-center gap-1.5">
           {kindIcon && <Icon src={kindIcon} size={12} />}
@@ -77,10 +78,10 @@ export function InspectorHeader({
           </div>
         </div>
       </div>
-      <h2 className="w-full pt-2 pb-[0.5px] text-[22px] leading-[27.5px] font-semibold tracking-[-0.44px] text-ink">
+      <h2 className="w-full pt-2 text-[22px] leading-[27.5px] font-semibold tracking-[-0.44px] text-ink">
         {title}
       </h2>
-      <p className="w-full pt-1.5 pb-[0.25px] text-[13px] leading-[18.75px] tracking-[-0.08px] text-muted">
+      <p className="w-full pt-1.5 text-[13px] leading-[18.75px] tracking-[-0.08px] text-muted">
         {meta}
       </p>
     </div>
@@ -129,7 +130,7 @@ export function InspectorAction({
       disabled={disabled}
       onClick={onClick}
       className={clsx(
-        'flex w-[350px] max-w-full items-center gap-3 rounded-[10px] border border-line p-3.5 text-left',
+        'flex w-full items-center gap-3 rounded-[10px] border border-line p-3.5 text-left',
         disabled ? 'cursor-default bg-[#fafafb]' : 'hover:bg-well'
       )}
     >
@@ -148,7 +149,7 @@ export function InspectorAction({
         </span>
         <span
           className={clsx(
-            'w-[244px] max-w-full text-[12px] leading-[18px] tracking-[-0.08px]',
+            'text-[12px] leading-[18px] tracking-[-0.08px]',
             disabled ? 'text-[#a0a3aa]' : 'text-muted'
           )}
         >

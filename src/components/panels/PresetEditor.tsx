@@ -31,17 +31,25 @@ export function PresetEditor({
       open
       onClose={onClose}
       label={isNew ? 'New preset' : `Edit ${initial.name}`}
+      title={isNew ? 'New preset' : `Edit ${initial.name}`}
+      description={
+        isNew
+          ? 'A saved set of rules any workflow can start from.'
+          : 'Workflows using this preset pick up the change. Ones you customized keep their own.'
+      }
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            disabled={!name}
+            onClick={() => onSave({ ...draft, name, adLimit })}
+          >
+            {isNew ? 'Add preset' : 'Save'}
+          </Button>
+        </>
+      }
     >
-      <div className="flex w-full flex-col items-start gap-1.5">
-        <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-          {isNew ? 'New preset' : `Edit ${initial.name}`}
-        </p>
-        <p className="w-full text-[13px] leading-[19px] text-ink-2">
-          {isNew
-            ? 'A saved set of rules any workflow can start from.'
-            : 'Workflows using this preset pick up the change. Ones you customized keep their own.'}
-        </p>
-      </div>
       <label className="flex w-full flex-col items-start gap-1.5">
         <span className="text-[12px] leading-[15px] font-medium text-ink">
           Name
@@ -81,16 +89,6 @@ export function PresetEditor({
         {presetRules(draft.check, adLimit)}. Anything that posts or spends
         always waits for your approval.
       </p>
-      <div className="flex w-full items-center justify-end gap-2">
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="primary"
-          disabled={!name}
-          onClick={() => onSave({ ...draft, name, adLimit })}
-        >
-          {isNew ? 'Add preset' : 'Save'}
-        </Button>
-      </div>
     </Modal>
   );
 }

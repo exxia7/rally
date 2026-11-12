@@ -1,6 +1,6 @@
 import type { ForkNumber } from '@/components/map/forks';
 import type { NodeState } from '@/components/map/NodeCard';
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import type { NewStep } from '@/components/planning/AddStepPopover';
 import type { PlanEdge } from '@/components/planning/PlanMap';
 import type { Helper } from '@/screens/plan/aiCoachPlan';
@@ -282,4 +282,6 @@ export type AppState = {
   /** Return-to stack of screen ids (settings, Sandbox…): `useGo().back()` pops it. */
   returnTo: string[];
   speed: Speed;
+  /** The screen each workflow was last on (the sidebar's workflow list reopens it there). */
+  lastScreen?: Record<WorkflowId, string>;
 };

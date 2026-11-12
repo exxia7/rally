@@ -14,7 +14,7 @@ import type {
 import type { ForkNumber } from '@/components/map/forks';
 import type { InspectorData } from '@/components/run/InspectorPanel';
 import type { RunData, RunMap } from '@/components/run/RunScreenLayout';
-import type { TaskItem } from '@/components/run/TasksOverlay';
+import type { TaskItem } from '@/components/run/TasksDropdown';
 import {
   AI_COACH_EDGES,
   AI_COACH_INSPECTOR,
@@ -406,7 +406,6 @@ export const FORK_DECISION_RUNNING_RUN: RunData = {
   tasksChip: {
     label: 'First-timers · 0 of 4 done',
     progress: 0,
-    width: 279,
     fork: 1,
   },
   inspectors: {
@@ -627,7 +626,6 @@ export const FORK_RUNNING_RUN: RunData = {
   tasksChip: {
     label: 'Vs Penny · 1 of 3 done',
     progress: 33,
-    width: 263,
     fork: 1,
   },
   inspectors: {

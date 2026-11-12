@@ -1,9 +1,20 @@
+import { motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 
 import { edgePath } from '@/components/map/connectors';
+import {
+  EASE_OUT,
+  transitions,
+  useAdded,
+  useGlide,
+  useMotionOn,
+  useTransition,
+} from '@/lib/motion';
+import { useAppState } from '@/state/store';
 
 import { HelperCard, type HelperCardData } from './HelperCard';
 import { edgeKey } from './planEdit';
+import { MapPopoverHost } from './MapPopoverHost';
 import { AddStepButton, ApprovalGate, StageLabel } from './PlanMapParts';
 
 // Plan-map geometry, from the 2.3 map where cards draw at 0.85 (154.275px wide): 1.054px connectors with
@@ -113,6 +124,9 @@ export function PlanMap({
   className?: string;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
+  // Motion (CLAUDE.md "Motion"): after an edit, cards glide to their new places, connectors interpolate to their
+  // new routes and anything added fades in. A first paint is still.
+  const scope = `plan:${useAppState().activeId}`;
   const k = scale / BASE;
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const gateById = new Map((gates ?? []).map((g) => [g.id, g]));
@@ -125,6 +139,7 @@ export function PlanMap({
         x: side === 'out' ? n.x + CARD_W * scale : n.x,
         y: n.y + (HEADER_H / 2) * scale,
         port: true,
+        key: `${id}:${side}`,
       };
     const g = gateById.get(id);
     if (g)
@@ -132,6 +147,7 @@ export function PlanMap({
         x: side === 'out' ? g.x + g.width : g.x,
         y: g.y + (GATE_H * (g.scale ?? scale)) / 2,
         port: false,
+        key: `${id}:${side}`,
       };
     return null;
   };
@@ -142,8 +158,9 @@ export function PlanMap({
     const b = anchor(e.to, 'in');
     if (!a || !b) return [];
     const color = e.color ?? '#91ade8';
-    if (a.port) ports.set(`${a.x},${a.y}`, { x: a.x, y: a.y, color });
-    if (b.port) ports.set(`${b.x},${b.y}`, { x: b.x, y: b.y, color });
+    // Keyed by node side (one per position, as before), so a moving card's port glides with it.
+    if (a.port) ports.set(a.key, { x: a.x, y: a.y, color });
+    if (b.port) ports.set(b.key, { x: b.x, y: b.y, color });
     const lane = e.lane ?? (a.x + b.x) / 2;
     return [
       {
@@ -155,6 +172,12 @@ export function PlanMap({
       },
     ];
   });
+
+  const added = useAdded(scope, [
+    ...nodes.map((n) => `node:${n.id}`),
+    ...(gates ?? []).map((g) => `gate:${g.id}`),
+    ...lines.map((l) => `line:${l.key}`),
+  ]);
 
   return (
     <div
@@ -184,7 +207,13 @@ export function PlanMap({
         className="pointer-events-none absolute top-0 left-0"
       >
         {lines.map((l) => (
-          <path key={l.key} d={l.d} stroke={l.color} strokeWidth={STROKE * k} />
+          <PlanLine
+            key={l.key}
+            isNew={added.has(`line:${l.key}`)}
+            d={l.d}
+            color={l.color}
+            width={STROKE * k}
+          />
         ))}
         {onAddStep &&
           lines.map((l) => (
@@ -200,35 +229,38 @@ export function PlanMap({
             />
           ))}
         {[...ports.entries()].map(([key, p]) => (
-          <circle
+          <PlanPort
             key={key}
-            cx={p.x}
-            cy={p.y}
+            x={p.x}
+            y={p.y}
             r={PORT_R * k}
-            fill="white"
-            stroke={p.color}
-            strokeWidth={STROKE * k}
+            color={p.color}
+            width={STROKE * k}
           />
         ))}
       </svg>
       {gates?.map((g) => (
-        <div
+        <Placed
           key={g.id}
-          className="absolute"
-          style={{ left: g.x, top: g.y, opacity: g.dimmed ? 0.5 : undefined }}
+          isNew={added.has(`gate:${g.id}`)}
+          x={g.x}
+          y={g.y}
+          opacity={g.dimmed ? 0.5 : undefined}
         >
           <ApprovalGate
             label={g.label}
             scale={g.scale ?? scale}
             onClick={onGateClick ? () => onGateClick(g) : undefined}
           />
-        </div>
+        </Placed>
       ))}
       {nodes.map((n) => (
-        <div
+        <Placed
           key={n.id}
-          className="absolute"
-          style={{ left: n.x, top: n.y, opacity: n.opacity }}
+          isNew={added.has(`node:${n.id}`)}
+          x={n.x}
+          y={n.y}
+          opacity={n.opacity}
         >
           <HelperCard
             {...n}
@@ -238,7 +270,7 @@ export function PlanMap({
               onSettingClick ? (label) => onSettingClick(n, label) : undefined
             }
           />
-        </div>
+        </Placed>
       ))}
       {onAddStep &&
         lines.map((l) => {
@@ -266,10 +298,97 @@ export function PlanMap({
           );
         })}
       {overlays?.map((o) => (
-        <div key={o.id} className="absolute" style={{ left: o.x, top: o.y }}>
+        <MapPopoverHost key={o.id} x={o.x} y={o.y}>
           {o.content}
-        </div>
+        </MapPopoverHost>
       ))}
     </div>
+  );
+}
+
+// Motion (framer-motion, CLAUDE.md "Motion"): after an edit, cards and gates glide on a spring, lines and ports
+// interpolate to their new route in step, and anything added rises or fades in. A first paint is still.
+const REROUTE = { duration: 0.42, ease: EASE_OUT } as const;
+
+// A free-placed card or gate: glides when an edit moves it; one added after the map was on screen rises in.
+function Placed({
+  isNew,
+  x,
+  y,
+  opacity,
+  children,
+}: {
+  isNew: boolean;
+  x: number;
+  y: number;
+  opacity?: number;
+  children: ReactNode;
+}) {
+  const on = useMotionOn();
+  const glide = useGlide(x, y);
+  return (
+    <motion.div
+      className="absolute"
+      style={{ left: x, top: y, ...glide }}
+      initial={on && isNew ? { opacity: 0, y: 6 } : false}
+      animate={{ opacity: opacity ?? 1, y: 0 }}
+      transition={on ? transitions.slow : transitions.instant}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// A connector: re-routes by interpolating its path (`d`); a new one fades in.
+function PlanLine({
+  isNew,
+  d,
+  color,
+  width,
+}: {
+  isNew: boolean;
+  d: string;
+  color: string;
+  width: number;
+}) {
+  const on = useMotionOn();
+  return (
+    <motion.path
+      initial={on && isNew ? { opacity: 0, d } : false}
+      animate={{ opacity: 1, d }}
+      transition={
+        on ? { d: REROUTE, opacity: transitions.base } : transitions.instant
+      }
+      stroke={color}
+      strokeWidth={width}
+    />
+  );
+}
+
+// A port: moves with its line.
+function PlanPort({
+  x,
+  y,
+  r,
+  color,
+  width,
+}: {
+  x: number;
+  y: number;
+  r: number;
+  color: string;
+  width: number;
+}) {
+  const t = useTransition(REROUTE);
+  return (
+    <motion.circle
+      initial={false}
+      animate={{ cx: x, cy: y }}
+      transition={t}
+      r={r}
+      fill="white"
+      stroke={color}
+      strokeWidth={width}
+    />
   );
 }

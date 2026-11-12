@@ -4,13 +4,13 @@ import chevronDown14 from '@/assets/icons/chevron-down-14.svg';
 import more from '@/assets/icons/more.svg';
 import panelBlue from '@/assets/icons/panel-blue.svg';
 import panel from '@/assets/icons/panel.svg';
-import settingsBlue16 from '@/assets/icons/settings-blue-16.svg';
 import settings16 from '@/assets/icons/settings-16.svg';
+import settingsBlue16 from '@/assets/icons/settings-blue-16.svg';
 import { TopBar } from '@/components/shell/AppShell';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { Menu, type MenuItemData } from '@/components/ui/Menu';
-import { RunStatus, type RunState } from '@/components/ui/RunStatus';
+import { type RunState } from '@/components/ui/RunStatus';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { screenPath } from '@/screens/registry';
@@ -19,11 +19,11 @@ import { useGo } from '@/state/nav';
 import { Breadcrumb } from './Breadcrumb';
 
 // The workflow top bar (Figma "TopBar" in frames 2.x–6.x, e.g. 2362:24740): breadcrumb "Workflows / <title> ⌄",
-// then 16px later the Planning / Flowchart segmented control; on the right, 8px apart: run status pill,
-// workflow settings and panel toggle (Outlined icon buttons), then the main action (Pause, Start launch…).
-// Under 1280px the status pill shows only its dot. Under 768px the breadcrumb collapses to the truncated title, and the settings
+// then 16px later the Planning / Flowchart segmented control; on the right, 8px apart: workflow settings and
+// panel toggle (Outlined icon buttons), then the main action (Pause, Start launch…). Figma's run status pill is
+// not drawn (removed at the user's request). Under 768px the breadcrumb collapses to the truncated title, and the settings
 // and panel toggle move into a "more" menu.
-// Planning frames show a 12/18 muted `estimate` ("About 9 min · $0.30", 4px extra right padding) instead of a status.
+// Planning frames show a 12/18 muted `estimate` ("About 9 min", 4px extra right padding) instead of a status.
 // An open panel draws its toggle Selected (blue); `settingsActive` does the same for the settings button (2.8).
 export type WorkflowView = 'planning' | 'flowchart';
 
@@ -31,8 +31,6 @@ export function WorkflowTopBar({
   title = 'AI Coach launch',
   view,
   onViewChange,
-  status,
-  statusLabel,
   onSettings,
   panelOpen,
   onTogglePanel,
@@ -53,7 +51,7 @@ export function WorkflowTopBar({
   onTogglePanel?: () => void;
   /** The main action, e.g. a Pause or Start launch Button. */
   action?: ReactNode;
-  /** Plan estimate text on the right, e.g. "About 9 min · $0.30". */
+  /** Plan estimate text on the right, e.g. "About 9 min". */
   estimate?: string;
   /** Draws the settings button Selected (you're on the workflow settings page). */
   settingsActive?: boolean;
@@ -126,17 +124,17 @@ export function WorkflowTopBar({
               current={title}
               after={
                 !hideTitleMenu && (
-                <button
-                  type="button"
-                  aria-label="Workflow menu"
-                  aria-haspopup="menu"
-                  aria-expanded={titleMenu}
-                  onClick={() => setTitleMenu((o) => !o)}
-                  // 14px chevron; on phones a transparent 40px hit area around it (the look is unchanged).
-                  className="flex shrink-0 rounded-[4px] hover:bg-hover max-md:relative max-md:before:absolute max-md:before:-inset-[13px]"
-                >
-                  <Icon src={chevronDown14} size={14} />
-                </button>
+                  <button
+                    type="button"
+                    aria-label="Workflow menu"
+                    aria-haspopup="menu"
+                    aria-expanded={titleMenu}
+                    onClick={() => setTitleMenu((o) => !o)}
+                    // 14px chevron; on phones a transparent 40px hit area around it (the look is unchanged).
+                    className="flex shrink-0 rounded-[4px] hover:bg-hover max-md:relative max-md:before:absolute max-md:before:-inset-[13px]"
+                  >
+                    <Icon src={chevronDown14} size={14} />
+                  </button>
                 )
               }
             />
@@ -155,8 +153,18 @@ export function WorkflowTopBar({
               options={[
                 // Figma _Segment widths in the top bar (e.g. 2362:24749): 81 + 90 → 177px control.
                 // Phones: "Plan" / "Run", so the workflow title isn't cut to "AI …".
-                { value: 'planning', label: 'Planning', minWidth: 81, shortLabel: 'Plan' },
-                { value: 'flowchart', label: 'Flowchart', minWidth: 90, shortLabel: 'Run' },
+                {
+                  value: 'planning',
+                  label: 'Planning',
+                  minWidth: 81,
+                  shortLabel: 'Plan',
+                },
+                {
+                  value: 'flowchart',
+                  label: 'Flowchart',
+                  minWidth: 90,
+                  shortLabel: 'Run',
+                },
               ]}
               value={view}
               onChange={onViewChange}
@@ -166,12 +174,9 @@ export function WorkflowTopBar({
       }
       right={
         <>
-          {status && (
-            <RunStatus
-              state={status}
-              label={statusLabel}
-            />
-          )}
+          {/* The run status pill ("Running · $0.18", "Needs you · $0.21") is removed everywhere at the user's request;
+              Pause/Resume, the Tasks dropdown and the sidebar's Needs you badge carry the run's state. `status` and
+              `statusLabel` are still accepted so callers don't change. */}
           {estimate && (
             <p className="pr-1 text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted max-md:hidden">
               {estimate}

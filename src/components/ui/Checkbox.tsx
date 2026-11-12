@@ -6,7 +6,7 @@ import checkWhite from '@/assets/icons/check-white.svg';
 import { Icon } from './Icon';
 
 // Two checkbox looks from the Figma library, visual only (the row owns the click):
-// - `style="soft"`: "Checkbox" (2362:28681), 18.45px white box, light-blue border, blue check ("What goes out");
+// - `style="soft"`: "Checkbox" (2362:28681), 18px white box (Figma's instance is scaled to 18.45), light-blue border, blue check ("What goes out");
 //   unchecked it has a #c9cbd0 border ("Don't show this again" in the rerun confirm).
 // - `style="solid"`: the 16px box in "Tool row" (2362:28952): filled accent with a white check when on,
 //   line-grey outline when off.
@@ -24,7 +24,7 @@ export function Checkbox({
       <span
         aria-hidden
         className={clsx(
-          'flex size-[18.446px] shrink-0 items-center justify-center rounded-[4.612px] border-[0.922px] bg-white',
+          'flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border bg-white',
           checked ? 'border-accent-line' : 'border-[#c9cbd0]',
           className
         )}
