@@ -5,6 +5,7 @@ import lockAmber from '@/assets/icons/lock-amber-10.svg';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
 import { FlowMap } from '@/components/map/FlowMap';
 import { MapCanvas } from '@/components/map/MapCanvas';
+import { RUN_MAP_SCALE, runMapFocus } from '@/components/map/runMapView';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { ApprovalItem, type ApprovalState } from '@/components/panels/Cards';
 import { InspectorHeader } from '@/components/panels/Inspector';
@@ -17,6 +18,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
 import {
   AD_TEST,
@@ -30,13 +32,14 @@ import {
   approvalsOf,
   approvalWaiting,
   chosenFork,
+  goesOut,
   money,
   runCost,
   runData,
 } from '@/state/runView';
 import { dispatch, useAppState, useWorkflow } from '@/state/store';
 
-import { APPROVAL_MAP_SCALE, LAUNCH_MAP } from './launchMap';
+import { LAUNCH_MAP } from './launchMap';
 
 export const screenId = '5.1';
 
@@ -53,6 +56,7 @@ export default function ApprovalScreen() {
   const [connectDialog, connect] = useConnectTool();
   const blockedBy = (id: string) => !!blockedOutput(app, wf, id);
   const [panelOpen, setPanelOpen] = useState(true);
+  const xl = useMediaQuery('(min-width: 1280px)');
   // A map card other than "Ready to post" opens its own (read-only) inspector instead of the approval panel.
   const [inspecting, setInspecting] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
@@ -257,17 +261,25 @@ export default function ApprovalScreen() {
         }}
       />
       <MapCanvas
-        stageWidth={954}
+        contentScale={RUN_MAP_SCALE}
+        viewKey={`run:${app.activeId}`}
+        focus={runMapFocus(run.map.nodes, LAUNCH_MAP)}
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
             <TasksDropdown
+              outputs={goesOut(wf)}
               motionKey={`run:${app.activeId}:tasks`}
               tasks={run.tasks}
-              note={run.tasksSummary}
               done={wf.asDrawn ? 9 : undefined}
               total={wf.asDrawn ? 10 : undefined}
               onSelectTask={(t) => t.id && openNode(t.id)}
+              // Under 1280px the panel covers the map: opening the list closes it.
+              onOpen={() => {
+                if (xl) return;
+                setInspecting(null);
+                setPanelOpen(false);
+              }}
             />
             <CompletedAgents
               agents={run.completed}
@@ -277,18 +289,16 @@ export default function ApprovalScreen() {
           </>
         }
       >
-        <div
-          className="absolute top-[165px] left-[43px] origin-top-left"
-          style={{ transform: `scale(${APPROVAL_MAP_SCALE})` }}
-        >
-          <FlowMap
-            nodes={run.map.nodes}
-            edges={run.map.edges}
-            width={LAUNCH_MAP.width}
-            height={LAUNCH_MAP.height}
-            onNodeClick={(n) => openNode(n.id)}
-          />
-        </div>
+        {/* Drawn as on every run screen (5.2 too), not Figma's smaller redraw beside the docked panel. */}
+        <FlowMap
+          x={LAUNCH_MAP.x}
+          y={LAUNCH_MAP.y}
+          nodes={run.map.nodes}
+          edges={run.map.edges}
+          width={LAUNCH_MAP.width}
+          height={LAUNCH_MAP.height}
+          onNodeClick={(n) => openNode(n.id)}
+        />
       </MapCanvas>
       {/* Permissions/settings agent (3d): the connect step for "Connect LinkedIn to post". */}
       {connectDialog}

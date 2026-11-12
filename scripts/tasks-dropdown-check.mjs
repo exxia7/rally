@@ -1,12 +1,14 @@
-// Checks the Tasks dropdown (TasksDropdown on CanvasListCard) on every run canvas, and the "What goes out" card that
-// shares it. Needs the dev server on http://localhost:5173 (npm run dev).
+// Checks the Tasks dropdown (TasksDropdown on CanvasListCard) on every run and plan canvas. Needs the dev server on
+// http://localhost:5173 (npm run dev).
 //   node scripts/tasks-dropdown-check.mjs            (headless; HEADED=1 to watch)
 // Per screen, at 1440×900 and 375×812: the header toggles it (aria-expanded) and the open card stays inside the
 // viewport (phones: 16px gutters); a row folds it and does what its card does (an inspector naming the step); Escape
 // folds it and returns focus to the header; an outside click folds it AND lands (Zoom in zooms, Pause pauses);
-// Enter opens it with focus on the first row and arrows move between rows. Also: the `*-tasks` deep links open it
-// on load (not under 1280px when a panel covers the canvas), the rows follow the live run (?speed=fast), a long list
-// (three steps added on the plan) scrolls inside the card, and "What goes out" folds the same way under 1280px.
+// Enter opens it with focus on the first row and arrows move between rows; "Goes out" lists the outputs with their
+// run status; under 1280px opening it closes a panel covering the map. Also: the `*-tasks` deep links open it on load
+// (alone under 1280px), the rows follow the live run (?speed=fast), a long list (steps added on the plan) scrolls
+// inside the card, and the plan canvases (2.3, 2.5 at 1440/1024/375) use the same card for the planned steps and
+// what goes out (add, remove, renamed and removed helpers, a row opens the drawer).
 import { chromium } from "@playwright/test";
 
 const BASE = "http://localhost:5173";
@@ -94,15 +96,65 @@ for (const size of SIZES) {
         waitUntil: "networkidle",
       });
       await settle(page, 500);
-      await clearCover(page, size);
+      // 5.2's summary stays modal while open: close it first.
+      if (
+        await page
+          .locator('[role="dialog"][aria-label="Launch summary"]')
+          .count()
+      ) {
+        await page.keyboard.press("Escape");
+        await settle(page);
+      }
       check(
         where,
         "header present, closed",
         (await header(page).count()) && !(await expanded(page)),
       );
 
-      // Open: inside the viewport (phones: 16px gutters) and clear of the zoom controls.
+      // Open: inside the viewport (phones: 16px gutters) and clear of the zoom controls. Under 1280px a panel that
+      // covers the map (5.1's approval sheet, 4.3's hand-raise) closes as the list opens.
+      const covered = size.width < 1280 && (await visibleAside(page));
       check(where, "header opens it", await open(page));
+      if (covered)
+        check(
+          where,
+          "opening closes the panel covering the map",
+          !(await visibleAside(page)),
+        );
+      const goes = await card(page).evaluate((el) => {
+        const body = el.querySelector("[data-card-body]");
+        const label = [...body.querySelectorAll("p")].find(
+          (p) => p.textContent === "Goes out",
+        );
+        return label
+          ? {
+              n: [...body.children].slice([...body.children].indexOf(label) + 1)
+                .length,
+              text: body.innerText.split("Goes out")[1],
+            }
+          : null;
+      });
+      check(
+        where,
+        '"Goes out" lists the outputs',
+        goes && goes.n > 0,
+        goes ? `${goes.n} outputs` : "no section",
+      );
+      if (id === "5.1")
+        check(
+          where,
+          "5.1: outputs need your OK",
+          /Needs your OK/.test(goes?.text ?? ""),
+        );
+      if (id === "5.2")
+        check(where, "5.2: outputs posted", /Posted/.test(goes?.text ?? ""));
+      if (/^3\./.test(id))
+        check(
+          where,
+          "run: outputs wait, no add or remove",
+          /Waiting/.test(goes?.text ?? "") &&
+            !(await card(page).getByText("Add an output").count()),
+        );
       const box = await card(page).boundingBox();
       const zoom = await page
         .getByRole("button", { name: "Zoom in" })
@@ -256,27 +308,29 @@ for (const size of SIZES) {
   }
 }
 
-// Deep links: the `*-tasks` frames open it on load; under 1280px a frame whose panel covers the canvas doesn't.
-for (const [id, size, want] of [
-  ["3.2-tasks", SIZES[0], true],
-  ["3.3-tasks", SIZES[0], true],
-  ["3.4-tasks", SIZES[0], true],
-  ["3.5-tasks", SIZES[0], true],
-  ["4.2-tasks", SIZES[0], true],
-  ["3.2-tasks", SIZES[1], true],
-  ["4.2-tasks", SIZES[1], true],
-  ["3.5-tasks", SIZES[1], false],
+// Deep links: the `*-tasks` frames open it on load. Under 1280px, where a panel would cover the map, they open the
+// list alone (no panel over it).
+const TABLET = { width: 768, height: 1024 };
+for (const [id, size] of [
+  ["3.2-tasks", SIZES[0]],
+  ["3.3-tasks", SIZES[0]],
+  ["3.4-tasks", SIZES[0]],
+  ["3.5-tasks", SIZES[0]],
+  ["4.2-tasks", SIZES[0]],
+  ["3.2-tasks", SIZES[1]],
+  ["4.2-tasks", SIZES[1]],
+  ["3.3-tasks", SIZES[1]],
+  ["3.5-tasks", SIZES[1]],
+  ["3.3-tasks", TABLET],
+  ["3.5-tasks", TABLET],
 ]) {
   const page = await browser.newPage({ viewport: size });
   await page.goto(`${BASE}/s/${id}?speed=hold`, { waitUntil: "networkidle" });
   await settle(page, 500);
-  check(
-    `${id}@${size.width}`,
-    want
-      ? "deep link opens it"
-      : "deep link leaves it folded (panel covers the canvas)",
-    (await expanded(page)) === want,
-  );
+  const where = `${id}@${size.width}`;
+  check(where, "deep link opens it", await expanded(page));
+  if (size.width < 1280)
+    check(where, "no panel over the list", !(await visibleAside(page)));
   await page.close();
 }
 
@@ -381,75 +435,181 @@ for (const size of [
   await page.close();
 }
 
-// "What goes out" (same card): static at 1440, folds into its header below 1280 with the same behaviour.
+// Plan canvases: the same dropdown, top-left, folded: "N planned", the helpers' steps (a row opens that helper's
+// drawer), then "Goes out" with remove on hover and "Add an output" (store `outputs/set`). Renamed and removed helpers
+// show at once. Open, it stays clear of the legend and the zoom controls; Escape and outside clicks fold it.
+const storeWf = (page) =>
+  page.evaluate(() => {
+    const s = window.__pathfinder.store.get();
+    return s.workflows[s.activeId];
+  });
+const dispatchIn = (page, a) =>
+  page.evaluate((x) => window.__pathfinder.dispatch(x), a);
 for (const size of [
   { width: 1440, height: 900 },
   { width: 1024, height: 768 },
   { width: 375, height: 812 },
 ]) {
-  const where = `2.3 What goes out@${size.width}`;
-  const page = await browser.newPage({ viewport: size });
-  await page.goto(`${BASE}/s/2.3?speed=hold`, { waitUntil: "networkidle" });
-  await settle(page, 500);
-  const toggle = page
-    .locator("button[aria-expanded]")
-    .filter({ hasText: /^What goes out/ });
-  if (size.width >= 1280) {
-    check(
-      where,
-      "drawn open, no toggle",
-      !(await toggle.count()) &&
-        (await page.getByText("Product Hunt page").isVisible()),
-    );
-  } else {
-    check(
-      where,
-      "folded into its header",
-      (await toggle.getAttribute("aria-expanded")) === "false",
-    );
-    await toggle.click();
-    await settle(page);
-    check(
-      where,
-      "header opens it",
-      (await toggle.getAttribute("aria-expanded")) === "true" &&
-        (await page.getByText("Product Hunt page").isVisible()),
-    );
-    const b = await toggle.locator("xpath=..").boundingBox();
-    const z = await page
-      .getByRole("button", { name: "Zoom in" })
-      .locator("xpath=..")
-      .boundingBox();
-    check(
-      where,
-      "open card clear of the zoom controls",
-      !(
-        b.x < z.x + z.width &&
-        z.x < b.x + b.width &&
-        b.y < z.y + z.height &&
-        z.y < b.y + b.height
-      ),
-    );
-    await page.keyboard.press("Escape");
-    await settle(page);
-    check(
-      where,
-      "Escape folds it",
-      (await toggle.getAttribute("aria-expanded")) === "false",
-    );
-    await toggle.click();
-    await settle(page);
-    const zoomBefore = await zoomLabel(page);
-    await page.getByRole("button", { name: "Zoom in" }).click();
-    await settle(page);
-    check(
-      where,
-      "outside click folds it and lands",
-      (await toggle.getAttribute("aria-expanded")) === "false" &&
-        (await zoomLabel(page)) !== zoomBefore,
-    );
+  for (const id of ["2.3", "2.5"]) {
+    const where = `${id} plan@${size.width}`;
+    const page = await browser.newPage({ viewport: size });
+    page.setDefaultTimeout(5000);
+    try {
+      await page.goto(`${BASE}/s/${id}?speed=hold`, {
+        waitUntil: "networkidle",
+      });
+      await settle(page, 500);
+      check(
+        where,
+        "no What goes out card",
+        !(await page.getByText("What goes out", { exact: true }).count()),
+      );
+      const hb = await header(page).boundingBox();
+      check(
+        where,
+        "folded, top-left 16px in",
+        !(await expanded(page)) &&
+          hb &&
+          (await header(page).innerText()).match(/\d+ planned/),
+      );
+      await open(page);
+      const b = await card(page).boundingBox();
+      const z = await page
+        .getByRole("button", { name: "Zoom in" })
+        .locator("xpath=..")
+        .boundingBox();
+      const legend = await page
+        .getByText("Does the work")
+        .first()
+        .boundingBox()
+        .catch(() => null);
+      const clear = (a, o) =>
+        !o ||
+        !(
+          a.x < o.x + o.width &&
+          o.x < a.x + a.width &&
+          a.y < o.y + o.height &&
+          o.y < a.y + a.height
+        );
+      check(
+        where,
+        "open card clear of zoom controls and legend",
+        clear(b, z) &&
+          (!legend ||
+            !(await page.getByText("Does the work").first().isVisible()) ||
+            clear(b, legend)),
+      );
+      if (size.width < 768)
+        check(
+          where,
+          "phone: full width minus 16px gutters",
+          Math.round(b.x) === 16 &&
+            Math.round(b.x + b.width) === size.width - 16,
+        );
+      const wf = await storeWf(page);
+      const helpers = wf.helperOrder.filter(
+        (h) => wf.helpers[h] && !wf.removed.includes(h),
+      );
+      const rowText = await card(page).locator("[data-card-body]").innerText();
+      check(
+        where,
+        "one row per helper",
+        helpers.every((h) => rowText.includes(wf.helpers[h].name)),
+        `${helpers.length} helpers`,
+      );
+      check(
+        where,
+        "outputs under Goes out",
+        wf.outputs.every((o) =>
+          rowText.split("Goes out")[1]?.includes(o.label),
+        ),
+      );
+
+      // Add and remove outputs (the store follows).
+      const n0 = (await storeWf(page)).outputs.length;
+      await card(page).getByRole("button", { name: "Add an output" }).click();
+      await settle(page);
+      const added = (await storeWf(page)).outputs;
+      check(
+        where,
+        "Add an output adds one",
+        added.length === n0 + 1 &&
+          (await card(page).getByText("New output").count()) > 0,
+      );
+      const victim = added[0];
+      const row = card(page)
+        .locator("[data-card-body] > *")
+        .filter({ hasText: victim.label })
+        .first();
+      await row.hover();
+      await card(page)
+        .getByRole("button", { name: `Remove ${victim.label}` })
+        .click();
+      await settle(page);
+      const after = (await storeWf(page)).outputs;
+      check(
+        where,
+        `remove ${victim.label}`,
+        after.length === n0 && !after.some((o) => o.id === victim.id),
+      );
+      check(where, "still open after add/remove", await expanded(page));
+
+      // Renamed and removed helpers.
+      await dispatchIn(page, {
+        type: "helper/patch",
+        id: "writer",
+        patch: { name: "Copywriter" },
+      });
+      await dispatchIn(page, { type: "helper/remove", id: "designer" });
+      await settle(page);
+      const t2 = await card(page).locator("[data-card-body]").innerText();
+      check(
+        where,
+        "renamed helper shows",
+        t2.includes("Copywriter") && !/^Writer$/m.test(t2),
+      );
+      check(where, "removed helper gone", !/^Designer$/m.test(t2));
+
+      // Escape folds it; an outside click folds it and lands.
+      await page.keyboard.press("Escape");
+      await settle(page);
+      check(where, "Escape folds it", !(await expanded(page)));
+      await open(page);
+      const zb = await zoomLabel(page);
+      await page.getByRole("button", { name: "Zoom in" }).click();
+      await settle(page);
+      check(
+        where,
+        "outside click folds it and lands",
+        !(await expanded(page)) && (await zoomLabel(page)) !== zb,
+      );
+
+      // A planned row opens that helper's drawer.
+      await open(page);
+      await card(page)
+        .locator("[data-card-body] button")
+        .filter({ hasText: "Strategist" })
+        .first()
+        .click();
+      await settle(page, 600);
+      const drawer = await page.evaluate(() =>
+        [...document.querySelectorAll("aside")].some(
+          (a) =>
+            a.getBoundingClientRect().width > 0 &&
+            /Strategist/.test(a.innerText) &&
+            /Model|Skills|Checks/.test(a.innerText),
+        ),
+      );
+      check(
+        where,
+        "Strategist row opens its drawer",
+        !(await expanded(page)) && drawer,
+      );
+    } catch (e) {
+      check(where, "ran to the end", false, e.message.split("\n")[0]);
+    }
+    await page.close();
   }
-  await page.close();
 }
 
 await browser.close();

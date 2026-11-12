@@ -14,7 +14,6 @@ import {
 // the 3.2 layout with every handoff passed. 5.1 waits on Publisher (hand raised, "6 items waiting"); 5.2 has
 // posted everything. 5.1 draws this map at 0.68175 (its canvas is narrower with the panel docked).
 export const LAUNCH_MAP = AI_COACH_MAP;
-export const APPROVAL_MAP_SCALE = 119.442138671875 / 175.2;
 
 type Overrides = Partial<MapNode>;
 

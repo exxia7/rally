@@ -27,9 +27,12 @@ function useComposer(onSend: (text: string) => void, initial = '') {
 // 10px radius, 6px padding, 8px gaps, faint shadow) holding the attach button, a borderless Text Input and a
 // Primary "Send". The attach button is a ghost 32px square; while its menu is open it is Outlined.
 // The attach menu opens 8px above the button (Figma: menu bottom 808, button top 816), left-aligned with it.
+// Send with nothing typed does what 2.1's brief composer does: focuses the field and swaps the placeholder for
+// `emptyPlaceholder` until you type.
 export function PlanComposer({
   onSend,
   placeholder = 'Add goals or channels (optional)',
+  emptyPlaceholder = 'Type a goal or a channel first.',
   attachOpen,
   onAttachOpenChange,
   onAttach,
@@ -37,13 +40,26 @@ export function PlanComposer({
 }: {
   onSend: (text: string) => void;
   placeholder?: string;
+  /** The placeholder after Send with nothing typed. */
+  emptyPlaceholder?: string;
   attachOpen: boolean;
   onAttachOpenChange: (open: boolean) => void;
   onAttach?: (kind: 'upload' | 'link' | 'skill') => void;
   className?: string;
 }) {
-  const { text, setText, send } = useComposer(onSend);
+  const { text, setText, send: sendText } = useComposer(onSend);
   const anchor = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [nudge, setNudge] = useState(false);
+  // Any text ends the nudge.
+  if (nudge && text.trim()) setNudge(false);
+  const send = () => {
+    if (text.trim()) sendText();
+    else {
+      setNudge(true);
+      box.current?.querySelector('input')?.focus();
+    }
+  };
   const close = useCallback(
     () => onAttachOpenChange(false),
     [onAttachOpenChange]
@@ -51,6 +67,7 @@ export function PlanComposer({
   useOutsideClick([anchor], attachOpen, close);
   return (
     <div
+      ref={box}
       className={clsx(
         'flex w-full items-center gap-2 rounded-[10px] border border-line-2 bg-white p-1.5 drop-shadow-[0px_1px_1px_rgba(16,18,24,0.04)]',
         className
@@ -81,7 +98,8 @@ export function PlanComposer({
       <TextInput
         appearance="borderless"
         className="flex-1"
-        placeholder={placeholder}
+        placeholder={nudge ? emptyPlaceholder : placeholder}
+        aria-label={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {

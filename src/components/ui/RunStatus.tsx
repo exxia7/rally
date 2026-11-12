@@ -48,12 +48,13 @@ export function RunStatus({
       role="status"
       title={label ?? defaults[state]}
       className={clsx(
-        'flex h-7 shrink-0 items-center gap-1.5 rounded-[14px] bg-chip px-2.5 max-xl:w-7 max-xl:justify-center max-xl:px-0',
+        // Shrinks before the workflow title does: the label truncates (full text in the tooltip).
+        'flex h-7 min-w-7 shrink items-center gap-1.5 rounded-[14px] bg-chip px-2.5 max-xl:w-7 max-xl:justify-center max-xl:px-0',
         className
       )}
     >
       <span className={clsx('size-1.5 shrink-0 rounded-full', dots[state])} />
-      <span className="text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink max-xl:sr-only">
+      <span className="min-w-0 truncate text-[12px] leading-[18px] font-medium tracking-[-0.08px] text-ink max-xl:sr-only">
         {label ?? defaults[state]}
       </span>
     </motion.div>

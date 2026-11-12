@@ -201,9 +201,7 @@ export function HelperCard({
               {badge}
             </p>
           </div>
-        ) : (
-          <div className="h-[14.8px] w-[48.2px] shrink-0" />
-        )}
+        ) : null}
       </div>
       <div className="flex w-full shrink-0 flex-col items-start p-[6.6px]">
         {/* 14px lines: Figma rounds the 13.6px text box up to whole pixels (1 line = 14, 2 = 28). */}

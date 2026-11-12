@@ -1,3 +1,4 @@
+import planned from '@/assets/icons/handoff-pending.svg';
 import approval from '@/assets/icons/task-approval.svg';
 import done from '@/assets/icons/task-done.svg';
 import reused from '@/assets/icons/task-reused.svg';
@@ -5,6 +6,8 @@ import running from '@/assets/icons/task-running.svg';
 import waiting from '@/assets/icons/task-waiting.png';
 
 export type TaskRowState =
+  /** A step on the plan, before the run (plan canvases). */
+  | 'planned'
   | 'running'
   | 'approval'
   | 'waiting'
@@ -12,6 +15,7 @@ export type TaskRowState =
   | 'reused';
 
 const ICON: Record<Exclude<TaskRowState, 'waiting'>, string> = {
+  planned,
   running,
   approval,
   done,
@@ -19,7 +23,8 @@ const ICON: Record<Exclude<TaskRowState, 'waiting'>, string> = {
 };
 
 // Figma "Task row" (2362:30062) parts, used by the Tasks list's rows (CanvasListRow): the 14px state icon (the
-// waiting clock is 12px, inset 1px) and the trailing status. Running and Approval get a badge; the rest a muted word.
+// waiting clock is 12px, inset 1px; a planned step is the grey dashed handoff marker) and the trailing status. Running and
+// Approval get a badge; the rest a muted word; a planned step has none.
 export function TaskIcon({ state }: { state: TaskRowState }) {
   return (
     <span className="relative size-3.5 shrink-0">
@@ -33,6 +38,7 @@ export function TaskIcon({ state }: { state: TaskRowState }) {
 }
 
 export function TaskStatus({ state }: { state: TaskRowState }) {
+  if (state === 'planned') return null;
   if (state === 'running')
     return (
       <span className="flex shrink-0 items-center justify-center gap-1 rounded-[6px] bg-accent-soft px-1.5 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap text-accent">

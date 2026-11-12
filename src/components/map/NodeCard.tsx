@@ -393,7 +393,7 @@ export function NodeCard({
                   · {agent}
                 </p>
               )}
-              <div className="flex min-h-[14.8px] min-w-fit flex-1 items-center justify-end gap-[3.7px] overflow-clip">
+              <div className="ml-auto flex min-h-[14.8px] shrink-0 items-center justify-end gap-[3.7px]">
                 {flag && <Flag {...flag} />}
                 {asksYouFirst && <YourOkFlag />}
               </div>

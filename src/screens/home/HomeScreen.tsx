@@ -89,7 +89,7 @@ export default function HomeScreen() {
         }
       />
       <div className="flex min-h-px w-full flex-1 flex-col items-center overflow-auto bg-white">
-        <div className="flex w-full max-w-[1040px] flex-col items-start px-8 py-12 max-md:px-4 max-md:py-6">
+        <div className="flex w-full max-w-[1040px] flex-col items-start px-8 py-12 max-md:px-4 max-md:pt-6 max-md:pb-[calc(88px+env(safe-area-inset-bottom))]">
           <h1 className="max-w-[560px] text-[30px] leading-9 font-semibold tracking-[-0.75px] whitespace-nowrap text-ink max-md:text-[24px] max-md:leading-8">
             Your workflows
           </h1>
@@ -134,7 +134,7 @@ export default function HomeScreen() {
               </Button>
             </div>
           </div>
-          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] max-md:gap-3 max-md:pb-20 *:max-xl:w-auto">
+          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] max-md:gap-3 *:max-xl:w-auto">
             {visible.map((w) => (
               <WorkflowCard key={w.wf.id} {...w} onClick={() => open(w.wf)} />
             ))}

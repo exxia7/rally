@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import type { PanelTab } from '@/components/panels/PanelTabs';
 import {
   AddStepPopover,
   type NewStep,
 } from '@/components/planning/AddStepPopover';
 import {
+  type DrawerField,
   HelperDrawer,
   type HelperDraft,
 } from '@/components/planning/HelperDrawer';
@@ -16,6 +17,7 @@ import {
   PermissionPicker,
 } from '@/components/planning/PermissionPicker';
 import { PlanCanvas } from '@/components/planning/PlanCanvas';
+import { MapPopover } from '@/components/planning/MapPopoverHost';
 import { PlanChatPanel } from '@/components/planning/PlanChatPanel';
 import { edgeKey, planRight } from '@/components/planning/planEdit';
 import type { PlanEdge, PlanNode } from '@/components/planning/PlanMap';
@@ -152,13 +154,23 @@ export default function TeamMapScreen() {
     dispatch({ type: 'planChat/append', lines, clearUndo: true });
   const n = wf.planChat.length;
 
-  const openDrawer = (helper: string) => {
+  // The drawer field a card click asked for (its "Edit Model" row, the card itself); a new key asks again.
+  const [drawerFocus, setDrawerFocus] = useState<
+    { field: DrawerField; key: number } | undefined
+  >();
+  const openDrawer = (helper: string, field?: DrawerField) => {
     if (!live(helper)) return;
     setPicker(null);
     setAskPicker(null);
     setAdding(null);
     setDrawer(helper);
     setPanelOpen(true);
+    // A click on the card whose drawer is open (or on one of its rows) goes to that field.
+    setDrawerFocus((f) =>
+      field || helper === drawer
+        ? { field: field ?? 'name', key: (f?.key ?? 0) + 1 }
+        : undefined
+    );
   };
   const closeDrawer = () => {
     setDrawer(null);
@@ -442,6 +454,7 @@ export default function TeamMapScreen() {
           checksLabel('just-go', check),
         ]}
         toolSource={toolSource}
+        focus={drawerFocus}
         onChange={(p) => patch(drawer, fromDraft(p))}
         onClose={closeDrawer}
         onRemove={() => {
@@ -499,13 +512,11 @@ export default function TeamMapScreen() {
           addStepOn={adding ? edgeKey(adding.edge) : undefined}
           nodes={nodes}
           outputs={wf.outputs as OutputItem[]}
-          outputsKey={wf.outputs.map((o) => o.id).join()}
           onOutputsChange={(items) =>
             setOutputs(
               items.map((i) => wf.outputs.find((o) => o.id === i.id) ?? i)
             )
           }
-          zoomLabelBase={drawer || wide ? 83 : 70}
           onNodeClick={(node) => openDrawer(node.id)}
           // "You approve" holds Publisher until you say yes: open Publisher, where "Checks with you" sets it.
           onGateClick={() => openDrawer('publisher')}
@@ -523,7 +534,15 @@ export default function TeamMapScreen() {
               setAdding(null);
               setDrawer(null);
               setAskPicker((p) => (p === node.id ? null : node.id));
-            } else openDrawer(node.id);
+            } else
+              openDrawer(
+                node.id,
+                label === 'Model'
+                  ? 'model'
+                  : label === 'Skills' || label === 'Files'
+                    ? 'resources'
+                    : undefined
+              );
           }}
           overlays={[
             ...(adding
@@ -534,13 +553,16 @@ export default function TeamMapScreen() {
                     x: adding.at.x + 22.275 * layout.scale,
                     y: adding.at.y - 94.875 * layout.scale,
                     content: (
-                      <AddStepPopover
-                        from={nameOf(adding.edge.from)}
-                        to={nameOf(adding.edge.to)}
-                        scale={layout.scale}
-                        onPick={addStep}
-                        onClose={() => setAdding(null)}
-                      />
+                      // Drawn at 1:1 outside the scaled map: the component's sizes are Figma's at map scale 0.825.
+                      <MapPopover>
+                        <AddStepPopover
+                          from={nameOf(adding.edge.from)}
+                          to={nameOf(adding.edge.to)}
+                          scale={1 / 0.825}
+                          onPick={addStep}
+                          onClose={() => setAdding(null)}
+                        />
+                      </MapPopover>
                     ),
                   },
                 ]
@@ -552,16 +574,17 @@ export default function TeamMapScreen() {
                     x: pickerNode.x + 150.45,
                     y: pickerNode.y + 84.857,
                     content: (
-                      <ToolPicker
-                        helper={team[picker].name}
-                        selected={team[picker].tools ?? []}
-                        scale={0.85}
-                        toolSource={toolSource}
-                        onToggle={(tool) => toggleTool(picker, tool)}
-                        onConnect={() => connectFor(picker)}
-                        onOpenFullEditor={() => openDrawer(picker)}
-                        onClose={() => setPicker(null)}
-                      />
+                      <MapPopover>
+                        <ToolPicker
+                          helper={team[picker].name}
+                          selected={team[picker].tools ?? []}
+                          toolSource={toolSource}
+                          onToggle={(tool) => toggleTool(picker, tool)}
+                          onConnect={() => connectFor(picker)}
+                          onOpenFullEditor={() => openDrawer(picker)}
+                          onClose={() => setPicker(null)}
+                        />
+                      </MapPopover>
                     ),
                   },
                 ]
@@ -570,24 +593,28 @@ export default function TeamMapScreen() {
               ? [
                   {
                     id: 'permission-picker',
-                    x: askNode.x - 282.2,
+                    // Its right edge 10px left of the card.
+                    x: askNode.x - 10,
                     y: Math.max(8, askNode.y - 121.57),
                     content: (
-                      <div ref={askRef}>
-                        <PermissionPicker
-                          helper={asker.name}
-                          summary={
-                            askPicker === 'publisher'
-                              ? `${asker.name} posts for you and can spend up to $${wf.permissions.adLimit} on ads.`
-                              : `${asker.name} posts your launch in Discord.`
-                          }
-                          value={pickerAsk(asker)}
-                          teamDefault={CHECK_TEAM_DEFAULT[check]}
-                          onChange={(level) => chooseAsk(askPicker, level)}
-                          onPermissions={() => go('2.7', { returnHere: true })}
-                          scale={0.85}
-                        />
-                      </div>
+                      <MapPopover align="end">
+                        <div ref={askRef}>
+                          <PermissionPicker
+                            helper={asker.name}
+                            summary={
+                              askPicker === 'publisher'
+                                ? `${asker.name} posts for you and can spend up to $${wf.permissions.adLimit} on ads.`
+                                : `${asker.name} posts your launch in Discord.`
+                            }
+                            value={pickerAsk(asker)}
+                            teamDefault={CHECK_TEAM_DEFAULT[check]}
+                            onChange={(level) => chooseAsk(askPicker, level)}
+                            onPermissions={() =>
+                              go('2.7', { returnHere: true })
+                            }
+                          />
+                        </div>
+                      </MapPopover>
                     ),
                   },
                 ]

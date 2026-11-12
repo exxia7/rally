@@ -21,6 +21,8 @@ export type SandboxSection = {
   count?: number;
   /** A custom body instead of resource rows (2.7's Permissions settings). */
   content?: ReactNode;
+  /** `false` drops the header's "+" (a section nothing can be added to, e.g. the plan's Estimate). Default: shown. */
+  addable?: boolean;
 };
 
 // The Sandbox tab of the run side panel (3.3, 2362:24921): a 12/18 muted note (4px top, 24px sides), then
@@ -101,17 +103,19 @@ export function SandboxPanel({
                   onToggle={() => toggle(s.id)}
                   className="min-w-px flex-1"
                 />
-                <button
-                  type="button"
-                  aria-label={`Add to ${s.title}`}
-                  onClick={() => {
-                    toggle(s.id, true);
-                    onAdd?.(s);
-                  }}
-                  className="flex shrink-0 rounded-[4px] hover:bg-hover"
-                >
-                  <Icon src={plusGray14} size={14} />
-                </button>
+                {s.addable !== false && (
+                  <button
+                    type="button"
+                    aria-label={`Add to ${s.title}`}
+                    onClick={() => {
+                      toggle(s.id, true);
+                      onAdd?.(s);
+                    }}
+                    className="flex shrink-0 rounded-[4px] hover:bg-hover"
+                  >
+                    <Icon src={plusGray14} size={14} />
+                  </button>
+                )}
               </div>
               {isOpen && s.content}
               {isOpen && !s.content && (

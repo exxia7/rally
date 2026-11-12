@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { MapCanvas } from '@/components/map/MapCanvas';
-import { OutputsCard, type OutputItem } from '@/components/panels/OutputsCard';
-import { useMediaQuery } from '@/lib/useMediaQuery';
+import type { OutputItem } from '@/components/map/OutputRow';
+import { TasksDropdown } from '@/components/run/TasksDropdown';
+import { useAppState } from '@/state/store';
 
 import {
   PlanMap,
@@ -15,17 +16,18 @@ import {
 import { PlanLegend } from './PlanMapParts';
 
 // The planning canvas of the 2.x frames ("ZoomStage", e.g. 2362:23662): the plan map on the pannable canvas, with
-// the kind legend and zoom controls pinned bottom-left and "What goes out" bottom-right, 16px in. At 1440×900
-// with the side panel open the stage is 954×830, exactly the Figma canvas. Under 1280px "What goes out" folds
-// into its header (above the zoom controls on phones), so it doesn't cover the map or a popover opened on it.
+// the kind legend and zoom controls pinned bottom-left and the Tasks list (planned steps and what goes out; it
+// replaces Figma's "What goes out" card, as on the run) top-left, 16px in. At 1440×900 with the side panel open the
+// stage is 954×830, exactly the Figma canvas.
+// Clear of the legend (bottom 70px) and the zoom controls under it; phones hide the legend.
+const PLAN_FIT = 'max-h-[calc(100%-128px)] max-md:max-h-[calc(100%-76px)]';
+
 export function PlanCanvas({
   layout,
   nodes = layout.nodes,
   overlays,
   outputs,
-  outputsKey,
   onOutputsChange,
-  zoomLabelBase = 70,
   stageWidth = 954,
   stageHeight = 830,
   onNodeClick,
@@ -40,11 +42,9 @@ export function PlanCanvas({
   /** The layout's nodes with per-frame overrides (see `planNodes`). */
   nodes?: PlanNode[];
   overlays?: PlanOverlay[];
+  /** What goes out (the store's outputs); `onOutputsChange` gets the list after a remove or an add. */
   outputs: OutputItem[];
-  /** Change it to reset the outputs card to `outputs` (it keeps its own add/remove state). */
-  outputsKey?: string;
   onOutputsChange?: (items: OutputItem[]) => void;
-  zoomLabelBase?: number;
   stageWidth?: number;
   stageHeight?: number;
   onNodeClick?: (node: PlanNode) => void;
@@ -57,30 +57,38 @@ export function PlanCanvas({
   /** Extra canvas-pinned overlays. */
   children?: ReactNode;
 }) {
-  const xl = useMediaQuery('(min-width: 1280px)');
-  const [outputsOpen, setOutputsOpen] = useState(false);
+  const { activeId } = useAppState();
+  // Flow order: left to right, then top to bottom.
+  const planned = [...nodes].sort((a, b) => a.x - b.x || a.y - b.y);
   return (
     <MapCanvas
       stageWidth={stageWidth}
       stageHeight={stageHeight}
-      zoomLabelBase={zoomLabelBase}
+      // The label is the cards' real scale: the full map draws them at 0.85, the drawer's compact map at 0.59.
+      contentScale={layout.scale}
+      // One remembered view per workflow and layout (full, compact, wide).
+      viewKey={`plan:${activeId}:${layout.scale}`}
       zoomPosition="left"
       focus={focus}
-      // Phones: the plan cards are drawn at 0.85 with 9.9px text; open at 1.2× instead of the run map's 0.8×,
-      // so a card's text reads at about 10–12px.
-      phoneZoom={1.2}
       overlay={
         <>
           <PlanLegend className="absolute bottom-[70px] left-5 max-md:hidden" />
-          {/* Docked open at ≥1280px as drawn; below that it folds into its header (open → it grows upward). Phones
-              lift it above the zoom controls. */}
-          <OutputsCard
-            key={outputsKey}
-            initial={outputs}
-            onChange={onOutputsChange}
-            open={xl || outputsOpen}
-            onOpenChange={xl ? undefined : setOutputsOpen}
-            className="absolute right-4 bottom-4 max-h-[calc(100%-32px)] max-md:bottom-[60px] max-md:max-h-[calc(100%-76px)]"
+          {/* The Tasks list (the run's, before the run): the planned steps in flow order, then what goes out. */}
+          <TasksDropdown
+            tasks={planned.map((n) => ({
+              id: n.id,
+              title: n.name,
+              state: 'planned',
+            }))}
+            label={`${planned.length} planned`}
+            progress={null}
+            onSelectTask={(t) => {
+              const node = planned.find((n) => n.id === t.id);
+              if (node) onNodeClick?.(node);
+            }}
+            outputs={outputs}
+            onOutputsChange={onOutputsChange}
+            fitClassName={PLAN_FIT}
           />
           {children}
         </>

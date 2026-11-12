@@ -2,6 +2,7 @@ import { createElement } from 'react';
 
 import type { AgentName } from '@/components/agents/characters';
 import type { MapEdge, MapNode } from '@/components/map/FlowMap';
+import type { OutputStatus } from '@/components/map/OutputRow';
 import type { Decision } from '@/components/panels/DecisionLog';
 import type { HandRaiseData } from '@/components/run/HandRaisePanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
@@ -50,6 +51,7 @@ import type {
   BeatId,
   Fork,
   HandRaiseId,
+  Output,
   Workflow,
   WorkflowStatus,
 } from './types';
@@ -445,7 +447,7 @@ function applyCounts(d: RunData, wf: Workflow): RunData {
   };
 }
 
-/** A decision you changed (3.4 "Change") shows your text in its place, marked "Changed by you". */
+/** A decision you changed (3.4 "Change") is yours: your text and avatar in its place, marked "Changed by you". */
 function applyDecisionChanges(log: Decision[], wf: Workflow): Decision[] {
   const changes = new Map(
     wf.decisions.filter((x) => x.replaces).map((x) => [x.replaces!, x])
@@ -456,6 +458,10 @@ function applyDecisionChanges(log: Decision[], wf: Workflow): Decision[] {
     return c
       ? {
           ...x,
+          art: createElement(UserAvatar, { className: 'size-5! text-[9px]!' }),
+          agent: undefined,
+          who: 'You',
+          by: 'you',
           title: c.title,
           basis: c.basis,
           time: c.time,
@@ -706,6 +712,151 @@ function applyExtraSteps(d: RunData, wf: Workflow): RunData {
   };
 }
 
+// ---- Re-flow when the team changed -------------------------------------------------------------------------------
+
+/** Figma's run-map columns (task, research, decision, content, posting, ready), at map scale. */
+const RUN_COLUMNS = [-18.427, 193.702, 419.666, 654.834, 885.428, 1106.781];
+const CARD_W = 175.237;
+/** The research column's three cards span 37…467 around this line; single cards sit on it (Strategist, Ready). */
+const RUN_CENTER = 252;
+const RUN_GAP = 84.5;
+/** The 3.2 placements: the map at 45,83 with the panel closed, 874px wide at 43,165 beside a docked panel. */
+const RUN_STAGE = { width: 1362, height: 830, x: 45, y: 83, bottom: 72 };
+const RUN_DOCKED = { x: 43, y: 165, width: 874, scale: 874 / 1282 };
+
+/** A run card's height at map scale (3.2–5.2 measure 87 for a plain step, +40 with a lead, +70 with a preview). */
+const runCardHeight = (n: MapNode) =>
+  87 +
+  (n.lead ? 40 : 0) +
+  (n.preview ? 75 : 0) +
+  (n.kind === 'decision' ? 20 : 0) +
+  (n.flag ? 8 : 0);
+
+/**
+ * Once helpers are removed or added, Figma's places leave holes (Designer's slot, a stranded Schedule launch) and
+ * added columns push Ready to post off the stage. This lays the map out again the way Figma composes it: each step in
+ * the column after its latest input (Figma's column x's, then 230.6px apart), a column's cards spread over the same
+ * height as the fullest column (one card on the centre line), in the order of their inputs. Lanes keep their offset
+ * before their target; the map's size and placements shrink or grow to fit the stage. The Figma team keeps Figma's
+ * layout, and fork frames (their own lanes and overlays) are left alone.
+ */
+function reflowRun(d: RunData, wf: Workflow): RunData {
+  const { map } = d;
+  if (!goneSteps(wf).size && !extraHelpers(wf).length) return d;
+  if (
+    map.forkLines?.length ||
+    map.overlays?.length ||
+    map.edges.some((e) => e.fork)
+  )
+    return d;
+  const nodes = map.nodes;
+  const ids = new Set(nodes.map((n) => n.id));
+  const edges = map.edges.filter((e) => ids.has(e.from) && ids.has(e.to));
+  // Column: the longest path from a step with no inputs.
+  const rank = new Map(nodes.map((n) => [n.id, 0]));
+  for (let pass = 0; pass < nodes.length; pass++) {
+    let moved = false;
+    for (const e of edges) {
+      const r = rank.get(e.from)! + 1;
+      if (r > rank.get(e.to)!) {
+        rank.set(e.to, r);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  const columns: MapNode[][] = [];
+  for (const n of nodes) (columns[rank.get(n.id)!] ??= []).push(n);
+  const colX = (i: number) =>
+    i < RUN_COLUMNS.length
+      ? RUN_COLUMNS[i]
+      : RUN_COLUMNS[RUN_COLUMNS.length - 1] +
+        (i - RUN_COLUMNS.length + 1) * COLUMN;
+  const span = Math.max(
+    ...columns.map((c) =>
+      c
+        ? c.reduce((h, n) => h + runCardHeight(n), 0) + RUN_GAP * (c.length - 1)
+        : 0
+    )
+  );
+  const top = Math.max(18.5, RUN_CENTER - span / 2);
+  const at = new Map<string, { x: number; y: number }>();
+  columns.forEach((col, i) => {
+    if (!col) return;
+    // Order by where the inputs sit (already placed), then by Figma's order.
+    const key = (n: MapNode) => {
+      const ins = edges.filter((e) => e.to === n.id && at.has(e.from));
+      return ins.length
+        ? ins.reduce((sum, e) => sum + at.get(e.from)!.y, 0) / ins.length
+        : n.y;
+    };
+    const sorted = [...col].sort((a, b) => key(a) - key(b) || a.y - b.y);
+    const total = sorted.reduce((h, n) => h + runCardHeight(n), 0);
+    if (sorted.length === 1) {
+      const n = sorted[0];
+      at.set(n.id, { x: colX(i), y: top + span / 2 - runCardHeight(n) / 2 });
+      return;
+    }
+    const gap = (span - total) / (sorted.length - 1);
+    let y = top;
+    for (const n of sorted) {
+      at.set(n.id, { x: colX(i), y });
+      y += runCardHeight(n) + gap;
+    }
+  });
+  const moved = nodes.map((n) => {
+    const p = at.get(n.id)!;
+    const dx = p.x - n.x;
+    const dy = p.y - n.y;
+    return {
+      ...n,
+      x: p.x,
+      y: p.y,
+      avatar: n.avatar?.at
+        ? {
+            ...n.avatar,
+            at: {
+              ...n.avatar.at,
+              x: n.avatar.at.x + dx,
+              y: n.avatar.at.y + dy,
+            },
+          }
+        : n.avatar,
+    };
+  });
+  const oldX = new Map(nodes.map((n) => [n.id, n.x]));
+  const width = Math.max(...moved.map((n) => n.x + CARD_W));
+  const height = top + span + 92;
+  // Fit the stage: at most design size with the panel closed, and Figma's docked scale beside the panel.
+  const room = RUN_STAGE.height - RUN_STAGE.y - RUN_STAGE.bottom;
+  const scale = Math.min(
+    1,
+    (RUN_STAGE.width - 2 * RUN_STAGE.x) / width,
+    room / height
+  );
+  const dockedScale = Math.min(
+    RUN_DOCKED.scale,
+    RUN_DOCKED.width / width,
+    (RUN_STAGE.height - RUN_DOCKED.y - RUN_STAGE.bottom) / height
+  );
+  return {
+    ...d,
+    map: {
+      ...map,
+      nodes: moved,
+      edges: map.edges.map((e) =>
+        e.lane === undefined || !at.has(e.to)
+          ? e
+          : { ...e, lane: e.lane + at.get(e.to)!.x - oldX.get(e.to)! }
+      ),
+      width,
+      height,
+      full: { x: RUN_STAGE.x, y: RUN_STAGE.y, width: width * scale },
+      docked: { x: RUN_DOCKED.x, y: RUN_DOCKED.y, width: width * dockedScale },
+    },
+  };
+}
+
 /** How much longer the current beat runs while steps you added work in it (the timeline's beat for them). */
 export function extraWorkDelay(wf: Workflow) {
   if (wf.asDrawn || !extraHelpers(wf).length) return 0;
@@ -740,6 +891,7 @@ export function runData(
       inspectors: d.inspectors && mapText(d.inspectors, facts),
     };
   d = applyGone(d, wf);
+  d = reflowRun(d, wf);
   d = applyPermissions(d, wf);
   d = applyOverrides(d, wf);
   d = applySandbox(d, wf);
@@ -1032,6 +1184,35 @@ export function approvalItems(wf: Workflow) {
 /** 5.1's approvals: the chosen version's. */
 export function approvalsOf(wf: Workflow) {
   return branchApprovals(wf, chosenBranch(wf));
+}
+
+/**
+ * The Tasks list's "Goes out" on a run: the plan's outputs (those whose helper is still on the team) and where each is.
+ * Before the approval they wait; at it, an output needs your OK until you approve it (ready) or decline it (not
+ * posting); one with nothing to approve is ready. Once launched it posted, or didn't.
+ */
+export function goesOut(wf: Workflow): (Output & { status: OutputStatus })[] {
+  const { phase } = wf.run;
+  const approvals = approvalsOf(wf);
+  const approvable = new Set(approvalItems(wf).map((i) => i.id));
+  return wf.outputs
+    .filter((o) => !o.owner || isLive(wf, o.owner))
+    .map((o) => {
+      const a = approvals[o.id];
+      const status: OutputStatus =
+        phase === 'launched'
+          ? a === 'wont-post'
+            ? 'not-posted'
+            : 'posted'
+          : phase === 'awaitingApproval'
+            ? a === 'wont-post'
+              ? 'not-posting'
+              : a === 'approved' || !approvable.has(o.id)
+                ? 'ready'
+                : 'approval'
+            : 'waiting';
+      return { ...o, status };
+    });
 }
 
 export function approvalWaiting(wf: Workflow) {

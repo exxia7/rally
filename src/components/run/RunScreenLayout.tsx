@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
 import outputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
@@ -18,6 +18,7 @@ import {
 import type { ForkNumber } from '@/components/map/forks';
 import { MapCanvas } from '@/components/map/MapCanvas';
 import type { NodeKindName } from '@/components/map/NodeKind';
+import { RUN_MAP_SCALE, runMapFocus } from '@/components/map/runMapView';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import type { Decision } from '@/components/panels/DecisionLog';
 import type { PanelTab } from '@/components/panels/PanelTabs';
@@ -29,7 +30,8 @@ import type { RunState } from '@/components/ui/RunStatus';
 import { useChangedFrom } from '@/lib/motion';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { useGo } from '@/state/nav';
-import { useAppState } from '@/state/store';
+import { goesOut } from '@/state/runView';
+import { useAppState, useWorkflow } from '@/state/store';
 
 import { HandRaisePanel, type HandRaiseData } from './HandRaisePanel';
 import { InspectorPanel, type InspectorData } from './InspectorPanel';
@@ -91,16 +93,14 @@ export type RunPanel =
   | { kind: 'approval'; branch: string }
   | null;
 
-const STAGE = { width: 1362, docked: 954, height: 830 };
-const DEFAULT_DOCKED = { x: 43, y: 165, width: 874 };
+const STAGE = { width: 1362, height: 830 };
 const XL = '(min-width: 1280px)';
 
 // The run screen (3.2–3.5, reused by Stuck 4.x and Rerun/fork 6.x with their own data): workflow top bar, the
 // pannable run map with its canvas overlays (Tasks chip and anchored Tasks overlay, Completed agents, zoom), and
 // an optional side panel: the Chat · Sandbox · Decisions tabs or a node's inspector. All of it is local state;
-// `initial*` props pick the frame a route opens on. With the panel docked (≥1280px) the canvas narrows to 954px
-// and the map is redrawn at `map.docked`; below 1280 the panel overlays the full-size map. Between 1280 and 1440 the
-// docked canvas is narrower than 954px, so the stage starts scaled down to fit its width (as Fit view would).
+// `initial*` props pick the frame a route opens on. With the panel docked (≥1280px) the canvas narrows; below 1280
+// the panel overlays the map. The map is drawn the same way in both; MapCanvas picks a readable zoom and keeps it.
 // A helper's raised hand opens `data.handRaise` in the side panel (or `handRaisedScreen` when there is none).
 export function RunScreenLayout({
   data: frameData,
@@ -168,14 +168,23 @@ export function RunScreenLayout({
   const xl = useMediaQuery(XL);
   const [localPaused, setPaused] = useState(initialPaused);
   const paused = pausedProp ?? localPaused;
-  // While a hand is raised the run waits for you: Resume opens the hand-raise panel instead.
+  // While a hand is raised the run waits for you: Resume (and the card with the raised hand) opens the hand-raise
+  // panel instead, or, when it's already open, brings it to the step you haven't answered (HandRaisePanel `nudge`).
+  const [handNudge, setHandNudge] = useState(0);
+  const showHandRaise = () => {
+    setPanel({ kind: 'hand-raise' });
+    setHandNudge((n) => n + 1);
+  };
   const togglePause = () => {
     if (status?.state === 'waiting' && data.handRaise && paused)
-      setPanel({ kind: 'hand-raise' });
+      showHandRaise();
     else if (onPauseToggle) onPauseToggle();
     else setPaused((p) => !p);
   };
-  const [panel, setPanel] = useState<RunPanel>(initialPanel);
+  // Under 1280px a panel covers the map, so a `*-tasks` frame opens only the Tasks list there.
+  const [panel, setPanel] = useState<RunPanel>(
+    initialTasksOpen && !xl ? null : initialPanel
+  );
   // Forks (store): every branch drawn, the Branches row, fork-scoped approval, the inline Fork card.
   const forks = useForkRunView({
     data: frameData,
@@ -186,13 +195,18 @@ export function RunScreenLayout({
   });
   const data = forks.data;
   // Motion memory for this workflow's run (src/lib/motion.ts): a hand raised while you watch slides its panel in.
-  const scope = `run:${useAppState().activeId}`;
+  const { activeId } = useAppState();
+  const scope = `run:${activeId}`;
+  // The Tasks list's "Goes out": the plan's outputs and where each is in the run.
+  const wf = useWorkflow();
+  const outputs = useMemo(() => goesOut(wf), [wf]);
   const asideFrom = useChangedFrom(`${scope}:aside`, panel?.kind ?? 'none');
   const [takenOver, setTakenOver] = useState<Set<string>>(() => new Set());
 
   const { map } = data;
-  const docked = xl && panel !== null;
-  const place = docked ? (map.docked ?? DEFAULT_DOCKED) : (map.full ?? map);
+  // One placement whatever the panel does: the canvas keeps its zoom as the panel docks (MapCanvas), instead of
+  // Figma's smaller redraw of the map beside a docked panel (`map.docked`).
+  const place = map.full ?? map;
   const scale = place.width / map.width;
 
   const inspect = (nodeId: string) => setPanel({ kind: 'inspector', nodeId });
@@ -201,21 +215,14 @@ export function RunScreenLayout({
     if (branchPanel) setPanel(branchPanel);
     else if (nodeLinks?.[node.id]) go(nodeLinks[node.id]);
     else if (node.avatar?.state === 'hand-raised') {
-      if (data.handRaise) setPanel({ kind: 'hand-raise' });
+      if (data.handRaise) showHandRaise();
       else go(handRaisedScreen);
     } else inspect(node.id);
   };
   const confirmHandRaise = onHandRaiseConfirm ?? (() => go('4.1b'));
 
-  // Phones open the map on the node that needs you, else the first one working.
-  const focusNode =
-    map.nodes.find(
-      (n) => n.state === 'needs-you' || n.avatar?.state === 'hand-raised'
-    ) ?? map.nodes.find((n) => n.state === 'working');
-  const focus = focusNode && {
-    x: map.x + focusNode.x + (focusNode.width ?? 175.2) / 2,
-    y: map.y + focusNode.y + 60,
-  };
+  // The map keeps the node that needs you in view (else the first one working, else Ready to post).
+  const focus = runMapFocus(map.nodes, place, scale);
 
   const inspected =
     panel?.kind === 'inspector'
@@ -229,6 +236,7 @@ export function RunScreenLayout({
         data={data.handRaise}
         // A hand raised while you watch slides its panel in, even over another open panel.
         enter={asideFrom !== undefined && asideFrom !== 'hand-raise'}
+        nudge={handNudge}
         onClose={() => setPanel(null)}
         onConfirm={confirmHandRaise}
       />
@@ -336,10 +344,10 @@ export function RunScreenLayout({
       />
       <MapCanvas
         // Remount on dock/undock so the stage re-centres at its new size.
-        key={docked ? 'docked' : 'full'}
-        stageWidth={docked ? STAGE.docked : STAGE.width}
+        stageWidth={STAGE.width}
         stageHeight={STAGE.height}
-        fitWidth={docked}
+        contentScale={RUN_MAP_SCALE * scale}
+        viewKey={`run:${activeId}`}
         focus={focus}
         // Phones: a hand-raise or inspector opens as a half-height sheet, so keep the card above it.
         focusAt={panel && panel.kind !== 'tabs' ? 0.2 : 0.5}
@@ -347,14 +355,16 @@ export function RunScreenLayout({
         overlay={
           <>
             <TasksDropdown
+              outputs={outputs}
               motionKey={`${scope}:tasks`}
               tasks={data.tasks}
               note={data.tasksSummary}
               label={data.tasksChip?.label}
               progress={data.tasksChip?.progress}
               fork={data.tasksChip?.fork}
-              // Under 1280px an open panel covers the canvas, so a `*-tasks` frame with a panel opens the panel alone.
-              defaultOpen={initialTasksOpen && (xl || !initialPanel)}
+              defaultOpen={initialTasksOpen}
+              // Under 1280px the panel covers the map: opening the list closes it.
+              onOpen={() => !xl && setPanel(null)}
               // A row does what clicking its card does (inspector, hand-raise panel, a fork's approval).
               onSelectTask={(t) => {
                 const node = map.nodes.find((n) => n.id === t.id);

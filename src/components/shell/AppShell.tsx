@@ -66,8 +66,10 @@ export function TopBar({
         </div>
         {left}
       </div>
-      <div className="flex min-w-fit flex-1 items-start justify-end pl-3">
-        <div className="flex items-center gap-2">{right}</div>
+      {/* Space runs out on the right first: it shrinks 100× faster than the left, down to its min-content (the
+          run status pill truncates its label; buttons keep their size), and only then does the title truncate. */}
+      <div className="flex min-w-min shrink-[100] grow basis-auto items-start justify-end pl-3">
+        <div className="flex min-w-0 items-center gap-2">{right}</div>
       </div>
     </header>
   );

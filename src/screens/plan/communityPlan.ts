@@ -1,4 +1,4 @@
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import type { PlanLayout, PlanNode } from '@/components/planning/PlanMap';
 import type { ChatLine } from '@/state/types';
 

@@ -4,6 +4,7 @@ import checkDark from '@/assets/icons/check-dark.svg';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
 import { FlowMap } from '@/components/map/FlowMap';
 import { MapCanvas } from '@/components/map/MapCanvas';
+import { RUN_MAP_SCALE, runMapFocus } from '@/components/map/runMapView';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { InspectorPanel } from '@/components/run/InspectorPanel';
 import { inspectorFromNode } from '@/components/run/RunScreenLayout';
@@ -14,10 +15,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Modal } from '@/components/ui/Modal';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
 import { blockedOutput } from '@/state/permissions';
 import {
   agentNames,
+  goesOut,
   runData,
   summaryView,
 } from '@/state/runView';
@@ -45,6 +48,7 @@ export default function LaunchSummaryScreen() {
   const [open, setOpen] = useState(true);
   // Once the summary is closed, a map card opens its own read-only inspector; "Ready to post" reopens the summary.
   const [inspecting, setInspecting] = useState<string | null>(null);
+  const xl = useMediaQuery('(min-width: 1280px)');
   const wf = useWorkflow();
   useRunFrameSync('5.2');
   const run = useMemo(() => runData(wf), [wf]);
@@ -115,14 +119,19 @@ export default function LaunchSummaryScreen() {
         onViewChange={(v) => v === 'planning' && go(planFrame(wf.planStage))}
       />
       <MapCanvas
+        contentScale={RUN_MAP_SCALE}
+        viewKey={`run:${app.activeId}`}
+        focus={runMapFocus(run.map.nodes, LAUNCH_MAP)}
         zoomClassName="z-[60] max-md:bottom-[95px] max-md:z-0"
         overlay={
           <>
             <TasksDropdown
+              outputs={goesOut(wf)}
               motionKey={`run:${app.activeId}:tasks`}
               tasks={run.tasks}
-              note={run.tasksSummary}
               onSelectTask={(t) => t.id && openNode(t.id)}
+              // Under 1280px the inspector covers the map: opening the list closes it.
+              onOpen={() => !xl && setInspecting(null)}
             />
             <CompletedAgents
               agents={run.completed}

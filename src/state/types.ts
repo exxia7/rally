@@ -1,6 +1,6 @@
 import type { ForkNumber } from '@/components/map/forks';
 import type { NodeState } from '@/components/map/NodeCard';
-import type { OutputItem } from '@/components/panels/OutputsCard';
+import type { OutputItem } from '@/components/map/OutputRow';
 import type { NewStep } from '@/components/planning/AddStepPopover';
 import type { PlanEdge } from '@/components/planning/PlanMap';
 import type { Helper } from '@/screens/plan/aiCoachPlan';
