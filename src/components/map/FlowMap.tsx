@@ -387,12 +387,16 @@ export function FlowMap({
   );
 }
 
-// Fork pills ("Compare to Penny") sit on their fork line in empty canvas, never over a card: once the map has laid
-// out, each pill is measured and, if it touches a card, slid along its fork line to the nearest clear spot (or to
-// the line's left side when the line has none). Positions are in map coordinates; offsetLeft/Top/Width/Height ignore
-// the canvas zoom and the cards' glide transforms, so they match the data.
+// Fork marks sit in empty canvas, never over a card or a helper: once the map has laid out, each is measured. A
+// lane label ("Compare to Penny · running") that runs under its first card's helper moves up just clear of it. A fork
+// pill that touches anything slides along its fork line to the nearest clear spot (or to the line's left side when
+// the line has none). Positions are in map coordinates; offsetLeft/Top/Width/Height ignore the canvas zoom and the
+// glide transforms, so they match the data.
 const PILL_ID = /^fork-(\d)-pill$/;
+const LABEL_ID = /^fork-\d-label$/;
 const PILL_GAP = 4;
+/** How far a lane label may rise above where it's drawn. */
+const LABEL_RISE = 60;
 
 type Box = { x: number; y: number; w: number; h: number };
 const hits = (a: Box, b: Box) =>
@@ -400,6 +404,14 @@ const hits = (a: Box, b: Box) =>
   b.x < a.x + a.w + PILL_GAP &&
   a.y < b.y + b.h + PILL_GAP &&
   b.y < a.y + a.h + PILL_GAP;
+
+const boxes = (root: HTMLElement, selector: string): Box[] =>
+  [...root.querySelectorAll<HTMLElement>(selector)].map((el) => ({
+    x: el.offsetLeft,
+    y: el.offsetTop,
+    w: el.offsetWidth,
+    h: el.offsetHeight,
+  }));
 
 function useForkPillPlacement(
   rootRef: RefObject<HTMLDivElement | null>,
@@ -411,25 +423,39 @@ function useForkPillPlacement(
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const cards: Box[] = [
-      ...root.querySelectorAll<HTMLElement>('[data-map-card]'),
-    ].map((el) => ({
-      x: el.offsetLeft,
-      y: el.offsetTop,
-      w: el.offsetWidth,
-      h: el.offsetHeight,
-    }));
+    const cards = boxes(root, '[data-map-card]');
+    const obstacles = [...cards, ...boxes(root, '[data-map-avatar]')];
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const next: Record<string, { x: number; y: number }> = {};
+    const size = (o: MapOverlay) => {
+      const el = root.querySelector<HTMLElement>(`[data-overlay="${o.id}"]`);
+      const scale = o.scale ?? 1;
+      return el && { w: el.offsetWidth * scale, h: el.offsetHeight * scale };
+    };
+    const clearOf = (list: Box[], b: Box) => !list.some((c) => hits(b, c));
+
+    // Lane labels first: they rise above the helper on their card, and then count as taken space for the pills.
+    for (const o of overlays ?? []) {
+      const sz = LABEL_ID.test(o.id) && size(o);
+      if (!sz) continue;
+      let y = o.y;
+      while (
+        y > o.y - LABEL_RISE &&
+        !clearOf(obstacles, { x: o.x, y, w: sz.w, h: sz.h })
+      )
+        y -= 2;
+      if (y !== o.y && clearOf(obstacles, { x: o.x, y, w: sz.w, h: sz.h }))
+        next[o.id] = { x: o.x, y };
+      obstacles.push({ x: o.x, y: next[o.id]?.y ?? o.y, ...sz });
+    }
+
     for (const o of overlays ?? []) {
       const m = PILL_ID.exec(o.id);
-      const el = m && root.querySelector<HTMLElement>(`[data-overlay="${o.id}"]`);
-      if (!m || !el) continue;
-      const scale = o.scale ?? 1;
-      const w = el.offsetWidth * scale;
-      const h = el.offsetHeight * scale;
+      const sz = m && size(o);
+      if (!m || !sz) continue;
+      const { w, h } = sz;
       const clear = (x: number, y: number) =>
-        !cards.some((c) => hits({ x, y, w, h }, c));
+        clearOf(obstacles, { x, y, w, h });
       if (clear(o.x, o.y)) continue;
       const line = forkLines?.find((f) => f.fork === Number(m[1]));
       // The stretch of the fork line the pill can sit on: from where it leaves the path down to its lane.
@@ -438,7 +464,8 @@ function useForkPillPlacement(
         return n ? [n.y + (n.portDy ?? DEFAULT_PORT_DY)] : [];
       });
       const top = line ? line.y + PILL_GAP : o.y - 200;
-      const bottom = (ends?.length ? Math.max(...ends) : o.y + 200) - h - PILL_GAP;
+      const bottom =
+        (ends?.length ? Math.max(...ends) : o.y + 200) - h - PILL_GAP;
       const ys: number[] = [];
       for (let d = 0; d <= Math.max(o.y - top, bottom - o.y); d += 2) {
         if (o.y + d <= bottom) ys.push(o.y + d);
@@ -450,9 +477,11 @@ function useForkPillPlacement(
         for (const y of ys)
           if (clear(x, y)) {
             next[o.id] = { x, y };
+            obstacles.push({ x, y, w, h });
             break found;
           }
     }
+
     setAt((prev) => {
       const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
       for (const k of keys)
@@ -611,6 +640,7 @@ function MapAvatar({
   const glide = useGlide(x, y);
   return (
     <motion.div
+      data-map-avatar
       className="absolute"
       style={{ left: x, top: y, ...glide }}
       variants={variants.pop}
