@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import type { MapNode } from '@/components/map/FlowMap';
 import type { ForkNumber } from '@/components/map/forks';
@@ -24,7 +24,6 @@ import {
   mergeBranches,
   nextForkNumber,
 } from './branches';
-import { BranchesRow } from './BranchesRow';
 import {
   ForkApprovalPanel,
   type ForkApprovalItem,
@@ -97,7 +96,6 @@ const forkNumbers = (nodes: MapNode[]) => [
 export function useForkRunView({
   data: drawnData,
   drawn = [],
-  panel,
   setPanel,
   inline,
 }: {
@@ -111,7 +109,6 @@ export function useForkRunView({
 }) {
   const wf = useWorkflow();
   const createFork = useCreateFork();
-  const [focus, setFocus] = useState<BranchId | null>(null);
 
   // Branches: Original + the frame's forks, renamed / added from the store.
   const live = wf.forks.map(branchFromFork);
@@ -130,30 +127,18 @@ export function useForkRunView({
     ? wf.chosenVersion
     : undefined;
   const view =
-    hasForks && (focus || chosen)
-      ? viewBranches(data, (id) => id !== (focus ?? chosen), chosen)
+    hasForks && chosen
+      ? viewBranches(data, (id) => id !== chosen, chosen)
       : data;
 
   const nodes = view.map.nodes;
   const nodeById = (id: string) => nodes.find((n) => n.id === id);
-  const branchName = (id: BranchId) =>
-    branches.find((b) => b.id === id)?.name ?? 'Original';
   const usedForks = [
     ...forkNumbers(nodes),
     ...branches.flatMap((b) => (b.fork ? [b.fork] : [])),
   ];
-  const nextFork = nextForkNumber(usedForks);
-
-  const inspectedBranch =
-    panel?.kind === 'inspector'
-      ? (() => {
-          const n = nodeById(panel.nodeId);
-          return n ? branchOfNode(n) : undefined;
-        })()
-      : panel?.kind === 'approval'
-        ? panel.branch
-        : undefined;
-
+  const branchName = (id: BranchId) =>
+    branches.find((b) => b.id === id)?.name ?? 'Original';
   /** The steps of a branch, in map order. */
   const laneOf = (id: BranchId) => nodes.filter((n) => branchOfNode(n) === id);
 
@@ -232,7 +217,6 @@ export function useForkRunView({
           // 5.1, 5.2 and Home follow the chosen version (runView.chosenBranch).
           ensureFork(b);
           dispatch({ type: 'fork/choose', id: b.id });
-          setFocus(null);
         }}
         onApproveAll={() => {
           for (const i of items)
@@ -279,8 +263,7 @@ export function useForkRunView({
       used: usedForks,
     });
     if (!b?.fork) return;
-    // The new fork's lane is in focus, its first step open.
-    setFocus(b.id);
+    // The new fork's first step opens.
     setPanel({
       kind: 'inspector',
       nodeId: `${nodeId.replace(/-f\d$/, '')}-f${b.fork}`,
@@ -316,32 +299,8 @@ export function useForkRunView({
     return parts.join(' · ');
   };
 
-  // ---- Branches row ----
-
-  const openNewFork = () => {
-    if (panel?.kind === 'inspector')
-      return setPanel({ ...panel, forkOpen: true });
-    const branch = focus ?? inspectedBranch ?? 'original';
-    const lane = laneOf(branch);
-    const start =
-      lane.find((n) => n.id.replace(/-f\d$/, '') === 'writer') ??
-      lane.find((n) => n.agent);
-    if (start)
-      setPanel({ kind: 'inspector', nodeId: start.id, forkOpen: true });
-  };
-
-  const forkOpen = panel?.kind === 'inspector' && !!panel.forkOpen;
-  const overlay =
-    hasForks && !wf.asDrawn ? (
-      <BranchesRow
-        branches={branches}
-        selected={focus ?? inspectedBranch ?? chosen ?? 'original'}
-        chosen={chosen}
-        onSelect={(id) => setFocus((f) => (f === id ? null : id))}
-        onNewFork={nextFork ? openNewFork : undefined}
-        pendingFork={forkOpen ? nextFork : null}
-      />
-    ) : null;
+  // No Branches row: every lane shows on the map, and the chosen version is badged on it.
+  const overlay = null;
 
   return {
     data: view,

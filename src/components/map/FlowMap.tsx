@@ -27,7 +27,7 @@ const PORT_R = 3.68921;
 const MARKER = 18.446;
 const AVATAR = 36.673;
 const DASH = 3.68921;
-const DEFAULT_PORT_DY = 20.52;
+export const DEFAULT_PORT_DY = 20.52;
 // Fork lanes exist only in the docked frames (4.5, 6.5, 6.6), where Figma draws the map at 874/1282 and gives the
 // fork line, its corners and the 5px fork handles round sizes at that scale.
 const FORK_K = 874 / 1282;
