@@ -1,5 +1,11 @@
 import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import {
+  type ReactNode,
+  type RefObject,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { AgentAvatar, type AgentState } from '@/components/agents/AgentAvatar';
 import type { AgentName } from '@/components/agents/characters';
@@ -252,8 +258,12 @@ export function FlowMap({
     };
   });
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const pillAt = useForkPillPlacement(rootRef, nodes, overlays, forkLines);
+
   return (
     <div
+      ref={rootRef}
       className={className}
       style={{
         position: x === undefined ? 'relative' : 'absolute',
@@ -362,10 +372,11 @@ export function FlowMap({
       {overlays?.map((o) => (
         <div
           key={o.id}
+          data-overlay={o.id}
           className="absolute origin-top-left"
           style={{
-            left: o.x,
-            top: o.y,
+            left: pillAt[o.id]?.x ?? o.x,
+            top: pillAt[o.id]?.y ?? o.y,
             transform: o.scale ? `scale(${o.scale})` : undefined,
           }}
         >
@@ -374,6 +385,88 @@ export function FlowMap({
       ))}
     </div>
   );
+}
+
+// Fork pills ("Compare to Penny") sit on their fork line in empty canvas, never over a card: once the map has laid
+// out, each pill is measured and, if it touches a card, slid along its fork line to the nearest clear spot (or to
+// the line's left side when the line has none). Positions are in map coordinates; offsetLeft/Top/Width/Height ignore
+// the canvas zoom and the cards' glide transforms, so they match the data.
+const PILL_ID = /^fork-(\d)-pill$/;
+const PILL_GAP = 4;
+
+type Box = { x: number; y: number; w: number; h: number };
+const hits = (a: Box, b: Box) =>
+  a.x < b.x + b.w + PILL_GAP &&
+  b.x < a.x + a.w + PILL_GAP &&
+  a.y < b.y + b.h + PILL_GAP &&
+  b.y < a.y + a.h + PILL_GAP;
+
+function useForkPillPlacement(
+  rootRef: RefObject<HTMLDivElement | null>,
+  nodes: MapNode[],
+  overlays: MapOverlay[] | undefined,
+  forkLines: ForkLine[] | undefined
+) {
+  const [at, setAt] = useState<Record<string, { x: number; y: number }>>({});
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const cards: Box[] = [
+      ...root.querySelectorAll<HTMLElement>('[data-map-card]'),
+    ].map((el) => ({
+      x: el.offsetLeft,
+      y: el.offsetTop,
+      w: el.offsetWidth,
+      h: el.offsetHeight,
+    }));
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const next: Record<string, { x: number; y: number }> = {};
+    for (const o of overlays ?? []) {
+      const m = PILL_ID.exec(o.id);
+      const el = m && root.querySelector<HTMLElement>(`[data-overlay="${o.id}"]`);
+      if (!m || !el) continue;
+      const scale = o.scale ?? 1;
+      const w = el.offsetWidth * scale;
+      const h = el.offsetHeight * scale;
+      const clear = (x: number, y: number) =>
+        !cards.some((c) => hits({ x, y, w, h }, c));
+      if (clear(o.x, o.y)) continue;
+      const line = forkLines?.find((f) => f.fork === Number(m[1]));
+      // The stretch of the fork line the pill can sit on: from where it leaves the path down to its lane.
+      const ends = line?.to.flatMap((id) => {
+        const n = byId.get(id);
+        return n ? [n.y + (n.portDy ?? DEFAULT_PORT_DY)] : [];
+      });
+      const top = line ? line.y + PILL_GAP : o.y - 200;
+      const bottom = (ends?.length ? Math.max(...ends) : o.y + 200) - h - PILL_GAP;
+      const ys: number[] = [];
+      for (let d = 0; d <= Math.max(o.y - top, bottom - o.y); d += 2) {
+        if (o.y + d <= bottom) ys.push(o.y + d);
+        if (d && o.y - d >= top) ys.push(o.y - d);
+      }
+      // Same side of the line first, then the pill's right edge just left of the line.
+      const xs = line ? [o.x, line.x - w - PILL_GAP * 2] : [o.x];
+      found: for (const x of xs)
+        for (const y of ys)
+          if (clear(x, y)) {
+            next[o.id] = { x, y };
+            break found;
+          }
+    }
+    setAt((prev) => {
+      const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+      for (const k of keys)
+        if (
+          !prev[k] !== !next[k] ||
+          (prev[k] &&
+            (Math.abs(prev[k].x - next[k].x) > 0.5 ||
+              Math.abs(prev[k].y - next[k].y) > 0.5))
+        )
+          return next;
+      return prev;
+    });
+  }, [rootRef, nodes, overlays, forkLines]);
+  return at;
 }
 
 // A connector (framer-motion). Pending lines stay still; a line out of a working step carries a travelling accent
@@ -481,6 +574,7 @@ function MapCard({
   const glide = useGlide(n.x, n.y);
   return (
     <motion.div
+      data-map-card
       className="absolute"
       style={{ left: n.x, top: n.y, ...glide }}
       variants={variants.rise}
