@@ -13,7 +13,7 @@ const height = width < 768 ? 812 : 900
 const asJson = args.includes('--json')
 let ids = args.filter((a) => !a.startsWith('--'))
 const base = 'http://localhost:5173'
-const url = (id) => `${base}${id === '1.1' ? '/' : `/s/${id}`}`
+const url = (id) => `${base}${id === '1.1' ? '/' : `/s/${id}`}?speed=hold`
 const SELECTOR =
   'button:not([disabled]), a[href], [role=button], [role=tab], [role=menuitem], [role=option], [role=switch], [role=checkbox], [role=radio], input[type=checkbox], input[type=radio], summary, [draggable=true]'
 
