@@ -1,7 +1,9 @@
+import { AnimatePresence } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 import menu from '@/assets/icons/menu.svg';
 import { IconButton } from '@/components/ui/IconButton';
+import { PanelEnter, useChangedFrom } from '@/lib/motion';
 
 import { Sidebar } from './Sidebar';
 import { sidebarUi } from './sidebarUi';
@@ -19,13 +21,17 @@ export function AppShell({
   aside?: ReactNode;
   overlay?: ReactNode;
 }) {
+  // Motion: the side panel slides in when it opens while you watch and out when it closes (SidePanel).
+  const asideFrom = useChangedFrom('shell:aside', aside ? 'open' : 'closed');
   return (
     <div className="relative flex h-dvh w-full gap-2 overflow-clip bg-app p-2 max-md:gap-0 max-md:p-0">
       <Sidebar />
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip rounded-card border border-line bg-white max-md:rounded-none max-md:border-0">
         {children}
       </main>
-      {aside}
+      <PanelEnter value={asideFrom === 'closed'}>
+        <AnimatePresence>{aside}</AnimatePresence>
+      </PanelEnter>
       {overlay}
     </div>
   );

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/StatusFilter';
 import { useNewWorkflow } from '@/state/actions';
 import { cardTarget, useGo } from '@/state/nav';
+import { planMiniMap } from '@/state/planView';
 import { workflowCard } from '@/state/runView';
 import { dispatch, useAppState } from '@/state/store';
 import type { Workflow } from '@/state/types';
@@ -28,6 +29,10 @@ function homeCard(wf: Workflow): WorkflowCardData {
     meta: card.meta,
     preview: wf.preview,
     needsYou: card.needsYou,
+    // The AI Coach art is its hand raised (Figma 1.1): any other time (a duplicate, a draft, a run that doesn't need
+    // you) the card shows its own plan.
+    plan:
+      wf.preview === 'ai-coach' && !card.needsYou ? planMiniMap(wf) : undefined,
     to: cardTarget(wf),
   };
 }
@@ -75,7 +80,7 @@ export default function HomeScreen() {
       <TopBar
         left={
           <p className="text-[14px] leading-5 font-medium tracking-[-0.08px] whitespace-nowrap text-ink">
-            Lumen workspace
+            Home
           </p>
         }
       />

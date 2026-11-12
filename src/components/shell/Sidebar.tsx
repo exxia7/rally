@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import bell from '@/assets/icons/bell.svg';
@@ -23,7 +24,6 @@ import { UserAvatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { Menu, type MenuItemData } from '@/components/ui/Menu';
-import { ShortcutKey } from '@/components/ui/ShortcutKey';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { useScrollEdges } from '@/lib/useScrollEdges';
@@ -31,7 +31,7 @@ import { YOU } from '@/screens/home/workspaceData';
 import { useNewWorkflow, useOpenWorkflow } from '@/state/actions';
 import { cardTarget, idFromPath, useGo, workflowFrame } from '@/state/nav';
 import { workflowCard } from '@/state/runView';
-import { dispatch, resetDemo, useAppState } from '@/state/store';
+import { dispatch, useAppState } from '@/state/store';
 import type { Workflow } from '@/state/types';
 
 import { focusSearch, SEARCH_ID, sidebarUi, useSidebarUi } from './sidebarUi';
@@ -45,6 +45,10 @@ import { focusSearch, SEARCH_ID, sidebarUi, useSidebarUi } from './sidebarUi';
 // Sizes: ≥1280px it's docked at 240px and collapses to a 52px rail (remembered). 768–1279px it's the rail, and
 // expanding opens the full sidebar over the content. Under 768px there's no rail: the top bar's menu button opens
 // it as a slide-out drawer. Overlay and drawer close on Esc, the scrim and navigation.
+//
+// Motion (framer-motion): the docked sidebar's collapse and expand animate its width with the `layout` prop while
+// the content cross-fades; the overlay and drawer slide in from the left over a fading scrim. Under reduced motion
+// everything switches instantly.
 
 type Dot = 'running' | 'needsYou' | 'draft' | 'done';
 
@@ -76,6 +80,18 @@ const MOD =
     : 'Ctrl ';
 
 const WIDE = '(min-width: 1280px)';
+
+// CLAUDE.md "Motion": a calm ease-out for moves.
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/** The sidebar's transitions, or none under reduced motion. */
+function useSidebarTransition() {
+  const reduce = useReducedMotion();
+  return {
+    move: reduce ? { duration: 0 } : { duration: 0.28, ease: EASE },
+    fade: reduce ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' as const },
+  };
+}
 
 /** What every part of the sidebar reads: the listed workflows, the ones waiting on you, and where you are. */
 function useSidebarData() {
@@ -125,17 +141,15 @@ function useWorkspaceItems(): MenuItemData[] {
 }
 
 function useAccountItems(): MenuItemData[] {
-  const go = useGo();
   const navigate = useNavigate();
   return [
     {
       key: 'reset',
       label: 'Reset demo',
       description: 'Forget your changes and start again from Home',
-      onSelect: () => {
-        resetDemo();
-        go('1.1');
-      },
+      // An uncarried load of Home reseeds the store from 1.1's scene (App.tsx `Seeded`), which is what a reset is.
+      // Resetting the store first would let a run screen follow the new store to its beat's frame before it unmounts.
+      onSelect: () => navigate('/'),
     },
     {
       key: 'screens',
@@ -195,69 +209,93 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  const t = useSidebarTransition();
   const overlay = !wide && <SidebarOverlay open={open} phone={phone} />;
   if (phone) return overlay;
   const docked = wide && !collapsed;
   return (
     <>
-      <aside
+      <motion.aside
+        layout
+        transition={t.move}
         aria-label="Sidebar"
+        // The radius in style, so framer-motion keeps it round while it scales the width.
+        style={{ borderRadius: 12 }}
         className={clsx(
-          'relative z-30 flex h-full shrink-0 rounded-card border border-line bg-white',
+          'relative z-30 flex h-full shrink-0 border border-line bg-white',
           docked ? 'w-[240px]' : 'w-[52px]'
         )}
       >
-        {docked ? (
-          <SidebarPanel
-            mode="docked"
-            onClose={() => sidebarUi.setCollapsed(true)}
-          />
-        ) : (
-          <SidebarRail
-            onExpand={() =>
-              wide ? sidebarUi.setCollapsed(false) : sidebarUi.setOpen(true)
-            }
-          />
-        )}
-      </aside>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={docked ? 'panel' : 'rail'}
+            layout="position"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={t.fade}
+            className="flex h-full w-full min-w-0"
+          >
+            {docked ? (
+              <SidebarPanel
+                mode="docked"
+                onClose={() => sidebarUi.setCollapsed(true)}
+              />
+            ) : (
+              <SidebarRail
+                onExpand={() =>
+                  wide ? sidebarUi.setCollapsed(false) : sidebarUi.setOpen(true)
+                }
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.aside>
       {overlay}
     </>
   );
 }
 
-/** The full sidebar over the content: from the rail under 1280px, or the phone drawer. Slides in from the left. */
+/** The full sidebar over the content: from the rail under 1280px, or the phone drawer. Slides in from the left
+ *  over a scrim; mounted only while open. */
 function SidebarOverlay({ open, phone }: { open: boolean; phone: boolean }) {
+  const t = useSidebarTransition();
   const close = () => sidebarUi.setOpen(false);
   return (
-    <div
-      className={clsx('fixed inset-0 z-50', !open && 'pointer-events-none')}
-      inert={!open}
-    >
-      <div
-        aria-hidden
-        onClick={close}
-        className={clsx(
-          'absolute inset-0 bg-[rgba(16,18,24,0.24)] transition-opacity duration-200 ease-out motion-reduce:transition-none',
-          open ? 'opacity-100' : 'opacity-0'
-        )}
-      />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label="Sidebar"
-        className={clsx(
-          'absolute flex bg-white shadow-[0px_8px_32px_0px_rgba(16,18,24,0.16)] transition-[translate,visibility] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
-          phone
-            ? 'inset-y-0 left-0 w-[280px] max-w-[calc(100vw-48px)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
-            : 'inset-y-2 left-2 w-[240px] rounded-card border border-line',
-          open
-            ? 'visible translate-x-0'
-            : 'invisible -translate-x-[calc(100%+16px)]'
-        )}
-      >
-        <SidebarPanel mode={phone ? 'drawer' : 'overlay'} onClose={close} />
-      </aside>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="scrim"
+          aria-hidden
+          onClick={close}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={t.fade}
+          className="fixed inset-0 z-50 bg-[rgba(16,18,24,0.24)]"
+        />
+      )}
+      {open && (
+        <motion.aside
+          key="sidebar"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sidebar"
+          initial={{ x: 'calc(-100% - 16px)' }}
+          animate={{ x: 0 }}
+          exit={{ x: 'calc(-100% - 16px)' }}
+          transition={t.move}
+          className={clsx(
+            'fixed z-50 flex bg-white shadow-[0px_8px_32px_0px_rgba(16,18,24,0.16)]',
+            phone
+              ? 'inset-y-0 left-0 w-[280px] max-w-[calc(100vw-48px)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
+              : 'inset-y-2 left-2 w-[240px] rounded-card border border-line'
+          )}
+        >
+          <SidebarPanel mode={phone ? 'drawer' : 'overlay'} onClose={close} />
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -351,9 +389,6 @@ function SidebarPanel({
             autoComplete="off"
             className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] tracking-[-0.08px] text-ink outline-none placeholder:text-muted-2"
           />
-          {!query && mode !== 'drawer' && (
-            <ShortcutKey>{`${MOD}K`}</ShortcutKey>
-          )}
         </label>
       </div>
 
@@ -470,14 +505,14 @@ function ScrollFades({ top, bottom }: { top: boolean; bottom: boolean }) {
       <div
         aria-hidden
         className={clsx(
-          'pointer-events-none absolute inset-x-0 top-0 h-4 bg-linear-to-b from-white to-transparent transition-opacity duration-150',
+          'pointer-events-none absolute inset-x-0 top-0 h-4 bg-linear-to-b from-white to-transparent',
           top ? 'opacity-100' : 'opacity-0'
         )}
       />
       <div
         aria-hidden
         className={clsx(
-          'pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-linear-to-t from-white to-transparent transition-opacity duration-150',
+          'pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-linear-to-t from-white to-transparent',
           bottom ? 'opacity-100' : 'opacity-0'
         )}
       />
