@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import arrowRightWhite from '@/assets/icons/arrow-right-white.svg';
 import { FixStep } from '@/components/nav/FixStep';
@@ -8,6 +8,7 @@ import { SidePanel } from '@/components/panels/SidePanel';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { RadioCard } from '@/components/ui/RadioCard';
+import { reducedMotion } from '@/lib/motion';
 
 import { HandoffModal } from './DetailModals';
 
@@ -59,6 +60,7 @@ export function HandRaisePanel({
   onConfirm,
   className,
   enter,
+  nudge,
 }: {
   data: HandRaiseData;
   onClose: () => void;
@@ -66,8 +68,15 @@ export function HandRaisePanel({
   className?: string;
   /** Motion: slide in on mount (a hand goes up while you watch); see SidePanel. */
   enter?: boolean;
+  /**
+   * Bumped when you ask for the panel again (Resume, the card with the raised hand): it goes to the first fix step
+   * you haven't moved past, focuses its choice and gives the choices a short pulse, so the click never reads as dead.
+   */
+  nudge?: number;
 }) {
   const [step, setStep] = useState(0);
+  // The furthest step you've reached: the steps before it are answered.
+  const [reached, setReached] = useState(0);
   const [choices, setChoices] = useState<number[]>(() =>
     data.steps.map(() => 0)
   );
@@ -79,8 +88,33 @@ export function HandRaisePanel({
   const body = useRef<HTMLDivElement>(null);
   const goTo = (i: number) => {
     setStep(i);
+    setReached((r) => Math.max(r, i));
     body.current?.scrollTo({ top: 0 });
   };
+  const choicesRef = useRef<HTMLDivElement>(null);
+  const [nudged, setNudged] = useState(0);
+  if (nudge && nudge !== nudged) {
+    setNudged(nudge);
+    if (step !== reached) goTo(reached);
+  }
+  useEffect(() => {
+    if (!nudged) return;
+    const group = choicesRef.current;
+    if (!group) return;
+    group
+      .querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')
+      ?.focus({ preventScroll: true });
+    group.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!reducedMotion())
+      group.animate(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.02)' },
+          { transform: 'scale(1)' },
+        ],
+        { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+      );
+  }, [nudged]);
 
   return (
     <SidePanel
@@ -154,6 +188,7 @@ export function HandRaisePanel({
         What should we do?
       </p>
       <div
+        ref={choicesRef}
         role="radiogroup"
         aria-label="What should we do?"
         className="flex w-full shrink-0 flex-col items-start gap-2 pt-3"

@@ -143,7 +143,6 @@ export function RunSidePanel({
   };
 
   // A decision's "Change" opens the Chat tab with "Change: <decision> → " typed; sending it updates the entry.
-  const [log, setLog] = useState(decisions);
   const [changing, setChanging] = useState<Decision | null>(null);
   const changeDecision = (d: Decision) => {
     setChanging(d);
@@ -159,24 +158,9 @@ export function RunSidePanel({
     if (!to) return null;
     const old = changing.title;
     // The store records it in decisions[] (`decision/change`); a date, time, price or budget in it becomes the
-    // launch fact the steps that haven't run read. The log here updates at once.
+    // launch fact the steps that haven't run read. The log is the store's (runView), so it shows the change as
+    // yours at once, with the helpers' current names.
     dispatch({ type: 'decision/change', id: changing.id, from: old, title: to });
-    const time = new Date()
-      .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-      .toLowerCase();
-    setLog((all) =>
-      all.map((d) =>
-        d.id === changing.id
-          ? {
-              ...d,
-              title: to,
-              basis: `You changed it from “${old}”`,
-              tag: 'Changed by you',
-              time,
-            }
-          : d
-      )
-    );
     setChanging(null);
     return `Updated: ${to}. It’s in the decision log, and the helpers whose steps haven’t started will use it.`;
   };
@@ -220,7 +204,7 @@ export function RunSidePanel({
       )}
       {tab === 'decisions' && (
         <DecisionLog
-          decisions={log}
+          decisions={decisions}
           more={decisionsMore}
           onChange={changeDecision}
           onFork={onDecisionFork}

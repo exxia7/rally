@@ -5,6 +5,7 @@ import {
   useState,
   type FormEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 
 import arrowLeftDark from '@/assets/icons/arrow-left-dark.svg';
@@ -72,6 +73,95 @@ const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
   { initial: 'T', name: 'Tonia' },
 ];
 
+/**
+ * Not in Figma: the nav follows the scroll. An IntersectionObserver keeps which sections are on screen in `root`; the
+ * current one is the lowest whose top has passed a line 30% down the view (the left column's first on a tie). Over
+ * the last screenful of scroll the line slides to the bottom, so the short sections at the end still get their turn;
+ * at the very top it's the first section (General). `pinned` holds the section you clicked (or the one the page
+ * opened on) while the page scrolls there; the next scroll you make yourself lets the spy take over.
+ */
+function useScrollSpy(
+  root: RefObject<HTMLElement | null>,
+  sections: { id: Section; el: () => HTMLElement | null }[],
+  pinned: RefObject<boolean>,
+  onActive: (s: Section) => void
+) {
+  const latest = useRef({ sections, onActive });
+  useEffect(() => {
+    latest.current = { sections, onActive };
+  });
+  useEffect(() => {
+    const scroller = root.current;
+    if (!scroller || typeof IntersectionObserver === 'undefined') return;
+    const els = latest.current.sections.flatMap(({ id, el }) => {
+      const e = el();
+      return e ? [{ id, el: e }] : [];
+    });
+    const idOf = new Map(els.map((x) => [x.el, x.id]));
+    const onScreen = new Set<HTMLElement>();
+    const before = (a: HTMLElement, b: HTMLElement) =>
+      !!(b.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_PRECEDING);
+    const pick = () => {
+      if (pinned.current || !onScreen.size) return;
+      const view = scroller.getBoundingClientRect();
+      const room =
+        scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop;
+      const tail = scroller.clientHeight * 0.7;
+      const line =
+        view.top +
+        scroller.clientHeight *
+          (0.3 + 0.7 * Math.max(0, Math.min(1, 1 - room / tail)));
+      let best: HTMLElement | undefined;
+      let bestTop = -Infinity;
+      for (const e of onScreen) {
+        const top = Math.round(e.getBoundingClientRect().top);
+        if (scroller.scrollTop <= 0) {
+          if (!best || before(e, best)) best = e;
+        } else if (
+          top <= line &&
+          (top > bestTop || (top === bestTop && best && before(e, best)))
+        ) {
+          best = e;
+          bestTop = top;
+        }
+      }
+      const id = best && idOf.get(best);
+      if (id) latest.current.onActive(id);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const en of entries) {
+          const e = en.target as HTMLElement;
+          if (en.isIntersecting) onScreen.add(e);
+          else onScreen.delete(e);
+        }
+        pick();
+      },
+      { root: scroller }
+    );
+    for (const { el } of els) io.observe(el);
+    // Only a scroll you make yourself (wheel, touch, keys, the scrollbar) unpins; then each scroll re-picks.
+    const unpin = () => {
+      pinned.current = false;
+    };
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(pick);
+    };
+    const intents = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+    for (const t of intents)
+      scroller.addEventListener(t, unpin, { passive: true });
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(frame);
+      for (const t of intents) scroller.removeEventListener(t, unpin);
+      scroller.removeEventListener('scroll', onScroll);
+    };
+  }, [root, pinned]);
+}
+
 // Figma 1.2 "Workspace settings" (2362:23330). Button widths are the Figma instance widths: Figma's Inter
 // sets these labels ~1px wider than Chrome, so hugging them would shift every right-aligned button.
 export default function WorkspaceSettingsScreen() {
@@ -85,12 +175,29 @@ export default function WorkspaceSettingsScreen() {
     setShownFor(location.state);
     if (asked) setSection(asked);
   }
+  // The section you picked (or the page opened on) stays selected until you scroll yourself (useScrollSpy).
+  const pinned = useRef(true);
   useEffect(() => {
-    if (asked)
-      document
-        .getElementById(`settings-${asked}`)
-        ?.scrollIntoView({ block: 'start' });
+    if (!asked) return;
+    pinned.current = true;
+    document
+      .getElementById(`settings-${asked}`)
+      ?.scrollIntoView({ block: 'start' });
   }, [asked, location.state]);
+  const scroller = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  useScrollSpy(
+    scroller,
+    NAV.map(({ value }) => ({
+      id: value,
+      el: () =>
+        value === 'general'
+          ? heading.current
+          : document.getElementById(`settings-${value}`),
+    })),
+    pinned,
+    setSection
+  );
   // Presets, the default and connected tools are the workspace's in the store: 2.7, 2.8, the plan's cards and 5.1
   // read the same ones (src/state/permissions.ts).
   const app = useAppState();
@@ -119,6 +226,7 @@ export default function WorkspaceSettingsScreen() {
   const upload = useRef<HTMLInputElement>(null);
 
   const goTo = (s: Section) => {
+    pinned.current = true;
     setSection(s);
     document
       .getElementById(`settings-${s}`)
@@ -142,7 +250,10 @@ export default function WorkspaceSettingsScreen() {
           value={section}
           onChange={goTo}
         />
-        <div className="flex h-full min-h-px min-w-px flex-1 flex-col items-start overflow-y-auto bg-white max-md:w-full">
+        <div
+          ref={scroller}
+          className="flex h-full min-h-px min-w-px flex-1 flex-col items-start overflow-y-auto bg-white max-md:w-full"
+        >
           <div
             id="settings-general"
             className="flex w-[920px] max-w-full shrink-0 flex-col items-start p-10 max-md:px-4 max-md:py-6"
@@ -158,7 +269,10 @@ export default function WorkspaceSettingsScreen() {
                 </Button>
               </div>
             )}
-            <h1 className="text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
+            <h1
+              ref={heading}
+              className="text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7"
+            >
               Workspace settings
             </h1>
             <p className="w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] text-muted">
