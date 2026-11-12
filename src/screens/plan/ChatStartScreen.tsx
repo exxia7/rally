@@ -206,7 +206,7 @@ export default function ChatStartScreen() {
             </Thread>
           </div>
         </div>
-        <div className="flex w-[620px] max-w-full shrink-0 flex-col items-start pt-3 pb-8 max-md:px-3 max-md:pb-3">
+        <div className="flex w-[620px] max-w-full shrink-0 flex-col items-start pt-3 pb-8 max-md:px-4 max-md:pb-3">
           <PlanComposer
             onSend={send}
             attachOpen={attachOpen}

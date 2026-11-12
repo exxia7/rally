@@ -205,7 +205,8 @@ try {
   await page.getByRole('button', { name: 'Done', exact: true }).click()
   await waitPath('/')
   await page.getByText('Your workflows').waitFor()
-  const card = page.getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+  // The Home card, not the sidebar's entry for the same workflow.
+  const card = page.locator('main').getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
   const cardText = await card.first().innerText()
   check('Home card shows Done · Launched Mar 14', /Done/.test(cardText) && cardText.includes('Launched Mar 14'), cardText.replace(/\n/g, ' · '))
   check('Home card names the chosen version', cardText.includes('Post at noon'))

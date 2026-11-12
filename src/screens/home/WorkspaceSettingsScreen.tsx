@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type FormEvent,
@@ -30,6 +31,8 @@ import { Progress } from '@/components/ui/Progress';
 import { screenPath } from '@/screens/registry';
 import { PresetEditor } from '@/components/panels/PresetEditor';
 import { useConnectTool } from '@/components/planning/useConnectTool';
+import { useLocation } from 'react-router-dom';
+
 import { useGo } from '@/state/nav';
 import { presetAdLimit, presetCheck } from '@/state/permissions';
 import { dispatch, useAppState } from '@/state/store';
@@ -73,7 +76,21 @@ const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
 // sets these labels ~1px wider than Chrome, so hugging them would shift every right-aligned button.
 export default function WorkspaceSettingsScreen() {
   const go = useGo();
-  const [section, setSection] = useState<Section>('presets');
+  const location = useLocation();
+  // The sidebar's workspace menu opens a section (Connected tools, Permission presets); otherwise as drawn.
+  const asked = (location.state as { section?: Section } | null)?.section;
+  const [section, setSection] = useState<Section>(asked ?? 'presets');
+  const [shownFor, setShownFor] = useState(location.state);
+  if (shownFor !== location.state) {
+    setShownFor(location.state);
+    if (asked) setSection(asked);
+  }
+  useEffect(() => {
+    if (asked)
+      document
+        .getElementById(`settings-${asked}`)
+        ?.scrollIntoView({ block: 'start' });
+  }, [asked, location.state]);
   // Presets, the default and connected tools are the workspace's in the store: 2.7, 2.8, the plan's cards and 5.1
   // read the same ones (src/state/permissions.ts).
   const app = useAppState();
