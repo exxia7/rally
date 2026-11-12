@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useParams } from 'react-router-dom';
 
 import arrowRightWhite from '@/assets/icons/arrow-right-white.svg';
 import {
@@ -30,6 +29,7 @@ import { useGo } from '@/state/nav';
 import { runFrame } from '@/state/runView';
 import { dispatch, useAppState, useWorkflow } from '@/state/store';
 import type { Brief } from '@/state/types';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['2.2', '2.2-attach'];
@@ -74,7 +74,7 @@ const isDesktop = () =>
 // conversation, still.
 export default function ChatStartScreen() {
   const go = useGo();
-  const { id } = useParams();
+  const id = useScreenId();
   const [attachOpen, setAttachOpen] = useState(id === '2.2-attach');
   const [panelOpen, setPanelOpen] = useState(isDesktop);
   const [view, setView] = useState<WorkflowView>('planning');

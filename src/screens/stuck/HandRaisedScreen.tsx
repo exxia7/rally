@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { AgentAvatar } from '@/components/agents/AgentAvatar';
 import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
@@ -8,6 +7,7 @@ import { useGo } from '@/state/nav';
 import { rerunConfirm } from '@/state/runView';
 import { dispatch, store } from '@/state/store';
 import { useLiveRun } from '@/state/useRun';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['4.1', '4.1b'];
@@ -17,7 +17,7 @@ export const screenId = ['4.1', '4.1b'];
 // decision card's Rerun, opens 4.1b "Rerun confirm" (2362:27019), a modal listing the helpers that rerun too.
 // Confirming starts the rerun (4.2).
 export default function HandRaisedScreen() {
-  const { id = '4.1' } = useParams();
+  const id = useScreenId() ?? '4.1';
   const go = useGo();
   const { wf, layout } = useLiveRun(id, { confirm: id === '4.1b' });
   const pending = wf.handRaises.find((h) => h.id === 'missing');

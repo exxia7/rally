@@ -1,8 +1,8 @@
-import { useParams } from 'react-router-dom';
 
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
 
 import { useLiveRun } from '@/state/useRun';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['4.2', '4.2-tasks'];
@@ -11,7 +11,7 @@ export const screenId = ['4.2', '4.2-tasks'];
 // doesn't touch are reused; and 4.2-tasks (2362:27165) with the anchored Tasks overlay (a Close link, no bar) open
 // from the "Tasks · Rerunning" chip. Writer is the next to raise its hand (4.3, price mismatch).
 export default function RerunScreen() {
-  const { id = '4.2' } = useParams();
+  const id = useScreenId() ?? '4.2';
   const { layout } = useLiveRun(id);
   // Writer raises its hand on its own when the Strategist's new card lands (the timeline's next beat).
   return (

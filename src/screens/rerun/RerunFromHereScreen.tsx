@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { AgentAvatar } from '@/components/agents/AgentAvatar';
 import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
@@ -7,6 +6,7 @@ import { RunScreenLayout } from '@/components/run/RunScreenLayout';
 import { useGo } from '@/state/nav';
 
 import { COPY_DONE_RUN, RERUN_NOTE_DEFAULT } from './data';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['6.1', '6.2'];
@@ -15,7 +15,7 @@ export const screenId = ['6.1', '6.2'];
 // Fork from here (→ 6.4) and Rerun from here. Rerun opens 6.2 "Rerun from here" (2362:25860): the rerun confirm with
 // an optional note for what Writer should change. Confirming goes to 6.3 Rerunning with that note.
 export default function RerunFromHereScreen() {
-  const { id } = useParams();
+  const id = useScreenId();
   const go = useGo();
   const [confirm, setConfirm] = useState(id === '6.2');
   return (

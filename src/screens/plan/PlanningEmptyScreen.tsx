@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import {
@@ -12,6 +11,7 @@ import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { useGo } from '@/state/nav';
 import { runFrame } from '@/state/runView';
 import { dispatch, useWorkflow } from '@/state/store';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['2.1', '2.1-attach'];
@@ -38,7 +38,7 @@ const STARTERS: { label: string; brief: string }[] = [
 // the attach menu: Upload files opens the file picker; links and skills are added as attachments.
 export default function PlanningEmptyScreen() {
   const go = useGo();
-  const { id } = useParams();
+  const id = useScreenId();
   const wf = useWorkflow();
   const [brief, setBrief] = useState(wf.brief.what);
   const [attachOpen, setAttachOpen] = useState(id === '2.1-attach');

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import type { OutputItem } from '@/components/map/OutputRow';
 import type { PanelTab } from '@/components/panels/PanelTabs';
@@ -55,6 +55,7 @@ import {
   planNodes,
 } from './aiCoachPlan';
 import { COMMUNITY, communityChat, DISCORD_OUTPUT } from './communityPlan';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = [
@@ -110,7 +111,7 @@ const initialDrawer = (id: string, state: unknown): string | null => {
 export default function TeamMapScreen() {
   const go = useGo();
   const location = useLocation();
-  const { id = '2.3' } = useParams();
+  const id = useScreenId() ?? '2.3';
   const s = useAppState();
   const wf = s.workflows[s.activeId];
   const team = wf.helpers;

@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 import { type DragEvent, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import lockDark from '@/assets/icons/lock-dark.svg';
 import type { OutputItem } from '@/components/map/OutputRow';
@@ -30,6 +29,7 @@ import { useWorkflowPermissions } from '@/state/usePermissions';
 
 import { AI_COACH_TEAM, type Helper, helperCard } from './aiCoachPlan';
 import { COMMUNITY } from './communityPlan';
+import { useScreenId } from '@/screens/screenId';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
 export const screenId = ['2.6', '2.7'];
@@ -145,7 +145,7 @@ const isDesktop = () =>
 
 export default function PlanSandboxScreen() {
   const go = useGo();
-  const { id = '2.6' } = useParams();
+  const id = useScreenId() ?? '2.6';
   const wf = useWorkflow();
   const team = wf.helpers;
   const live = (h: string) => !!team[h] && !wf.removed.includes(h);

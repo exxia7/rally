@@ -18,6 +18,7 @@ import {
 } from 'react-router-dom';
 
 import { frameOfPage, SCREENS, screenPath } from '@/screens/registry';
+import { ScreenIdContext } from '@/screens/screenId';
 import { resumeTarget } from '@/state/nav';
 import { sceneFor } from '@/state/scenes';
 import { dispatch, store, useAppState } from '@/state/store';
@@ -100,7 +101,13 @@ for (const mod of Object.values(modules)) {
 
 function Screen({ id }: { id: string }) {
   const Component = byId.get(id);
-  if (Component) return <Component />;
+  // Modules that render several frames read which one through useScreenId().
+  if (Component)
+    return (
+      <ScreenIdContext.Provider value={id}>
+        <Component />
+      </ScreenIdContext.Provider>
+    );
   return <Navigate to="/" replace />;
 }
 
