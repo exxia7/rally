@@ -18,7 +18,8 @@ const ids = process.argv.slice(2).length
   : fs.readdirSync(refDir).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4)).sort()
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })
+// Reduced motion: every animation is off, so a frame renders exactly its Figma state.
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce' })
 const rows = []
 for (const id of ids) {
   const refPath = path.join(refDir, `${id}.png`)

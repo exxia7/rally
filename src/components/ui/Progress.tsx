@@ -6,10 +6,13 @@ export function Progress({
   value,
   height = 3.689,
   fillColor,
+  fromValue,
   className,
 }: {
   /** 0–100 */
   value: number;
+  /** The value it showed before a change the viewer saw: the fill grows from there (motion only). */
+  fromValue?: number;
   height?: number;
   /** Fill colour other than the accent (a fork's progress takes its Branch/Fork colour). */
   fillColor?: string;
@@ -26,8 +29,16 @@ export function Progress({
       style={{ height }}
     >
       <div
-        className="h-full rounded-full bg-accent"
-        style={{ width: `${pct}%`, backgroundColor: fillColor }}
+        key={fromValue === undefined ? 'fill' : `from-${fromValue}`}
+        className={clsx(
+          'h-full rounded-full bg-accent',
+          fromValue !== undefined && 'pf-grow'
+        )}
+        style={{
+          width: `${pct}%`,
+          backgroundColor: fillColor,
+          ['--pf-from' as string]: `${Math.max(0, Math.min(100, fromValue ?? pct))}%`,
+        }}
       />
     </div>
   );

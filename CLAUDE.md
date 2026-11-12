@@ -20,9 +20,30 @@ Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
 - `src/assets/icons`, `src/assets/art`: SVG/PNG downloaded from Figma. Never reference figma.com URLs at runtime.
 - `design/ref/<id>.png`: Figma render of each frame (1440×900). `design/notes.md`: notes from the canvas.
 
-## Pixel-exact rules
+## The bar: Figma's sizing and spacing, built like a real app
 
-The bar is "looks exactly like Figma". Verify each screen with the diff harness, not by eye alone:
+Updated by the user after the first build. **Figma's sizing and spacing are the spec**: paddings, gaps, margins,
+control heights, card and panel widths, radii, type sizes and colours come from the design and its tokens. **Pixel
+exactness is not the goal**: don't chase antialiasing or sub-pixel text widths, and don't add hacks to match a
+render (fractional pinned widths like `w-[148.031px]`, text-box rounding tricks, hand-tuned 0.25px offsets).
+Where an earlier hack hurts real behaviour, replace it with the system value.
+
+Build it the way a developer would ship it:
+- Anything that can outgrow its box scrolls in its own container (`min-h-0` + `overflow-y-auto` on the flex child),
+  with headers, tab rows, composers and footers staying put (sticky or outside the scroll area) and the last item
+  clearing them. A scroll area that cuts content shows it's scrollable (a fade or a shadow at the edge), never a
+  hard slice with a dead band under it.
+- No fixed heights that clip content; heights hug content unless the design is a fixed-size control.
+- Long names, long copy, many items and empty states all lay out cleanly; text wraps or truncates on purpose.
+- Menus, popovers and modals stay inside the viewport and scroll inside themselves when tall.
+
+The pixel tools below are still useful as a **visual check** (use the diff images to spot spacing or sizing that
+drifted from Figma), but a few percent of difference is fine and a frame doesn't have to stay identical to the
+baseline.
+
+## Pixel tools (visual check only)
+
+Verify each screen with the diff harness, not by eye alone:
 
 1. Dev server: `npm run dev` (port 5173, already running in most sessions; check with `curl -s localhost:5173`).
 2. Reference: `get_screenshot` on the frame node with `maxDimension: 1440`, then
@@ -171,3 +192,27 @@ pixel-exact at 1440×900, so:
 - Check: `node scripts/responsive-check.mjs <id>` renders 375/768/1024/1280/1920, saves
   `design/out/<id>@<w>.png` and flags horizontal overflow. Every screen must pass with no overflow, and the
   375 and 768 renders must look deliberate: nothing clipped, overlapping or unreachable.
+
+## Motion
+
+Figma has no motion spec; every animation is listed in `design/non-figma-ui.md` ("Motion" rows). Keep it calm:
+one-shot transitions 150–600ms with ease-out (`cubic-bezier(0.22, 1, 0.36, 1)` for moves), loops slow (1.4–2.8s)
+and subtle.
+
+- Keyframes and the `pf-*` classes live at the end of `src/index.css`, all inside
+  `@media (prefers-reduced-motion: no-preference)`: under reduced motion nothing animates and the frame renders as
+  drawn (motion-only extras such as the status ellipsis are hidden). Animate only `transform`, `opacity` and
+  `stroke-dashoffset` (plus the SVG `d`/`cx`/`cy` re-route transition and the Tasks bar's tiny width grow); never
+  anything that moves layout. Use `will-change` only if a profile asks for it.
+- Loops (thinking): `pf-breathe` (working avatar), `pf-dots` (its ··· badge), `pf-live-dot` + `pf-ellipsis`
+  (working status line), `pf-glow` (working card halo), `pf-flow` (accent pulse along a line out of a working step,
+  fork colour on a fork lane). Loops must start from the drawn look.
+- One-shots: `pf-draw` (a handoff completes: the line draws source → target), `pf-pop` (handoff check, a helper
+  appearing), `pf-crossfade` (card state change), `pf-rise` / `pf-fade` (new card, line, chat message),
+  `pf-tick` + `pf-grow` (Tasks chip count and bar), `pf-tray-in` (helper into the done tray), `pf-bounce` +
+  `pf-ring` (hand raised), `pf-attn` (status pill turns "Needs you"), `pf-slide-in` (hand-raise panel).
+- One-shots play only for a change the viewer saw, never on a direct load's first paint. `src/lib/motion.ts` holds
+  the memory (outside React, so it survives the route swaps between beats): `useChangedFrom(key, value)` for a state
+  change, `useAdded(scope, ids)` for what appeared in a map or tray, `useGlide(ref, x, y)` for FLIP moves of
+  free-placed cards (WAAPI transform, skipped under reduced motion). Key memory by workflow (`map:<activeId>`).
+- Checks: the pixel scripts render with `reducedMotion: 'reduce'`, so they see the still frame.

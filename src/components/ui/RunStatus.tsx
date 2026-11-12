@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import { useChangedFrom } from '@/lib/motion';
+
 // Figma "Run status" (2362:28658): run state in the top bar. 28px pill with a coloured dot, soft fill, no border,
 // so it never reads as a button. Under 1280px it shrinks to a 28px dot; the label stays for screen readers
 // (sr-only) and as a tooltip.
@@ -28,12 +30,16 @@ export function RunStatus({
   label?: string;
   className?: string;
 }) {
+  // Motion: the pill pulses once when the run comes to need you while you watch (one top bar at a time, so one key).
+  const from = useChangedFrom('run-status', state);
   return (
     <div
+      key={state === 'waiting' && from !== undefined ? 'needs-you' : 'pill'}
       role="status"
       title={label ?? defaults[state]}
       className={clsx(
         'flex h-7 shrink-0 items-center gap-1.5 rounded-[14px] bg-chip px-2.5 max-xl:w-7 max-xl:justify-center max-xl:px-0',
+        state === 'waiting' && from !== undefined && 'pf-attn',
         className
       )}
     >

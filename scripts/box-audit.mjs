@@ -122,7 +122,8 @@ const meta = loadBoxes()
 
 // ---------- DOM boxes ----------
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })
+// Reduced motion: every animation is off, so a frame renders exactly its Figma state.
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce' })
 await page.goto(`http://localhost:5173${id === '1.1' ? '/' : `/s/${id}`}`, { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(150)

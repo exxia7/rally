@@ -1,5 +1,7 @@
 import clsx from 'clsx';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Ref } from 'react';
+
+import { useChangedFrom } from '@/lib/motion';
 
 import { FittedArt } from './Character';
 import { AGENT_ART, type AgentName } from './characters';
@@ -42,18 +44,29 @@ export function AgentAvatar({
   state = 'idle',
   size = 30,
   badgeText,
+  motionKey,
+  appeared,
+  ref,
   className,
   style,
 }: {
+  /** It just appeared while you watched (motion): a raised hand still bounces and rings. */
+  appeared?: boolean;
   agent: AgentName;
   state?: AgentState;
   size?: number;
   /** Font size / line height of the ··· and z glyphs, when an instance overrides them (Done agent: 10/14). */
   badgeText?: { size: number; leading: number };
+  /** Remembers the state across beats, so a hand raised while you watch bounces once (src/lib/motion.ts). */
+  motionKey?: string;
+  ref?: Ref<HTMLDivElement>;
   className?: string;
   style?: CSSProperties;
 }) {
   const k = size / 30;
+  const changedFrom = useChangedFrom(motionKey, state);
+  const raised =
+    state === 'hand-raised' && (changedFrom !== undefined || !!appeared);
   const glyph: CSSProperties = {
     fontSize: badgeText?.size ?? 6.75 * k,
     lineHeight: `${badgeText?.leading ?? 6.75 * k}px`,
@@ -67,6 +80,7 @@ export function AgentAvatar({
   };
   return (
     <div
+      ref={ref}
       className={clsx('relative shrink-0', className)}
       style={{ width: size, height: size, ...style }}
     >
@@ -75,7 +89,10 @@ export function AgentAvatar({
         size={size}
         className={clsx(
           'absolute! inset-0',
-          state === 'waiting' && 'opacity-45'
+          state === 'waiting' && 'opacity-45',
+          // Thinking: a working helper breathes; a hand raised while you watch bounces once.
+          state === 'working' && 'pf-breathe',
+          raised && 'pf-bounce'
         )}
       />
       {(state === 'working' || state === 'done') && (
@@ -84,9 +101,29 @@ export function AgentAvatar({
           style={state === 'done' ? { ...pill, width: 11.25 * k } : pill}
         >
           <p className="font-bold whitespace-nowrap text-ink-2" style={glyph}>
-            {state === 'done' ? 'z' : '···'}
+            {state === 'done' ? (
+              'z'
+            ) : (
+              // Thinking: with motion the dots pulse in turn (three spans); still, the drawn "···" glyph run.
+              <>
+                <span className="pf-still">···</span>
+                <span aria-hidden className="pf-dots pf-moving">
+                  <span>·</span>
+                  <span>·</span>
+                  <span>·</span>
+                </span>
+              </>
+            )}
           </p>
         </div>
+      )}
+      {raised && (
+        // Its "!" sends out a ring three times.
+        <span
+          aria-hidden
+          className="pf-ring absolute top-0 right-0"
+          style={{ width: 11.25 * k, height: 11.25 * k }}
+        />
       )}
       {state === 'hand-raised' && (
         <div

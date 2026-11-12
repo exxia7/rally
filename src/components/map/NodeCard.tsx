@@ -1,11 +1,18 @@
 import clsx from 'clsx';
-import type { CSSProperties, KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type Ref,
+} from 'react';
 
 import diamondLg from '@/assets/icons/diamond-lg.svg';
 import diamond from '@/assets/icons/diamond.svg';
 import liveDot from '@/assets/icons/live-dot.svg';
 import lock from '@/assets/icons/lock-amber.svg';
 import { Button } from '@/components/ui/Button';
+import { reducedMotion, useChangedFrom } from '@/lib/motion';
 
 import { FORK_COLOR, type ForkNumber } from './forks';
 import { type NodeKindName, NodeKindTile } from './NodeKind';
@@ -113,6 +120,40 @@ function Flag({ label, tone = 'neutral', clip }: NodeFlag) {
   );
 }
 
+// Thinking: a working step's status walks through believable sub-steps (then back to its own text). Counts the store
+// derives ("Writing 3 of 5 pieces") never change, so only count-free statuses have sub-steps.
+const SUBSTEPS: Record<string, string[]> = {
+  'Making the plan': ['Setting the timeline', 'Planning the budget'],
+  'Comparing apps': ['Reading competitor pages', 'Comparing pricing'],
+  'Reading the survey': ['Sorting the answers', 'Finding what people want'],
+  'Deciding who it’s for': ['Weighing the research', 'Picking the audience'],
+  'Drafting the post': ['Reading the launch copy', 'Matching the server’s tone'],
+  Scheduling: ['Checking the launch date', 'Lining up the posts'],
+  Redoing: ['Rereading the handoff', 'Redoing the step'],
+  Working: ['Reading the handoff', 'Working on it'],
+};
+const SUBSTEP_MS = 2600;
+
+function useSubstep(text: string, live: boolean) {
+  const [at, setAt] = useState({ text, i: 0, ticks: 0 });
+  const steps = live ? SUBSTEPS[text] : undefined;
+  useEffect(() => {
+    if (!steps || reducedMotion()) return;
+    const id = window.setInterval(
+      () =>
+        setAt((a) =>
+          a.text === text
+            ? { text, i: (a.i + 1) % (steps.length + 1), ticks: a.ticks + 1 }
+            : { text, i: 1, ticks: 1 }
+        ),
+      SUBSTEP_MS
+    );
+    return () => window.clearInterval(id);
+  }, [text, steps]);
+  if (!steps || at.text !== text) return { shown: text, moved: false };
+  return { shown: at.i === 0 ? text : steps[at.i - 1], moved: at.ticks > 0 };
+}
+
 function StatusLine({
   status,
   inset,
@@ -121,13 +162,21 @@ function StatusLine({
   inset?: boolean;
 }) {
   const tone = status.tone ?? 'muted';
+  const { shown, moved } = useSubstep(status.text, tone === 'live');
   if (tone === 'live') {
     return (
       <div className="flex w-full flex-col gap-[5px] overflow-clip">
         <div className="flex w-full items-center gap-[5px]">
-          <img src={liveDot} alt="" className="size-1.5 shrink-0" />
+          <img src={liveDot} alt="" className="pf-live-dot size-1.5 shrink-0" />
           <p className={clsx(line, 'min-w-px flex-1 font-medium text-accent')}>
-            {status.text}
+            <span key={shown} className={moved ? 'pf-fade' : undefined}>
+              {shown}
+            </span>
+            <span aria-hidden className="pf-ellipsis">
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
+            </span>
           </p>
         </div>
       </div>
@@ -173,15 +222,21 @@ export function NodeCard({
   strokeWidth,
   onClick,
   onRerun,
+  motionKey,
+  ref,
   className,
   style,
 }: NodeCardData & {
   onClick?: () => void;
   onRerun?: () => void;
+  /** Remembers the card's state across beats, so a change the viewer sees cross-fades (src/lib/motion.ts). */
+  motionKey?: string;
+  ref?: Ref<HTMLDivElement>;
   className?: string;
   style?: CSSProperties;
 }) {
   const live = status?.tone === 'live';
+  const changedFrom = useChangedFrom(motionKey, state);
   const compact = !lead && !preview && !note && kind !== 'decision';
   const onKey = (e: KeyboardEvent) => {
     if (onClick && (e.key === 'Enter' || e.key === ' ')) {
@@ -204,6 +259,7 @@ export function NodeCard({
           : null;
   return (
     <div
+      ref={ref}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
@@ -220,6 +276,8 @@ export function NodeCard({
                 ? 'border-[0.922px] border-solid border-accent-line'
                 : 'border-[0.922px] border-solid border-line-2',
         onClick && 'cursor-pointer',
+        // Working: a soft accent halo breathes around the card (an overlay; motion only).
+        state === 'working' && 'pf-glow relative',
         className
       )}
       style={{
@@ -237,9 +295,12 @@ export function NodeCard({
       }}
     >
       <div
+        // A new state cross-fades in (only after a change the viewer saw).
+        key={state}
         className={clsx(
           'flex w-full flex-col',
-          state === 'waiting' && 'opacity-50'
+          state === 'waiting' && 'opacity-50',
+          changedFrom !== undefined && 'pf-crossfade'
         )}
         style={padY ? { paddingBlock: padY } : undefined}
       >

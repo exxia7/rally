@@ -325,7 +325,7 @@ function applyGone(d: RunData, wf: Workflow): RunData {
                   .filter((x) => !mentionsGone(x))
                   .join(' ');
                 return { ...f, value: kept || 'Nothing else uses this.' };
-              }              ),
+              }),
             },
           ])
       ),
@@ -426,15 +426,17 @@ function applyCounts(d: RunData, wf: Workflow): RunData {
           : beat === 'launched'
             ? `All ${total} done`
             : `${done} of ${total} done · about ${minsLeft[beat] ?? 1} min left`;
-  const yours: Decision[] = wf.decisions.filter((x) => !x.replaces).map((x) => ({
-    id: x.id,
-    art: createElement(UserAvatar, { className: 'size-5! text-[9px]!' }),
-    who: 'You',
-    time: x.time,
-    by: 'you',
-    title: x.title,
-    basis: x.basis,
-  }));
+  const yours: Decision[] = wf.decisions
+    .filter((x) => !x.replaces)
+    .map((x) => ({
+      id: x.id,
+      art: createElement(UserAvatar, { className: 'size-5! text-[9px]!' }),
+      who: 'You',
+      time: x.time,
+      by: 'you',
+      title: x.title,
+      basis: x.basis,
+    }));
   return {
     ...d,
     completed,
@@ -452,7 +454,13 @@ function applyDecisionChanges(log: Decision[], wf: Workflow): Decision[] {
   return log.map((x) => {
     const c = changes.get(x.id);
     return c
-      ? { ...x, title: c.title, basis: c.basis, time: c.time, tag: 'Changed by you' }
+      ? {
+          ...x,
+          title: c.title,
+          basis: c.basis,
+          time: c.time,
+          tag: 'Changed by you',
+        }
       : x;
   });
 }
@@ -471,7 +479,10 @@ function applySandbox(d: RunData, wf: Workflow): RunData {
       const res = wf.resources[sec.id];
       const added = res
         .filter((r) => !sec.items.some((i) => i.name === r.name))
-        .map((r) => ({ name: r.name, source: r.source ?? 'New · not used yet' }));
+        .map((r) => ({
+          name: r.name,
+          source: r.source ?? 'New · not used yet',
+        }));
       const items = [...added, ...sec.items].map((i) => {
         const users = (res.find((r) => r.name === i.name)?.usedBy ?? [])
           .map(name)
@@ -558,8 +569,10 @@ function applyExtraSteps(d: RunData, wf: Workflow): RunData {
     const id = STEP_OF_HELPER[planId] ?? planId;
     return has(id) ? id : null;
   };
-  const preds = (id: string) => edges.filter((e) => e.to === id).map((e) => e.from);
-  const succs = (id: string) => edges.filter((e) => e.from === id).map((e) => e.to);
+  const preds = (id: string) =>
+    edges.filter((e) => e.to === id).map((e) => e.from);
+  const succs = (id: string) =>
+    edges.filter((e) => e.from === id).map((e) => e.to);
 
   for (const x of extras) {
     let up: string[];
@@ -702,7 +715,9 @@ export function runData(
             ? {
                 ...x,
                 status: {
-                  text: n ? `${n} item${n === 1 ? '' : 's'} waiting` : 'Ready to launch',
+                  text: n
+                    ? `${n} item${n === 1 ? '' : 's'} waiting`
+                    : 'Ready to launch',
                   tone: 'strong',
                 },
               }
@@ -840,7 +855,12 @@ export function runCost(wf: Workflow) {
 }
 export const money = (n: number) => `$${n.toFixed(2)}`;
 
-export function runStatus(wf: Workflow): { state: PillState; label: string } {
+/** The top bar's run status pill. `hidden`: no pill (after launch the run is over; the user asked to drop it). */
+export function runStatus(wf: Workflow): {
+  state: PillState;
+  label: string;
+  hidden?: boolean;
+} {
   const cost = money(runCost(wf));
   const { phase, paused } = wf.run;
   if (phase === 'needsYou')
@@ -851,7 +871,7 @@ export function runStatus(wf: Workflow): { state: PillState; label: string } {
       label: `${approvalWaiting(wf)} waiting for your OK · ${cost}`,
     };
   if (phase === 'launched')
-    return { state: 'running', label: `Launched · ${cost}` };
+    return { state: 'running', label: '', hidden: true };
   if (paused) return { state: 'paused', label: `Paused · ${cost}` };
   if (phase === 'rerunning')
     return { state: 'rerunning', label: `Rerunning · ${cost}` };
@@ -939,10 +959,7 @@ function stepsAfter(from: string): Set<string> {
  * A branch's items: the original's, or a fork's (the outputs of the helpers it redoes, with its own copy where it
  * has some). `fork` can be a fork the store doesn't have yet (a frame's drawn fork).
  */
-export function branchItems(
-  wf: Workflow,
-  fork?: Pick<Fork, 'from' | 'copy'>
-) {
+export function branchItems(wf: Workflow, fork?: Pick<Fork, 'from' | 'copy'>) {
   const all = originalItems(wf);
   if (!fork) return all;
   const owners = new Set(
@@ -970,11 +987,7 @@ export function withEditedText<T extends { id: string; body: string }>(
 
 /** 5.1's items: the chosen version's, with the text you edited in place (5.1 "Edit", `edited` set). */
 export function approvalItems(wf: Workflow) {
-  return withEditedText(
-    wf,
-    chosenBranch(wf),
-    branchItems(wf, chosenFork(wf))
-  );
+  return withEditedText(wf, chosenBranch(wf), branchItems(wf, chosenFork(wf)));
 }
 
 /** 5.1's approvals: the chosen version's. */

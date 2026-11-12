@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Ref } from 'react';
 
 import checkDim from '@/assets/icons/check-blue-dim.svg';
 import check from '@/assets/icons/check-blue.svg';
@@ -16,18 +16,21 @@ export function HandoffMarker({
   size = 16,
   className,
   style,
+  ref,
 }: {
   status: HandoffStatus;
   dimmed?: boolean;
   size?: number;
   className?: string;
   style?: CSSProperties;
+  ref?: Ref<HTMLDivElement>;
 }) {
   const k = size / 16;
   const box: CSSProperties = { width: size, height: size, ...style };
   if (status === 'pending') {
     return (
       <img
+        ref={ref as Ref<HTMLImageElement>}
         src={dimmed ? pendingDim : pending}
         alt=""
         className={clsx('shrink-0', className)}
@@ -38,6 +41,7 @@ export function HandoffMarker({
   if (status === 'blocked') {
     return (
       <div
+        ref={ref}
         className={clsx(
           'flex shrink-0 items-center justify-center rounded-full',
           dimmed ? 'bg-[#f2abae]' : 'bg-problem',
@@ -56,6 +60,7 @@ export function HandoffMarker({
   }
   return (
     <div
+      ref={ref}
       className={clsx(
         'flex shrink-0 items-center justify-center rounded-full border-solid bg-white',
         dimmed ? 'border-[#ccd8f4]' : 'border-accent-line',
