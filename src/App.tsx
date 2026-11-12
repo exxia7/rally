@@ -23,11 +23,29 @@ import { sceneFor } from '@/state/scenes';
 import { dispatch, store, useAppState } from '@/state/store';
 
 // The hosted build (VITE_HOSTED=1, published as a claude.ai Artifact) can only carry a plain `#name` in its
-// link, never a path, so it routes in memory and mirrors the current URL into the hash:
-// `/w/ai-coach/run` ⇄ `#w_ai-coach_run`, `/settings` ⇄ `#settings`, `/` ⇄ no hash. Local dev keeps real URLs.
+// link, never a path, so it routes in memory and mirrors the current URL into the hash. claude.ai only passes
+// names made of letters, digits and hyphens, and reserves `settings`, `sidebar`, `customize`, `upgrade`,
+// `downloads` and `comment-*`. So every name starts with `r--` (clear of the reserved ones), path segments
+// (which never contain `--`) are joined with `--`, and a dot (sample frame ids like 3.2) becomes `-0-`:
+// `/w/ai-coach/run` ⇄ `#r--w--ai-coach--run`, `/settings` ⇄ `#r--settings`, `/` ⇄ no hash.
+// Links shared before this scheme (`#w_ai-coach_run`, `#settings`) still open. Local dev keeps real URLs.
 const HOSTED = import.meta.env.VITE_HOSTED === '1';
-const pathToHash = (path: string) => path.replace(/^\/+/, '').replace(/\//g, '_');
-const hashToPath = (hash: string) => `/${hash.replace(/^#/, '').replace(/_/g, '/')}`;
+const pathToHash = (path: string) => {
+  const segments = path.split('/').filter(Boolean);
+  if (!segments.length) return '';
+  return `r--${segments.map((s) => s.replace(/\./g, '-0-')).join('--')}`;
+};
+const hashToPath = (hash: string) => {
+  const name = hash.replace(/^#/, '');
+  if (!name) return '/';
+  if (name.startsWith('r--'))
+    return `/${name
+      .slice(3)
+      .split('--')
+      .map((s) => s.replace(/-0-/g, '.'))
+      .join('/')}`;
+  return `/${name.replace(/_/g, '/')}`;
+};
 
 function HashSync() {
   const location = useLocation();
@@ -134,8 +152,8 @@ function ScreenIndex() {
     <div className="min-h-full bg-white px-12 py-10 max-md:px-4 max-md:py-6">
       <h1 className="text-[22px] font-semibold">Rally frames (dev)</h1>
       <p className="mt-1 text-[13px] text-muted">
-        Each link opens a Figma frame with its sample state. Sample states aren't saved: reload any page to get
-        your own data back.
+        Each link opens a Figma frame with its sample state. Sample states
+        aren't saved: reload any page to get your own data back.
       </p>
       {chapters.map((c) => (
         <section key={c} className="mt-6">
