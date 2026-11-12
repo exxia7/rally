@@ -39,12 +39,7 @@ const MODELS: Option<ModelId>[] = [
     'Best for big, multi-channel launches'
   ),
   model('sonnet', 'anthropic', 'Sonnet 5.5', 'Balanced quality and cost'),
-  model(
-    'haiku',
-    'anthropic',
-    'Haiku 5.5',
-    'Fastest and cheapest'
-  ),
+  model('haiku', 'anthropic', 'Haiku 5.5', 'Fastest and cheapest'),
 ];
 const EFFORTS: Option<Effort>[] = [
   {
@@ -73,6 +68,7 @@ function Picker<T extends string>({
   value,
   onChange,
   className,
+  placement = 'below',
 }: {
   label: string;
   buttonText: string;
@@ -80,6 +76,8 @@ function Picker<T extends string>({
   value: T;
   onChange: (value: T) => void;
   className?: string;
+  /** Where the menu opens: under the button (default) or above it (composers pinned to the bottom). */
+  placement?: 'below' | 'above';
 }) {
   const [open, setOpen] = useState(false);
   const logo = options.find((o) => o.value === value)?.logo;
@@ -110,7 +108,10 @@ function Picker<T extends string>({
         <Menu
           label={label}
           onClose={close}
-          className="absolute top-10 left-0 w-[263px]"
+          className={clsx(
+            'absolute left-0 w-[263px]',
+            placement === 'above' ? 'bottom-10' : 'top-10'
+          )}
           items={options.map((o) => ({
             key: o.value,
             label: o.label,
@@ -128,9 +129,11 @@ function Picker<T extends string>({
 export function ModelPicker({
   value = DEFAULT_MODEL,
   onChange,
+  placement,
 }: {
   value?: ModelId;
   onChange: (value: ModelId) => void;
+  placement?: 'below' | 'above';
 }) {
   return (
     <Picker
@@ -139,6 +142,7 @@ export function ModelPicker({
       options={MODELS}
       value={value}
       onChange={onChange}
+      placement={placement}
     />
   );
 }

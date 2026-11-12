@@ -8,6 +8,7 @@ import {
 } from '@/components/panels/ChatMessage';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
+import { dispatch, useWorkflow } from '@/state/store';
 
 export type PlanChatMessage = {
   id: number | string;
@@ -43,6 +44,7 @@ export function PlanChatPanel({
   variant?: 'panel' | 'column';
   className?: string;
 }) {
+  const wf = useWorkflow();
   const end = useRef<HTMLDivElement>(null);
   const count = useRef(messages.length);
   useEffect(() => {
@@ -78,7 +80,14 @@ export function PlanChatPanel({
         <div className="flex min-h-px w-full flex-1 flex-col overflow-y-auto">
           {thread('column')}
         </div>
-        <ChatComposer onSend={onSend} suggestions={suggestions} narrow />
+        <ChatComposer
+          onSend={onSend}
+          suggestions={suggestions}
+          narrow
+          attachable
+          model={wf.model}
+          onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+        />
       </section>
     );
 
@@ -96,7 +105,13 @@ export function PlanChatPanel({
       onClose={onClose}
       footer={
         showSandbox ? undefined : (
-          <ChatComposer onSend={onSend} suggestions={suggestions} />
+          <ChatComposer
+            onSend={onSend}
+            suggestions={suggestions}
+            attachable
+            model={wf.model}
+            onModelChange={(model) => dispatch({ type: 'brief/model', model })}
+          />
         )
       }
     >

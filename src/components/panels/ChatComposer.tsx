@@ -11,7 +11,7 @@ import { useOutsideClick } from '@/lib/useOutsideClick';
 
 import type { Effort, ModelId } from '@/state/types';
 
-import { AttachMenu } from './AttachMenu';
+import { ATTACH_LABEL, AttachMenu, AttachmentChips } from './AttachMenu';
 import { EffortPicker, ModelPicker } from './ModelEffortPicker';
 
 // Shared composer state: a controlled text value, Enter (without Shift) or the send button sends trimmed text.
@@ -113,6 +113,9 @@ export function ChatComposer({
   narrow,
   className,
   defaultText,
+  attachable,
+  model,
+  onModelChange,
 }: {
   defaultText?: string;
   onSend: (text: string) => void;
@@ -121,8 +124,69 @@ export function ChatComposer({
   /** 12px sides, for a narrow (300px) chat column (2.4c), as the Figma component description says. */
   narrow?: boolean;
   className?: string;
+  /**
+   * Tools row (not in Figma, design/non-figma-ui.md): `attachable` adds a ghost "+" that opens the attach menu
+   * (above it) and `onModelChange` a model picker. With either, the box gets a second row under the field:
+   * + and model on the left, send on the right. Attachments show as chips above the field and are sent with the
+   * message ("… · Attached: Brand guide.pdf").
+   */
+  attachable?: boolean;
+  model?: ModelId;
+  onModelChange?: (model: ModelId) => void;
 }) {
-  const { text, setText, send } = useComposer(onSend, defaultText);
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const sendWith = (t: string) => {
+    const withFiles = attachments.length
+      ? `${t} · Attached: ${attachments.join(', ')}`
+      : t;
+    setAttachments([]);
+    onSend(withFiles);
+  };
+  const { text, setText, send } = useComposer(sendWith, defaultText);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const anchor = useRef<HTMLDivElement>(null);
+  const closeAttach = useCallback(() => setAttachOpen(false), []);
+  useOutsideClick([anchor], attachOpen, closeAttach);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const tools = attachable || !!onModelChange;
+  // Attachments alone can be sent too.
+  const sendAny = () =>
+    !text.trim() && attachments.length ? sendWith('Here you go') : send();
+
+  const field = (
+    <TextInput
+      appearance="borderless"
+      className="h-[30px] flex-1"
+      placeholder={placeholder}
+      autoFocus={!!defaultText}
+      onFocus={
+        defaultText
+          ? (e) => {
+              const n = e.currentTarget.value.length;
+              e.currentTarget.setSelectionRange(n, n);
+            }
+          : undefined
+      }
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendAny();
+        }
+      }}
+    />
+  );
+  const sendButton = (
+    <button
+      type="button"
+      aria-label="Send"
+      onClick={sendAny}
+      className="flex size-8 shrink-0 items-center justify-center rounded-control hover:bg-hover"
+    >
+      <Icon src={arrowRightDark} size={16} />
+    </button>
+  );
   return (
     <div
       className={clsx(
@@ -138,38 +202,73 @@ export function ChatComposer({
           ))}
         </div>
       )}
-      <div className="flex w-full items-center gap-1 overflow-clip rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
-        <TextInput
-          appearance="borderless"
-          className="h-[30px] flex-1"
-          placeholder={placeholder}
-          autoFocus={!!defaultText}
-          onFocus={
-            defaultText
-              ? (e) => {
-                  const n = e.currentTarget.value.length;
-                  e.currentTarget.setSelectionRange(n, n);
-                }
-              : undefined
-          }
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-        />
-        <button
-          type="button"
-          aria-label="Send"
-          onClick={send}
-          className="flex size-8 shrink-0 items-center justify-center rounded-control hover:bg-hover"
-        >
-          <Icon src={arrowRightDark} size={16} />
-        </button>
-      </div>
+      {tools ? (
+        <div className="flex w-full flex-col gap-1 rounded-control border border-control-border bg-white p-1 pl-3 focus-within:border-accent-line">
+          <AttachmentChips
+            items={attachments}
+            onRemove={(i) => setAttachments((a) => a.filter((_, k) => k !== i))}
+            className="pt-1.5 pr-2"
+          />
+          <div className="flex w-full items-center">{field}</div>
+          <div className="-ml-2 flex w-[calc(100%+8px)] items-center gap-1">
+            {attachable && (
+              <div ref={anchor} className="relative flex shrink-0">
+                <button
+                  type="button"
+                  aria-label="Attach"
+                  aria-haspopup="menu"
+                  aria-expanded={attachOpen}
+                  onClick={() => setAttachOpen((o) => !o)}
+                  className={clsx(
+                    'flex size-8 shrink-0 items-center justify-center rounded-control',
+                    attachOpen ? 'bg-hover' : 'hover:bg-hover'
+                  )}
+                >
+                  <Icon src={plusAttach} size={16} />
+                </button>
+                {attachOpen && (
+                  <AttachMenu
+                    onClose={closeAttach}
+                    onPick={(kind) =>
+                      kind === 'upload'
+                        ? fileInput.current?.click()
+                        : setAttachments((a) => [...a, ATTACH_LABEL[kind]])
+                    }
+                    className="absolute bottom-10 left-0 w-[263px]"
+                  />
+                )}
+                <input
+                  ref={fileInput}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    const names = [...(e.target.files ?? [])].map(
+                      (f) => f.name
+                    );
+                    setAttachments((a) => [...a, ...names]);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            )}
+            {onModelChange && (
+              <ModelPicker
+                value={model}
+                onChange={onModelChange}
+                placement="above"
+              />
+            )}
+            <div className="flex-1" />
+            {sendButton}
+          </div>
+        </div>
+      ) : (
+        <div className="flex w-full items-center gap-1 overflow-clip rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
+          {field}
+          {sendButton}
+        </div>
+      )}
     </div>
   );
 }

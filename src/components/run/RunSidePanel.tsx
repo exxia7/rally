@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
-import plusWhite from '@/assets/icons/plus-white.svg';
 import { ChatComposer } from '@/components/panels/ChatComposer';
 import { AssistantMessage, UserMessage } from '@/components/panels/ChatMessage';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
-import { dispatch } from '@/state/store';
-import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
+import { dispatch, useWorkflow } from '@/state/store';
 import type { MenuItemData } from '@/components/ui/Menu';
 
 import {
@@ -24,7 +21,8 @@ export type RunChatMessage = { from: 'assistant' | 'user'; text: string };
 export type SandboxStep = { id: string; name: string; detail: string };
 
 // The run side panel (3.3 Sandbox 2362:24915, 3.4 Decisions 2362:25044): SidePanel with run Panel tabs
-// (Chat · Sandbox · Decisions · N). Sandbox adds a Primary Small "Import" on the right of the tabs.
+// (Chat · Sandbox · Decisions · N). Figma also puts a Primary "Import" beside the tabs on Sandbox; removed (design
+// review, design/non-figma-ui.md): each Sandbox section's "+" imports into it, so the tab row is the same on every tab.
 // Docked at ≥1280px (the top bar's panel toggle closes it); an overlay with × below 1280, a sheet below 768.
 export function RunSidePanel({
   tab,
@@ -73,10 +71,7 @@ export function RunSidePanel({
           ? {
               ...s,
               open: true,
-              items: [
-                { name, source: 'New · not used yet' },
-                ...s.items,
-              ],
+              items: [{ name, source: 'New · not used yet' }, ...s.items],
             }
           : s
       )
@@ -85,13 +80,24 @@ export function RunSidePanel({
 
   // "Add to <step>…" on a row: only steps that haven't started take new items (the Sandbox note says so). The
   // store gives it to that step's helper (`sandbox/give`: its files, skills or tools); the row updates at once.
-  const addTo = (item: SandboxItem, section: SandboxSection, step: SandboxStep) => {
+  const addTo = (
+    item: SandboxItem,
+    section: SandboxSection,
+    step: SandboxStep
+  ) => {
     const helper = helperOfStep(step.id);
     if (
       helper &&
-      (section.id === 'assets' || section.id === 'skills' || section.id === 'tools')
+      (section.id === 'assets' ||
+        section.id === 'skills' ||
+        section.id === 'tools')
     )
-      dispatch({ type: 'sandbox/give', section: section.id, name: item.name, helper });
+      dispatch({
+        type: 'sandbox/give',
+        section: section.id,
+        name: item.name,
+        helper,
+      });
     setSections((prev) =>
       prev.map((s) =>
         s.id === section.id
@@ -155,7 +161,12 @@ export function RunSidePanel({
     const old = changing.title;
     // The store records it in decisions[] (`decision/change`); a date, time, price or budget in it becomes the
     // launch fact the steps that haven't run read. The log here updates at once.
-    dispatch({ type: 'decision/change', id: changing.id, from: old, title: to });
+    dispatch({
+      type: 'decision/change',
+      id: changing.id,
+      from: old,
+      title: to,
+    });
     const time = new Date()
       .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
       .toLowerCase();
@@ -186,20 +197,6 @@ export function RunSidePanel({
           onChange={onTabChange}
           decisions={decisions.length}
         />
-      }
-      headerExtra={
-        tab === 'sandbox' && (
-          <Button
-            variant="primary"
-            size="sm"
-            leading={<Icon src={plusWhite} size={16} />}
-            onClick={() => importFile()}
-            aria-label="Import"
-            className="max-md:px-1.5"
-          >
-            <span className="max-md:hidden">Import</span>
-          </Button>
-        )
       }
     >
       {tab === 'sandbox' && (
@@ -245,6 +242,7 @@ function RunChat({
   /** Applies a decision change; returns the reply, or null when the text wasn't one. */
   onSendChange?: (text: string) => string | null;
 }) {
+  const wf = useWorkflow();
   const [messages, setMessages] = useState(initial);
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -286,6 +284,9 @@ function RunChat({
         defaultText={draft}
         onSend={send}
         suggestions={messages.length === initial.length ? suggestions : []}
+        attachable
+        model={wf.model}
+        onModelChange={(model) => dispatch({ type: 'brief/model', model })}
       />
     </div>
   );

@@ -77,3 +77,15 @@ Small additions a flow needs, built only from existing components and tokens. Ad
   Low / Medium / High) beside the attach button. Ghost 32px buttons, shared Menu with a check on the current choice.
   Saved per workflow (`model`, `effort`; actions `brief/model`, `brief/effort`). Each model shows its maker's logo
   (Claude: `assets/icons/claude.svg`, Simple Icons, #D97757); new makers add a logo in `MAKER_LOGOS`.
+
+- Run Sandbox tab (3.3 and run frames): no Primary "Import" beside the panel tabs (Figma has one); each section's
+  "+" imports into it. The note is shortened to "Running now · new items only reach steps that haven't started."
+
+- Side panel tabs (Chat · Sandbox · Decisions, plan and run): underline page tabs on the header's bottom line instead
+  of Figma's segmented pill "Panel tabs", so they don't look like the top bar's Planning / Flowchart switch. Decisions'
+  count is a small grey chip. Each tab has a 14px Lucide icon in the tab's text colour (`message-circle.svg`,
+  `box.svg`, `diamond-outline.svg`, from lucide-static 0.460.0). The plan Sandbox's note moved from its 88px header into the top of the panel body.
+
+- Side panel chat composer (plan and run Chat tab): a second row under the field with a ghost "+" (attach menu above
+  it: Upload files / Paste a link / Add a skill) and the model picker (same choice as 2.1, saved on the workflow), send
+  arrow on the right. Attachments show as chips above the field and go out with the message ("· Attached: …").
