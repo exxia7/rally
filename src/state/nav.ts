@@ -84,6 +84,22 @@ export function cardTarget(wf: Workflow) {
   return runFrame(wf);
 }
 
+/** A workflow's frame from a frame id, without a direct load's overlay ('3.2-tasks' → '3.2'); null for Home (1.1)
+ *  and workspace settings (1.2), which aren't a workflow's. */
+export function workflowFrame(id: string | null) {
+  if (!id || id === '1.1' || id === '1.2') return null;
+  return id.replace(/-(tasks|attach)$/, '');
+}
+
+/** Where the sidebar reopens a workflow: the screen it was last on (`lastScreen`), else where it is now. Before its
+ *  run starts only the planning frames and the empty Flowchart (3.1) count; run screens follow the beat themselves. */
+export function resumeTarget(wf: Workflow, last?: string) {
+  if (!last) return cardTarget(wf);
+  if (wf.run.phase === 'notStarted' && !(last.startsWith('2.') || last === '3.1'))
+    return cardTarget(wf);
+  return last;
+}
+
 /** Where the Planning toggle goes: the brief (2.1), the chat (2.2) or the team map (2.3). */
 export function planFrame(stage: 'brief' | 'chat' | 'team') {
   return stage === 'brief' ? '2.1' : stage === 'chat' ? '2.2' : '2.3';

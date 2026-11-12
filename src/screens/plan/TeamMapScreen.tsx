@@ -467,7 +467,7 @@ export default function TeamMapScreen() {
     ) : null;
 
   return (
-    <AppShell sidebar="none" aside={aside}>
+    <AppShell aside={aside}>
       <PlanTopBar
         // 2.4c's chat is a column, not the side panel, so its toggle isn't drawn Selected.
         panelOpen={(panelOpen && !wide) || drawer !== null}

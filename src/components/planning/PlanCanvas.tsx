@@ -20,8 +20,8 @@ import { PlanLegend } from './PlanMapParts';
 
 // The planning canvas of the 2.x frames ("ZoomStage", e.g. 2362:23662): the plan map on the pannable canvas, with
 // the kind legend and zoom controls pinned bottom-left and "What goes out" bottom-right, 16px in. At 1440×900
-// with the side panel open the stage is 954×830, exactly the Figma canvas. On phones "What goes out" folds
-// into a chip above the zoom controls so it doesn't cover the map.
+// with the side panel open the stage is 954×830, exactly the Figma canvas. Under 1280px "What goes out" folds
+// into a chip (above the zoom controls on phones), so it doesn't cover the map or a popover opened on it.
 export function PlanCanvas({
   layout,
   nodes = layout.nodes,
@@ -80,15 +80,15 @@ export function PlanCanvas({
             initial={outputs}
             onChange={onOutputsChange}
             className={clsx(
-              'absolute right-4 bottom-4 z-10 max-md:bottom-[60px] max-md:max-w-[calc(100%-32px)]',
-              !outputsOpen && 'max-md:hidden'
+              'absolute right-4 bottom-4 z-10 max-xl:bottom-[60px] max-xl:max-h-[calc(100%-76px)] max-xl:max-w-[calc(100%-32px)] max-xl:overflow-y-auto',
+              !outputsOpen && 'max-xl:hidden'
             )}
           />
           <button
             type="button"
             aria-expanded={outputsOpen}
             onClick={() => setOutputsOpen((o) => !o)}
-            className="absolute right-4 bottom-4 hidden h-9 items-center gap-2 rounded-[10px] border border-line bg-white px-3 shadow-[0px_1px_1px_rgba(16,18,24,0.04)] max-md:flex"
+            className="absolute right-4 bottom-4 hidden h-9 items-center gap-2 rounded-[10px] border border-line bg-white px-3 shadow-[0px_1px_1px_rgba(16,18,24,0.04)] max-xl:flex"
           >
             <Icon src={nodeKindOutput14} size={14.264} />
             <span className="text-[13px] leading-5 font-medium whitespace-nowrap text-ink">

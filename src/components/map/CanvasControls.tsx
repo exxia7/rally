@@ -7,6 +7,7 @@ import minus from '@/assets/icons/minus.svg';
 import plus from '@/assets/icons/plus-dark.svg';
 import { Icon } from '@/components/ui/Icon';
 import { Progress } from '@/components/ui/Progress';
+import { useChangedFrom } from '@/lib/motion';
 
 import { FORK_COLOR, type ForkNumber } from './forks';
 
@@ -21,9 +22,12 @@ export function TaskProgressChip({
   fork,
   open,
   onClick,
+  motionKey,
   className,
   style,
 }: {
+  /** Remembers the progress across beats, so the bar grows and the count ticks when a step finishes. */
+  motionKey?: string;
   done: number;
   total: number;
   /** Replaces "N of M done". */
@@ -37,6 +41,13 @@ export function TaskProgressChip({
   className?: string;
   style?: CSSProperties;
 }) {
+  const value = progress ?? (done / total) * 100;
+  const text = label ?? `${done} of ${total} done`;
+  const fromValue = useChangedFrom(
+    motionKey && `${motionKey}:bar`,
+    String(progress === null ? 'none' : value)
+  );
+  const textFrom = useChangedFrom(motionKey && `${motionKey}:text`, text);
   return (
     <button
       type="button"
@@ -53,14 +64,25 @@ export function TaskProgressChip({
       </span>
       {progress !== null && (
         <Progress
-          value={progress ?? (done / total) * 100}
+          value={value}
+          fromValue={
+            fromValue === undefined || fromValue === 'none'
+              ? undefined
+              : Number(fromValue)
+          }
           height={4}
           fillColor={fork && FORK_COLOR[fork]}
           className="w-10! shrink-0"
         />
       )}
-      <span className="text-[12px] leading-[18px] font-medium whitespace-nowrap text-muted">
-        {label ?? `${done} of ${total} done`}
+      <span
+        key={text}
+        className={clsx(
+          'text-[12px] leading-[18px] font-medium whitespace-nowrap text-muted',
+          textFrom !== undefined && 'pf-tick'
+        )}
+      >
+        {text}
       </span>
       <Icon src={open ? chevronUp : chevronDown} size={14} />
     </button>

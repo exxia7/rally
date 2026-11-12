@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 import plusWhite from '@/assets/icons/plus-white.svg';
+import type { AgentName } from '@/components/agents/characters';
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import { AssistantMessage, UserMessage } from '@/components/panels/ChatMessage';
+import { Message, Thread, TypingRow } from '@/components/panels/ChatMessage';
 import { type Decision, DecisionLog } from '@/components/panels/DecisionLog';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
+import { ScrollArea } from '@/components/panels/ScrollArea';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { helperOfStep } from '@/state/runView';
 import { dispatch } from '@/state/store';
@@ -38,7 +40,10 @@ export function RunSidePanel({
   onDecisionChange,
   onDecisionFork,
   steps = [],
+  typing,
 }: {
+  /** The helper working right now: the Chat tab shows it typing under the thread. */
+  typing?: { agent: AgentName; name: string };
   steps?: SandboxStep[];
   tab: PanelTab;
   onTabChange: (tab: PanelTab) => void;
@@ -179,6 +184,8 @@ export function RunSidePanel({
   return (
     <SidePanel
       onClose={onClose}
+      // The Chat tab scrolls its own thread above its composer.
+      scroll={tab !== 'chat'}
       tabs={
         <PanelTabs
           phase="run"
@@ -225,19 +232,23 @@ export function RunSidePanel({
           suggestions={chatSuggestions}
           draft={changing ? `Change: ${changing.title} → ` : undefined}
           onSendChange={changing ? applyChange : undefined}
+          typing={typing}
         />
       )}
     </SidePanel>
   );
 }
 
-// The Chat tab while a run is going: the Planner's thread (24px sides) and the Chat composer pinned below.
+// The Chat tab while a run is going: the Planner's thread in the side-panel chat style (PanelThread: 24px sides,
+// 12px between messages, as the plan side panel's Chat) scrolling above the Chat composer, which stays pinned.
 function RunChat({
   initial,
   suggestions,
   draft,
   onSendChange,
+  typing,
 }: {
+  typing?: { agent: AgentName; name: string };
   initial: RunChatMessage[];
   suggestions?: string[];
   /** Prefilled composer text (a decision's Change). */
@@ -268,19 +279,21 @@ function RunChat({
   };
 
   return (
-    <div className="flex min-h-px w-full flex-1 flex-col">
-      <div
-        ref={scroller}
-        className="flex min-h-px w-full flex-1 flex-col items-end gap-4 overflow-y-auto px-6 pt-2 pb-4 max-md:px-4"
-      >
-        {messages.map((m, i) =>
-          m.from === 'user' ? (
-            <UserMessage key={i} text={m.text} wrap />
-          ) : (
-            <AssistantMessage key={i} text={m.text} />
-          )
-        )}
-      </div>
+    <div className="flex min-h-0 w-full flex-1 flex-col">
+      <ScrollArea ref={scroller}>
+        <Thread>
+          {messages.map((m, i) => (
+            <Message
+              key={i}
+              from={m.from}
+              text={m.text}
+              // Messages that arrive while you watch rise in (motion only).
+              className={i >= initial.length ? 'pf-rise' : undefined}
+            />
+          ))}
+          {typing && <TypingRow key={typing.agent} {...typing} />}
+        </Thread>
+      </ScrollArea>
       <ChatComposer
         key={draft}
         defaultText={draft}

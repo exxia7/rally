@@ -97,7 +97,6 @@ export default function ApprovalScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         inspected ? (
           <InspectorPanel
@@ -116,7 +115,7 @@ export default function ApprovalScreen() {
               sheet="half"
               onClose={() => setPanelOpen(false)}
               header={
-                <div className="flex min-h-[113px] w-full shrink-0 flex-col">
+                <div className="flex w-full shrink-0 flex-col">
                   <InspectorHeader
                     eyebrow={`Approval · ${publisher}`}
                     kindIcon={null}
@@ -129,7 +128,7 @@ export default function ApprovalScreen() {
                   />
                 </div>
               }
-              bodyClassName="px-6 py-5 max-md:px-4"
+              bodyClassName="px-6 pb-5 max-md:px-4"
               footer={
                 <div className="flex w-full shrink-0 items-start gap-2 border-t border-line bg-white px-6 py-4 max-md:px-4">
                   <Button
@@ -186,8 +185,8 @@ export default function ApprovalScreen() {
                   />
                 ))}
                 <div className="flex w-full shrink-0 flex-col items-start rounded-[10px] border border-dashed border-line-2 p-3.5">
-                  <div className="flex w-[320px] max-w-full items-center gap-2">
-                    <p className="min-w-px flex-1 text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] whitespace-nowrap text-muted">
+                  <div className="flex w-full items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-[14px] leading-[20.25px] font-semibold tracking-[-0.08px] text-muted">
                       $300 ad test
                     </p>
                     {wf.asDrawn || overAdLimit(wf) ? (
@@ -268,7 +267,7 @@ export default function ApprovalScreen() {
             <CompletedAgents
               agents={run.completed}
               names={names}
-              className="absolute bottom-[16.26px] left-4 max-md:right-4"
+              className="absolute bottom-4 left-4 max-md:right-4"
             />
             {tasksOpen && (
               <TasksOverlay

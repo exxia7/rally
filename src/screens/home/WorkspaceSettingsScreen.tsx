@@ -34,7 +34,7 @@ import { useGo } from '@/state/nav';
 import { presetAdLimit, presetCheck } from '@/state/permissions';
 import { dispatch, useAppState } from '@/state/store';
 
-import { TOOLS } from './workspaceData';
+import { TOOLS, YOU } from './workspaceData';
 
 export const screenId = '1.2';
 
@@ -64,7 +64,7 @@ const BRAND: { name: string; kind: 'File' | 'Skill' }[] = [
 ];
 
 const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
-  { initial: 'E', name: 'Emily · Owner', you: true },
+  { initial: YOU.initial, name: `${YOU.name} · ${YOU.role}`, you: true },
   { initial: 'V', name: 'Vivian' },
   { initial: 'T', name: 'Tonia' },
 ];
@@ -109,7 +109,7 @@ export default function WorkspaceSettingsScreen() {
   };
 
   return (
-    <AppShell sidebar="none">
+    <AppShell>
       <TopBar
         left={
           <Breadcrumb
@@ -117,7 +117,6 @@ export default function WorkspaceSettingsScreen() {
             current="Settings"
           />
         }
-        right={<UserAvatar />}
       />
       <div className="flex min-h-px w-full flex-1 items-start max-md:flex-col">
         <SettingsNav
@@ -145,7 +144,7 @@ export default function WorkspaceSettingsScreen() {
             <h1 className="text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
               Workspace settings
             </h1>
-            <p className="h-[26px] w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-muted max-xl:h-auto max-xl:whitespace-normal">
+            <p className="w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] text-muted">
               These apply to every workflow. A workflow can pick a different
               preset or customize it, and a helper can override it in its
               Details.
@@ -228,7 +227,6 @@ export default function WorkspaceSettingsScreen() {
                         <SettingName
                           name={t.name}
                           description={t.connected ? t.detail : 'Not connected'}
-                          descriptionClassName="h-[19px]"
                         />
                         {t.connected ? (
                           <>
@@ -365,13 +363,13 @@ export default function WorkspaceSettingsScreen() {
                   title="Usage and budget"
                   subtitle="AI cost across all workflows"
                 >
-                  <div className="flex h-[53px] w-full items-end justify-between pt-4">
+                  <div className="flex w-full items-end justify-between pt-4">
                     <div className="flex flex-col items-start">
                       <p className="h-5 text-[13px] leading-[19.5px] font-medium tracking-[-0.08px] whitespace-nowrap text-ink">
                         This month
                       </p>
                       {/* Figma rounds this 16.5px line's box up to 17px; matching it keeps "This month" on Figma's y. */}
-                      <p className="h-[17px] text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+                      <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                         ~410k tokens · 5 workflows
                       </p>
                     </div>

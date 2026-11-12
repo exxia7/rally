@@ -48,13 +48,26 @@ export function ConfirmDialog({
   const [dontShow, setDontShow] = useState(false);
   const [noteText, setNoteText] = useState(note?.defaultValue ?? '');
   return (
-    <Modal open={open} onClose={onClose} label={title}>
-      <div className="flex w-full flex-col items-start gap-1.5 overflow-clip">
-        <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-          {title}
-        </p>
-        <p className="w-full text-[13px] leading-[19px] text-ink-2">{body}</p>
-      </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      label={title}
+      title={title}
+      description={body}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => onConfirm(dontShow, noteText)}
+          >
+            {confirmLabel}
+          </Button>
+        </>
+      }
+    >
       {note && (
         <label className="flex w-full flex-col items-start gap-1.5">
           <span className="text-[12px] leading-[15px] font-medium whitespace-nowrap text-ink max-md:whitespace-normal">
@@ -78,9 +91,12 @@ export function ConfirmDialog({
               className="flex w-full items-center gap-2.5 overflow-clip"
             >
               <div className="relative size-6 shrink-0">{a.art}</div>
-              <p className="flex items-center gap-1.5 overflow-clip text-[13px] leading-[19px] whitespace-nowrap">
+              <p
+                title={`${a.name} · ${a.detail}`}
+                className="min-w-0 flex-1 truncate text-[13px] leading-[19px]"
+              >
                 <span className="font-medium text-ink">{a.name}</span>
-                <span className="text-muted">· {a.detail}</span>
+                <span className="text-muted"> · {a.detail}</span>
               </p>
             </div>
           ))}
@@ -108,14 +124,6 @@ export function ConfirmDialog({
           </button>
         </div>
       )}
-      <div className="flex w-full items-start justify-end gap-2 overflow-clip pt-1">
-        <Button variant="secondary" onClick={onClose}>
-          {cancelLabel}
-        </Button>
-        <Button variant="primary" onClick={() => onConfirm(dontShow, noteText)}>
-          {confirmLabel}
-        </Button>
-      </div>
     </Modal>
   );
 }

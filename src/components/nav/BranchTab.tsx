@@ -26,7 +26,7 @@ export function BranchTab({
       aria-pressed={state === 'selected'}
       onClick={onClick}
       className={clsx(
-        'flex h-7 shrink-0 flex-col items-center justify-center rounded-full px-3 text-center text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap',
+        'flex h-7 max-w-[200px] shrink-0 items-center justify-center rounded-full px-3 text-[12px] leading-[18px] font-medium tracking-[-0.08px] whitespace-nowrap',
         state === 'selected' && 'bg-accent-soft text-accent',
         state === 'default' && 'text-ink-2 hover:bg-hover',
         state === 'add' &&
@@ -45,8 +45,9 @@ export function BranchTab({
                   state === 'selected' ? `${FORK_COLOR[fork]}14` : undefined,
               }
       }
+      title={label}
     >
-      {label}
+      <span className="min-w-0 truncate">{label}</span>
     </button>
   );
 }

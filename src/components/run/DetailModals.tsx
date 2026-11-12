@@ -26,17 +26,16 @@ function DetailModal({
   children: ReactNode;
 }) {
   return (
-    <Modal open={open} onClose={onClose} label={title} width={520}>
-      <div className="flex w-full flex-col items-start gap-1.5">
-        <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-          {title}
-        </p>
-        <p className="w-full text-[13px] leading-[19px] text-ink-2">{intro}</p>
-      </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      label={title}
+      width={520}
+      title={title}
+      description={intro}
+      footer={<Button onClick={onClose}>Close</Button>}
+    >
       <div className="flex w-full flex-col items-start gap-2">{children}</div>
-      <div className="flex w-full justify-end">
-        <Button onClick={onClose}>Close</Button>
-      </div>
     </Modal>
   );
 }

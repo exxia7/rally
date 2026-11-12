@@ -12,9 +12,9 @@ import type { MenuItemData } from '@/components/ui/Menu';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 
-// The planning side panel's Sandbox tab (2.6 / 2.7 "SandboxPanel", 2362:24362): an 88px header with a 1px line
-// (20px top, 24px sides, 4px gap; Figma's 16px bottom padding is overridden by the fixed 88px, leaving 12): Panel
-// tabs (Chat · Sandbox) and a Primary Small "Import", then a 12/18 muted note. Below, the Sandbox sections (Assets, Skills, Tools, Launch facts, Permissions, Estimate):
+// The planning side panel's Sandbox tab (2.6 / 2.7 "SandboxPanel", 2362:24362): a header with a 1px line (20px top,
+// 12px bottom, 24px sides, 4px gap; 88px with a one-line note): Panel tabs (Chat · Sandbox) and a Primary Small
+// "Import", then a 12/18 muted note that wraps on narrow screens. Below, the Sandbox sections (Assets, Skills, Tools, Launch facts, Permissions, Estimate):
 // rows drag onto helpers on the map. Under 1280px it is an overlay with ×, under 768px a sheet (SidePanel).
 export function PlanSandboxPanel({
   sections,
@@ -48,7 +48,7 @@ export function PlanSandboxPanel({
       sheet="half"
       onClose={onClose}
       header={
-        <div className="flex h-[88px] w-full shrink-0 flex-col items-start gap-1 border-b border-line px-6 pt-5 pb-3 max-md:px-4">
+        <div className="flex w-full shrink-0 flex-col items-start gap-1 border-b border-line px-6 pt-5 pb-3 max-md:px-4">
           <div className="flex w-full items-center justify-between gap-2">
             <PanelTabs phase="plan" value="sandbox" onChange={onTabChange} />
             <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export function PlanSandboxPanel({
               )}
             </div>
           </div>
-          <p className="w-full shrink-0 truncate pr-2 text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
+          <p className="w-full shrink-0 pr-2 text-[12px] leading-[18px] tracking-[-0.08px] text-muted">
             {note}
           </p>
         </div>

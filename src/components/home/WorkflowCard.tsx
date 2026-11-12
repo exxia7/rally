@@ -83,15 +83,18 @@ export function WorkflowCard({
         )}
       </div>
       <div className="flex w-full shrink-0 flex-col items-start gap-1 edge-t px-4 py-3">
-        <div className="flex h-5 w-full items-center justify-between">
-          <p className="h-[21px] overflow-clip text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
+        <div className="flex h-5 w-full items-center justify-between gap-2">
+          <p
+            title={title}
+            className="min-w-0 truncate text-[14px] leading-5 font-semibold tracking-[-0.08px] text-ink"
+          >
             {title}
           </p>
           <Badge tone={status === 'Running' ? 'blue' : 'neutral'}>
             {status}
           </Badge>
         </div>
-        <p className="h-4 text-[12px] leading-4 tracking-[-0.08px] whitespace-nowrap text-muted">
+        <p className="w-full truncate text-[12px] leading-4 tracking-[-0.08px] text-muted">
           {meta}
         </p>
       </div>

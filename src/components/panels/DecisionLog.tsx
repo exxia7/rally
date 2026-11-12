@@ -48,10 +48,10 @@ export function DecisionEntry({
         <div className="flex min-w-px flex-1 flex-col items-start gap-2.5 overflow-clip">
           <div className="flex w-full flex-col items-start gap-0.5 overflow-clip tracking-[-0.08px]">
             <div className="flex min-h-5 w-full items-center gap-1 text-[12px] leading-[18px] whitespace-nowrap">
-              <p className="font-semibold text-ink">{d.who}</p>
-              <p className="text-muted">· {d.time}</p>
+              <p className="min-w-0 truncate font-semibold text-ink">{d.who}</p>
+              <p className="shrink-0 text-muted">· {d.time}</p>
               {d.tag && (
-                <div className="flex min-w-px flex-1 items-start justify-end">
+                <div className="flex shrink-0 grow items-start justify-end pl-1">
                   <Badge tone="subtle">{d.tag}</Badge>
                 </div>
               )}

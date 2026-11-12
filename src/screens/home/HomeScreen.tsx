@@ -7,11 +7,14 @@ import {
   type WorkflowCardData,
 } from '@/components/home/WorkflowCard';
 import { AppShell, TopBar } from '@/components/shell/AppShell';
-import { UserAvatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
-import { StatusFilter, type StatusFilterValue } from '@/components/ui/StatusFilter';
+import {
+  StatusFilter,
+  type StatusFilterValue,
+} from '@/components/ui/StatusFilter';
+import { useNewWorkflow } from '@/state/actions';
 import { cardTarget, useGo } from '@/state/nav';
 import { workflowCard } from '@/state/runView';
 import { dispatch, useAppState } from '@/state/store';
@@ -36,6 +39,7 @@ export const screenId = '1.1';
 // Figma 1.1 "Home · your workflows" (2362:23299)
 export default function HomeScreen() {
   const go = useGo();
+  const newWorkflow = useNewWorkflow();
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilterValue>('all');
@@ -74,18 +78,6 @@ export default function HomeScreen() {
             Lumen workspace
           </p>
         }
-        right={
-          <>
-            <Button
-              variant="secondary"
-              className="w-[148.031px] max-md:hidden"
-              onClick={() => go('1.2')}
-            >
-              Workspace settings
-            </Button>
-            <UserAvatar />
-          </>
-        }
       />
       <div className="flex min-h-px w-full flex-1 flex-col items-center overflow-auto bg-white">
         <div className="flex w-full max-w-[1040px] flex-col items-start px-8 py-12 max-md:px-4 max-md:py-6">
@@ -122,29 +114,35 @@ export default function HomeScreen() {
               {`Needs you · ${WORKFLOWS.filter((w) => w.needsYou).length}`}
             </ChoiceChip>
             <StatusFilter value={status} onChange={setStatus} />
-            <div className="flex min-w-fit flex-1 justify-end max-md:fixed max-md:right-4 max-md:bottom-[calc(56px+16px+env(safe-area-inset-bottom))] max-md:z-10 max-md:flex-none">
+            <div className="flex min-w-fit flex-1 justify-end max-md:fixed max-md:right-4 max-md:bottom-[calc(16px+env(safe-area-inset-bottom))] max-md:z-10 max-md:flex-none">
               <Button
                 variant="primary"
                 className="max-md:h-10 max-md:shadow-[0_4px_12px_rgba(16,18,24,0.18)]"
                 leading={<Icon src={plusIcon} size={16} />}
-                onClick={() => {
-                  dispatch({ type: 'wf/new' });
-                  go('2.1');
-                }}
+                onClick={newWorkflow}
               >
                 New workflow
               </Button>
             </div>
           </div>
-          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-md:gap-3 max-md:pb-20 *:max-xl:w-auto">
+          <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] max-md:gap-3 max-md:pb-20 *:max-xl:w-auto">
             {visible.map((w) => (
-              <WorkflowCard
-                key={w.wf.id}
-                {...w}
-                onClick={() => open(w.wf)}
-              />
+              <WorkflowCard key={w.wf.id} {...w} onClick={() => open(w.wf)} />
             ))}
           </div>
+          {visible.length === 0 && (
+            // Not in Figma: nothing to show (a search or filter with no match, or every workflow archived).
+            <div className="flex w-full flex-col items-center gap-1 rounded-card border border-dashed border-line-2 px-6 py-12 text-center">
+              <p className="text-[14px] leading-5 font-medium tracking-[-0.08px] text-ink">
+                {WORKFLOWS.length ? 'No workflows match' : 'No workflows yet'}
+              </p>
+              <p className="text-[13px] leading-5 tracking-[-0.08px] text-muted">
+                {WORKFLOWS.length
+                  ? 'Try another search or filter.'
+                  : 'Start one with New workflow.'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

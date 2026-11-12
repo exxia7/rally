@@ -100,8 +100,9 @@ export function PlanComposer({
 
 // Figma "Chat composer" (2362:28991): pinned to the bottom of the side panel's Chat tab. 1px top line,
 // 24px sides, 12px top / 16px bottom, optional Suggestions (6px apart), then one outlined box (control border,
-// 8px radius, 12px left / 4px other padding) with a borderless 30px message field and a ghost send icon button.
-// Clicking a suggestion sends it. `defaultText` opens it prefilled and focused, caret at the end (a decision's
+// 8px radius, 12px left / 4px other padding) with a borderless message field (30px for one line, growing with what
+// you type up to 5 lines, then scrolling; Shift+Enter is a new line) and a ghost send icon button, which stays on
+// the last line. Under 768px the sides are 16px, the panel's phone inset. Clicking a suggestion sends it. `defaultText` opens it prefilled and focused, caret at the end (a decision's
 // "Change" starts "Change: <decision> → ").
 export function ChatComposer({
   onSend,
@@ -123,8 +124,8 @@ export function ChatComposer({
   return (
     <div
       className={clsx(
-        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white pt-3 pb-4 max-md:px-3',
-        narrow ? 'px-3' : 'px-6',
+        'flex w-full shrink-0 flex-col items-start gap-3 border-t border-line bg-white pt-3 pb-4',
+        narrow ? 'px-3' : 'px-6 max-md:px-4',
         className
       )}
     >
@@ -135,10 +136,11 @@ export function ChatComposer({
           ))}
         </div>
       )}
-      <div className="flex w-full items-center gap-1 overflow-clip rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
-        <TextInput
-          appearance="borderless"
-          className="h-[30px] flex-1"
+      <div className="flex w-full items-end gap-1 overflow-clip rounded-control border border-control-border bg-white py-1 pr-1 pl-3 focus-within:border-accent-line">
+        <textarea
+          rows={1}
+          aria-label={placeholder}
+          className="field-sizing-content block max-h-[102px] min-h-[30px] min-w-px flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-[18px] tracking-[-0.08px] text-ink outline-none placeholder:text-[rgba(29,30,34,0.5)]"
           placeholder={placeholder}
           autoFocus={!!defaultText}
           onFocus={

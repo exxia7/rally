@@ -1,6 +1,9 @@
 // Workspace settings data (1.2): permission presets and connected tools. The store seeds the workspace from these
 // (src/state/scenes.ts), so 1.2, the plan and the run agree on what's connected.
 
+/** You, the signed-in member (1.2's People list and the sidebar's account row). */
+export const YOU = { initial: 'E', name: 'Emily', role: 'Owner' };
+
 export const PRESETS = [
   {
     key: 'careful',

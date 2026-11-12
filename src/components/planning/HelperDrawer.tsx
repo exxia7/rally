@@ -85,7 +85,7 @@ export function HelperDrawer({
   const fileInput = useRef<HTMLInputElement>(null);
 
   const header = (
-    <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 max-md:px-4">
+    <div className="flex w-full shrink-0 items-center gap-2 px-6 pt-5 pb-4 max-md:px-4">
       {helper.kind === 'decision' ? (
         <Icon src={decisionGlyph} size={16} />
       ) : helper.kind === 'output' ? (
@@ -129,7 +129,7 @@ export function HelperDrawer({
     <SidePanel header={header} footer={footer} onClose={onClose}>
       <div
         className={clsx(
-          'flex w-full flex-col items-start px-6 py-4 max-md:px-4',
+          'flex w-full flex-col items-start px-6 pb-4 max-md:px-4',
           hasTools ? 'gap-4' : 'gap-5'
         )}
       >
@@ -217,7 +217,7 @@ export function HelperDrawer({
                 >
                   <Icon src={dragHandle} size={14} />
                   <div className="flex min-w-px flex-1 flex-col items-start">
-                    <p className="truncate text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink">
+                    <p className="w-full truncate text-[13px] leading-[18.75px] font-medium tracking-[-0.08px] text-ink">
                       {r.name}
                     </p>
                     <p className="text-[12px] leading-4 tracking-[-0.08px] whitespace-nowrap text-muted">
@@ -376,7 +376,7 @@ function HandoffRow({
   return (
     <div className={clsx('flex w-full items-start gap-2 p-3', className)}>
       <div className="flex h-full min-w-px flex-1 flex-col items-start">
-        <p className="text-[12px] leading-4 tracking-[-0.08px] whitespace-nowrap text-muted">
+        <p className="w-full truncate text-[12px] leading-4 tracking-[-0.08px] text-muted">
           {label}
         </p>
         <div className="flex h-[21px] w-full items-start pt-0.5">

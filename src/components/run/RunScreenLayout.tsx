@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
 import outputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
@@ -28,7 +28,10 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PauseIcon } from '@/components/ui/PauseIcon';
 import type { RunState } from '@/components/ui/RunStatus';
+import { useChangedFrom } from '@/lib/motion';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { useGo } from '@/state/nav';
+import { useAppState } from '@/state/store';
 
 import { HandRaisePanel, type HandRaiseData } from './HandRaisePanel';
 import { InspectorPanel, type InspectorData } from './InspectorPanel';
@@ -97,19 +100,6 @@ const STAGE = { width: 1362, docked: 954, height: 830 };
 const DEFAULT_DOCKED = { x: 43, y: 165, width: 874 };
 const XL = '(min-width: 1280px)';
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window === 'undefined' || window.matchMedia(query).matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const onChange = () => setMatches(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
-
 // The run screen (3.2–3.5, reused by Stuck 4.x and Rerun/fork 6.x with their own data): workflow top bar, the
 // pannable run map with its canvas overlays (Tasks chip and anchored Tasks overlay, Completed agents, zoom), and
 // an optional side panel: the Chat · Sandbox · Decisions tabs or a node's inspector. All of it is local state;
@@ -151,7 +141,7 @@ export function RunScreenLayout({
   /** Spend shown in the status pill. */
   cost?: string;
   /** Override the status pill (e.g. a hand-raised run). Default: running / paused from the Pause button. */
-  status?: { state: RunState; label: string };
+  status?: { state: RunState; label: string; hidden?: boolean };
   /** Where a node whose helper raised its hand leads. */
   handRaisedScreen?: string;
   /** Extra canvas overlays (pinned to the viewport); a function gets the open panel (6.4's Branches row shows
@@ -201,6 +191,9 @@ export function RunScreenLayout({
   });
   const data = forks.data;
   const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
+  // Motion memory for this workflow's run (src/lib/motion.ts): a hand raised while you watch slides its panel in.
+  const scope = `run:${useAppState().activeId}`;
+  const asideFrom = useChangedFrom(`${scope}:aside`, panel?.kind ?? 'none');
   const [takenOver, setTakenOver] = useState<Set<string>>(() => new Set());
 
   const { map } = data;
@@ -240,6 +233,11 @@ export function RunScreenLayout({
     aside = (
       <HandRaisePanel
         data={data.handRaise}
+        className={
+          asideFrom !== undefined && asideFrom !== 'hand-raise'
+            ? 'pf-slide-in'
+            : undefined
+        }
         onClose={() => setPanel(null)}
         onConfirm={confirmHandRaise}
       />
@@ -260,6 +258,11 @@ export function RunScreenLayout({
         onDecisionChange={() => setPanel({ kind: 'tabs', tab: 'chat' })}
         steps={notStartedSteps(data)}
         onDecisionFork={() => go('4.4')}
+        typing={
+          paused || status?.state === 'waiting'
+            ? undefined
+            : typingHelper(data, agentNames)
+        }
       />
     );
   const inspectorData =
@@ -306,16 +309,22 @@ export function RunScreenLayout({
     );
 
   return (
-    <AppShell sidebar="none" aside={aside}>
+    <AppShell aside={aside}>
       <WorkflowTopBar
         title={title}
         view="flowchart"
         onViewChange={(v) => v === 'planning' && go(planningTarget)}
-        status={status?.state ?? (paused ? 'paused' : 'running')}
+        status={
+          status?.hidden
+            ? undefined
+            : (status?.state ?? (paused ? 'paused' : 'running'))
+        }
         statusLabel={
-          forks.costLabel(
-            status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
-          )
+          status?.hidden
+            ? undefined
+            : forks.costLabel(
+                status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
+              )
         }
         onSettings={() => go('2.8', { returnHere: true })}
         panelOpen={panel !== null}
@@ -347,6 +356,7 @@ export function RunScreenLayout({
         overlay={
           <>
             <TaskProgressChip
+              motionKey={`${scope}:tasks`}
               done={data.tasks.filter((t) => t.state === 'done').length}
               total={data.tasks.length}
               label={data.tasksChip?.label}
@@ -365,9 +375,10 @@ export function RunScreenLayout({
               }
             />
             <CompletedAgents
+              motionKey={`${scope}:done`}
               agents={data.completed}
               names={agentNames}
-              className="absolute bottom-[16.26px] left-4 max-md:right-4"
+              className="absolute bottom-4 left-4 max-md:right-4"
             />
             {typeof canvasOverlay === 'function'
               ? canvasOverlay(panel)
@@ -425,6 +436,19 @@ const KIND_GLYPH: Record<NodeKindName, string | null> = {
   decision: null,
   output: outputGlyph,
 };
+
+// The helper the run Chat shows typing: the first one working on the map.
+function typingHelper(
+  data: RunData,
+  names?: Partial<Record<AgentName, string>>
+) {
+  const n = data.map.nodes.find(
+    (x) => x.avatar?.state === 'working' || (x.state === 'working' && x.avatar)
+  );
+  if (!n?.avatar) return undefined;
+  const agent = n.avatar.agent;
+  return { agent, name: names?.[agent] ?? n.agent ?? agent };
+}
 
 // Steps the Sandbox's "Add to…" menu offers: tasks that haven't started, named by their helper.
 function notStartedSteps(data: RunData): SandboxStep[] {

@@ -1,11 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { ChatComposer } from '@/components/panels/ChatComposer';
-import {
-  PanelAssistantMessage,
-  PanelThread,
-  PanelUserMessage,
-} from '@/components/panels/ChatMessage';
+import { Message, Thread } from '@/components/panels/ChatMessage';
 import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
 
@@ -51,19 +47,15 @@ export function PlanChatPanel({
     count.current = messages.length;
   }, [messages.length]);
 
-  const thread = (inset: 'panel' | 'column') => (
-    <PanelThread inset={inset}>
-      {messages.map((m) =>
-        m.from === 'user' ? (
-          <PanelUserMessage key={m.id} text={m.text} />
-        ) : (
-          <PanelAssistantMessage key={m.id} text={m.text}>
-            {m.extra}
-          </PanelAssistantMessage>
-        )
-      )}
+  const thread = (inset?: 'narrow') => (
+    <Thread inset={inset}>
+      {messages.map((m) => (
+        <Message key={m.id} from={m.from} text={m.text}>
+          {m.extra}
+        </Message>
+      ))}
       <div ref={end} />
-    </PanelThread>
+    </Thread>
   );
 
   if (variant === 'column')
@@ -76,7 +68,7 @@ export function PlanChatPanel({
           Chat with Pathfinder
         </p>
         <div className="flex min-h-px w-full flex-1 flex-col overflow-y-auto">
-          {thread('column')}
+          {thread('narrow')}
         </div>
         <ChatComposer onSend={onSend} suggestions={suggestions} narrow />
       </section>
@@ -100,7 +92,7 @@ export function PlanChatPanel({
         )
       }
     >
-      {showSandbox ? sandbox : thread('panel')}
+      {showSandbox ? sandbox : thread()}
     </SidePanel>
   );
 }

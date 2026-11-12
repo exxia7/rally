@@ -1,32 +1,109 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
+import { AgentArt } from '@/components/agents/AgentAvatar';
+import type { AgentName } from '@/components/agents/characters';
 import { PathfinderAvatar } from '@/components/ui/Avatar';
 
-// Chat messages from the plan chat (frame 2.2, 2362:23566). Assistant: 30px Pathfinder avatar, 12px gap, then a
-// white bubble (1px line border, 16/12 padding, 6px top-left corner, 10px elsewhere, max 420px, 13/21.125 text).
-// The user: a well bubble aligned right (16/10 padding, 6px top-right corner, max 400px, 13/19.5 text).
-// Figma rounds text boxes up to whole pixels (2 lines of 21.125 → 43), so the bottom padding carries the
-// difference (+0.75 / +0.5) to keep the column from drifting up. Text keeps explicit line breaks ("\n"), as the Figma text boxes do. `children` render under the bubble,
-// aligned with it (e.g. a "See your team" button).
-export function AssistantMessage({
+// One set of chat components for every chat surface: the plan's main-column chat (2.1 → 2.2, 2362:23566,
+// `density="main"`) and the side panel's Chat (plan 2.3–2.8, 2362:23715; the run Chat tab: `density="panel"`).
+//
+// - <Message from="assistant">: the Pathfinder avatar, then a white bubble (1px line border, 10px corners with a
+//   sharp top-left). <Message from="user">: a well bubble on the right with a sharp top-right corner.
+// - Bubbles hug their text up to a max width (assistant: the thread width less the avatar, 420px in the main column;
+//   user: 400px main / 280px panel, and never more than 85% of the thread), wrap, keep explicit "\n" line breaks
+//   and break long words and URLs. No fixed widths, no nowrap.
+// - <Thread>: the message column. <TypingRow>: the helper that's working, at the foot of a thread.
+//
+// Figma's values per density:
+//   main:  30px avatar 12px from the bubble; 13px text (21.125 assistant / 19.5 user line height); 16/12 padding
+//          (assistant), 16/10 (user, 1px line border); 6px sharp corner; 16px between messages. `children` sit 16px
+//          under the bubble, aligned with it (the "See your team" button).
+//   panel: 26px avatar 8px from the bubble; 12.5px text (20.313 / 18.75); 12/10 padding (assistant), 12/8 (user,
+//          no border); 5px sharp corner; 12px between messages. `children` sit inside the bubble, 8px under the
+//          text (2.4d's Undo).
+export type ChatDensity = 'main' | 'panel';
+
+const STYLE = {
+  main: {
+    avatar: 30,
+    row: 'gap-3',
+    assistant: 'max-w-[420px] rounded-tl-[6px] px-4 py-3',
+    assistantText: 'text-[13px] leading-[21.125px]',
+    user: 'max-w-[min(400px,85%)] rounded-tr-[6px] border border-line px-4 py-2.5',
+    userText: 'text-[13px] leading-[19.5px]',
+  },
+  panel: {
+    avatar: 26,
+    row: 'gap-2',
+    assistant: 'rounded-tl-[5px] px-3 py-2.5',
+    assistantText: 'text-[12.5px] leading-[20.313px]',
+    user: 'max-w-[min(280px,85%)] rounded-tr-[5px] px-3 py-2',
+    userText: 'text-[12.5px] leading-[18.75px]',
+  },
+} as const;
+
+const TEXT = 'tracking-[-0.08px] whitespace-pre-line wrap-break-word text-ink';
+
+export function Message({
+  from,
   text,
+  density = 'panel',
   children,
+  className,
+  bubbleClassName,
 }: {
+  from: 'assistant' | 'user';
   text: ReactNode;
+  density?: ChatDensity;
+  /** Assistant only: under the text (inside the bubble in the panel, under it in the main column). */
   children?: ReactNode;
+  /** On the message row (motion classes such as `pf-rise`). */
+  className?: string;
+  /** On the bubble (2.2 rings the brief the launch facts came from). */
+  bubbleClassName?: string;
 }) {
-  return (
-    <div className="flex w-full flex-col items-start gap-4">
-      <div className="flex w-full items-start gap-3">
-        <PathfinderAvatar />
-        <div className="flex max-w-[420px] min-w-0 flex-col items-start rounded-tl-[6px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] border border-line bg-white px-4 pt-3 pb-[12.75px]">
-          <p className="text-[13px] leading-[21.125px] tracking-[-0.08px] whitespace-pre-line text-ink">
-            {text}
-          </p>
+  const s = STYLE[density];
+  if (from === 'user')
+    return (
+      <div className={clsx('flex w-full shrink-0 justify-end', className)}>
+        <div
+          className={clsx(
+            'min-w-0 rounded-[10px] bg-well',
+            s.user,
+            bubbleClassName
+          )}
+        >
+          <p className={clsx(TEXT, s.userText)}>{text}</p>
         </div>
       </div>
-      {children && (
+    );
+  const inside = density === 'panel';
+  return (
+    <div
+      className={clsx(
+        'flex w-full shrink-0 flex-col items-start gap-4',
+        className
+      )}
+    >
+      <div className={clsx('flex w-full items-start', s.row)}>
+        <PathfinderAvatar size={s.avatar} />
+        <div
+          className={clsx(
+            'flex min-w-0 flex-col items-start rounded-[10px] border border-line bg-white',
+            s.assistant,
+            bubbleClassName
+          )}
+        >
+          <p className={clsx(TEXT, s.assistantText)}>{text}</p>
+          {inside && children && (
+            <div className="flex w-full flex-col items-start pt-2">
+              {children}
+            </div>
+          )}
+        </div>
+      </div>
+      {!inside && children && (
         <div className="flex w-full flex-col items-start pl-[42px]">
           {children}
         </div>
@@ -35,47 +112,29 @@ export function AssistantMessage({
   );
 }
 
-export function UserMessage({
-  text,
-  wrap,
-  className,
-}: {
-  text: ReactNode;
-  /** Let long messages wrap at every width (the side panel's run chat); plan chat keeps one line on desktop. */
-  wrap?: boolean;
-  className?: string;
-}) {
-  return (
-    <div
-      className={clsx(
-        'flex max-w-[400px] shrink-0 flex-col items-start rounded-tl-[10px] rounded-tr-[6px] rounded-br-[10px] rounded-bl-[10px] border border-line bg-well px-4 pt-2.5 pb-[10.5px] max-md:max-w-[85%]',
-        className
-      )}
-    >
-      <p
-        className={clsx(
-          'text-[13px] leading-[19.5px] tracking-[-0.08px] text-ink',
-          !wrap && 'md:whitespace-nowrap'
-        )}
-      >
-        {text}
-      </p>
-    </div>
-  );
-}
-
-// The message column: 620px max, 32px top / 16px bottom padding, 16px between messages, user messages right.
-export function ChatThread({
+// The message column. main: 620px max, 32px top / 16px bottom, 16px between messages (16px sides on phones).
+// panel: 24px sides (16 on phones), 8px top / 16px bottom, 12px between messages. `inset="narrow"`: the 300px
+// left chat column of 2.4c (16px sides, no top padding).
+export function Thread({
   children,
+  density = 'panel',
+  inset,
   className,
 }: {
   children: ReactNode;
+  density?: ChatDensity;
+  inset?: 'narrow';
   className?: string;
 }) {
   return (
     <div
       className={clsx(
-        'flex w-[620px] max-w-full flex-col items-end gap-4 pt-8 pb-4 max-md:px-4',
+        'flex w-full flex-col items-start',
+        density === 'main'
+          ? 'max-w-[620px] gap-4 pt-8 pb-4 max-md:px-4'
+          : 'gap-3 pb-4',
+        density === 'panel' &&
+          (inset === 'narrow' ? 'px-4' : 'px-6 pt-2 max-md:px-4'),
         className
       )}
     >
@@ -84,66 +143,34 @@ export function ChatThread({
   );
 }
 
-// Side-panel chat (Chat tab in the plan side panel, e.g. 2362:23715). Smaller than the main-column chat:
-// 26px Pathfinder avatar 8px from a flexible bubble (1px line border, 12/10 padding, 5px top-left corner,
-// 12.5/20.313 text). `children` sit inside the bubble, 8px under the text (the Undo button in 2.4d).
-// Figma rounds the text box up to whole pixels; the 10.4px bottom padding splits that difference.
-export function PanelAssistantMessage({
-  text,
-  children,
-}: {
-  text: ReactNode;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex w-full shrink-0 items-start gap-2">
-      <PathfinderAvatar size={26} />
-      <div className="flex min-w-px flex-1 flex-col items-start rounded-tl-[5px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] border border-line px-3 pt-2.5 pb-[10.4px]">
-        <p className="relative top-[0.75px] w-full text-[12.5px] leading-[20.313px] tracking-[-0.08px] text-ink">
-          {text}
-        </p>
-        {children && (
-          <div className="flex w-full flex-col items-start pt-2">{children}</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// The user's side-panel message: right-aligned well bubble, no border, max 280px, 12/8 padding, 5px top-right
-// corner, 12.5/18.75 text.
-export function PanelUserMessage({ text }: { text: ReactNode }) {
-  return (
-    <div className="flex w-full shrink-0 items-start justify-end overflow-clip">
-      <div className="flex max-w-[280px] flex-col items-start rounded-tl-[10px] rounded-tr-[5px] rounded-br-[10px] rounded-bl-[10px] bg-well px-3 pt-2 pb-[8.5px]">
-        <p className="relative top-[0.75px] w-full text-[12.5px] leading-[18.75px] tracking-[-0.08px] text-ink">
-          {text}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// The side-panel message column: 24px sides, 8px top / 16px bottom, 12px between messages.
-// `inset="column"` is the 300px left chat column of 2.4c: 16px sides, no top padding.
-export function PanelThread({
-  children,
-  inset = 'panel',
+// The helper working right now, at the foot of a thread (the run Chat tab): its character in the avatar's place,
+// then a panel-style bubble with three dots that pulse in turn (`pf-dots`, still under reduced motion) and
+// "<Name> is working". Keyed by the screen on the agent, so it changes as the run moves on.
+export function TypingRow({
+  agent,
+  name,
   className,
 }: {
-  children: ReactNode;
-  inset?: 'panel' | 'column';
+  agent: AgentName;
+  name: string;
   className?: string;
 }) {
   return (
     <div
-      className={clsx(
-        'flex w-full flex-col items-start gap-3 pb-4',
-        inset === 'column' ? 'px-4' : 'px-6 pt-2 max-md:px-4',
-        className
-      )}
+      className={clsx('flex w-full shrink-0 items-center gap-2', className)}
+      role="status"
     >
-      {children}
+      <AgentArt agent={agent} size={STYLE.panel.avatar} />
+      <div className="flex min-w-0 items-center gap-2 rounded-[10px] rounded-tl-[5px] border border-line bg-white px-3 py-2">
+        <span aria-hidden className="pf-dots flex shrink-0 items-center gap-[3px]">
+          <span className="size-1 rounded-full bg-muted" />
+          <span className="size-1 rounded-full bg-muted" />
+          <span className="size-1 rounded-full bg-muted" />
+        </span>
+        <span className="truncate text-[12px] leading-[18px] text-muted">
+          {name} is working
+        </span>
+      </div>
     </div>
   );
 }

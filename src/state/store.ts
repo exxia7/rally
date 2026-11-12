@@ -49,6 +49,8 @@ export type Action =
   | { type: 'speed'; speed: Speed }
   | { type: 'nav/push'; id: string }
   | { type: 'nav/pop' }
+  /** The sidebar remembers the screen a workflow is on (`lastScreen`). */
+  | { type: 'nav/last'; id: WorkflowId; screen: string }
   | { type: 'wf/new' }
   | { type: 'wf/open'; id: WorkflowId }
   | { type: 'brief/send'; text: string; attachments?: string[] }
@@ -84,9 +86,16 @@ export type Action =
   | { type: 'permissions/nextTime'; rule: string; value?: 'allow' | 'keep' }
   | {
       type: 'permissions/set';
-      patch: Partial<Pick<Workflow['permissions'], 'preset' | 'checkLevel' | 'adLimit'>>;
+      patch: Partial<
+        Pick<Workflow['permissions'], 'preset' | 'checkLevel' | 'adLimit'>
+      >;
     }
-  | { type: 'workspace/tool'; name: string; connected: boolean; account?: string }
+  | {
+      type: 'workspace/tool';
+      name: string;
+      connected: boolean;
+      account?: string;
+    }
   | { type: 'workspace/defaultPreset'; name: string }
   /** 2.8 Launch facts edits. */
   | { type: 'facts/set'; patch: Partial<Workflow['resources']['facts']> }
@@ -98,7 +107,12 @@ export type Action =
   | { type: 'fork/create'; fork: Fork }
   | { type: 'fork/choose'; id: string }
   /** Fork-scoped approval: one output of one branch ('original' writes `approvals`, a fork its own). */
-  | { type: 'fork/approval'; branch: string; output: string; value: ApprovalValue }
+  | {
+      type: 'fork/approval';
+      branch: string;
+      output: string;
+      value: ApprovalValue;
+    }
   /** A fork's copy or name changed (its lane's copy, kept when you choose it). */
   | { type: 'fork/update'; id: string; patch: Partial<Omit<Fork, 'id' | 'n'>> }
   // Controls agent (additive, audit 4d/4f/4h/4a): 2.8 Duplicate and Archive, the run Sandbox's "Add to <step>" and
@@ -128,10 +142,14 @@ export type SandboxResource = 'assets' | 'skills' | 'tools';
  * Launch facts a changed decision states ("Launch Mar 14 at 10am · $400 budget", "Audience: students"), so the
  * steps that haven't run yet pick them up through the facts pass (dates and prices in the copy and approvals).
  */
-function factsFromDecision(text: string): Partial<Workflow['resources']['facts']> {
+function factsFromDecision(
+  text: string
+): Partial<Workflow['resources']['facts']> {
   const out: Partial<Workflow['resources']['facts']> = {};
   const date =
-    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? (\d{1,2})\b/i.exec(text);
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? (\d{1,2})\b/i.exec(
+      text
+    );
   if (date)
     out.date = `${date[1][0].toUpperCase()}${date[1].slice(1, 3).toLowerCase()} ${date[2]}`;
   const time = /\b(\d{1,2}(?::\d{2})?\s?(?:am|pm))\b/i.exec(text);
@@ -141,7 +159,8 @@ function factsFromDecision(text: string): Partial<Workflow['resources']['facts']
   const price = /(\$\d+(?:\.\d{2})?\/mo)\b/i.exec(text);
   if (price) out.price = price[1];
   const audience = /^audience:\s*(.+)$/i.exec(text.trim());
-  if (audience) out.audience = audience[1][0].toUpperCase() + audience[1].slice(1);
+  if (audience)
+    out.audience = audience[1][0].toUpperCase() + audience[1].slice(1);
   return out;
 }
 
@@ -539,7 +558,11 @@ function reduceWorkflow(wf: Workflow, a: Action): Workflow {
       const h = wf.helpers[a.helper];
       if (!h) return wf;
       const key =
-        a.section === 'skills' ? 'skills' : a.section === 'tools' ? 'tools' : 'files';
+        a.section === 'skills'
+          ? 'skills'
+          : a.section === 'tools'
+            ? 'tools'
+            : 'files';
       const has = h[key] ?? [];
       const res = wf.resources[a.section];
       const found = res.some((r) => r.name === a.name);
@@ -646,6 +669,10 @@ export function reduce(s: AppState, a: Action): AppState {
       };
     case 'nav/pop':
       return { ...s, returnTo: s.returnTo.slice(0, -1) };
+    case 'nav/last':
+      return s.lastScreen?.[a.id] === a.screen
+        ? s
+        : { ...s, lastScreen: { ...s.lastScreen, [a.id]: a.screen } };
     case 'wf/open':
       return s.workflows[a.id] ? { ...s, activeId: a.id } : s;
     case 'workspace/tool':
@@ -671,7 +698,10 @@ export function reduce(s: AppState, a: Action): AppState {
     case 'workspace/defaultPreset':
       return { ...s, workspace: { ...s.workspace, defaultPreset: a.name } };
     case 'workspace/preset': {
-      const p = { ...a.preset, rules: presetRules(a.preset.check, a.preset.adLimit) };
+      const p = {
+        ...a.preset,
+        rules: presetRules(a.preset.check, a.preset.adLimit),
+      };
       const old = s.workspace.presets.find((x) => x.key === p.key);
       const presets = old
         ? s.workspace.presets.map((x) => (x.key === p.key ? p : x))

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import arrowRightWhite from '@/assets/icons/arrow-right-white.svg';
 import { FixStep } from '@/components/nav/FixStep';
@@ -50,16 +50,20 @@ export type HandRaiseData = {
 // header without kind glyph or branch, then a 24px-sided, 20px-padded body: Fix steps (several things to fix,
 // 20px apart, the problem card 16px below), the Handoff problem card, "What should we do?" (SemiBold 14/21, 24px
 // above), Radio cards (12px above, 8px apart), the dashed "Something else?" field (12px above and below, 44px,
-// 12px radius) and the primary action pinned to the bottom. Steps and choices are local state; the last step's
-// button calls `onConfirm`.
+// 12px radius), then the primary action in a footer pinned under the scrolling body (12px above, 20px below), so it
+// stays reachable however tall the steps get. Steps and choices are local state; the last step's button calls
+// `onConfirm`. Moving to another step scrolls the body back to its top.
 export function HandRaisePanel({
   data,
   onClose,
   onConfirm,
+  className,
 }: {
   data: HandRaiseData;
   onClose: () => void;
   onConfirm: (choices: number[], other: string) => void;
+  /** Motion: `pf-slide-in` when a hand goes up while you watch. */
+  className?: string;
 }) {
   const [step, setStep] = useState(0);
   const [choices, setChoices] = useState<number[]>(() =>
@@ -70,12 +74,36 @@ export function HandRaisePanel({
   const current = data.steps[step];
   const last = step === data.steps.length - 1;
   const { problem } = current;
+  const body = useRef<HTMLDivElement>(null);
+  const goTo = (i: number) => {
+    setStep(i);
+    body.current?.scrollTo({ top: 0 });
+  };
 
   return (
     <SidePanel
       sheet="half"
       onClose={onClose}
-      bodyClassName="overflow-x-clip px-6 py-5 max-md:px-4"
+      className={className}
+      bodyRef={body}
+      bodyClassName="px-6 max-md:px-4"
+      footer={
+        <div className="flex w-full shrink-0 items-start bg-white px-6 pt-3 pb-5 max-md:px-4">
+          {last ? (
+            <Button variant="primary" onClick={() => onConfirm(choices, other)}>
+              {data.confirmLabel}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              trailing={<Icon src={arrowRightWhite} size={16} />}
+              onClick={() => goTo(step + 1)}
+            >
+              Next: {data.steps[step + 1].label.toLowerCase()}
+            </Button>
+          )}
+        </div>
+      }
       header={
         <InspectorHeader
           eyebrow={data.eyebrow}
@@ -94,7 +122,7 @@ export function HandRaisePanel({
               n={i + 1}
               label={s.label}
               current={i === step}
-              onClick={() => setStep(i)}
+              onClick={() => goTo(i)}
             />
           ))}
         </div>
@@ -119,7 +147,7 @@ export function HandRaisePanel({
           style={problem.height ? { minHeight: problem.height } : undefined}
         />
       </div>
-      <p className="h-[45px] shrink-0 pt-6 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
+      <p className="shrink-0 pt-6 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
         What should we do?
       </p>
       <div
@@ -141,7 +169,7 @@ export function HandRaisePanel({
           />
         ))}
       </div>
-      <div className="relative w-full shrink-0 py-3">
+      <div className="relative w-full shrink-0 pt-3">
         <input
           value={other}
           onChange={(e) => setOther(e.target.value)}
@@ -164,21 +192,6 @@ export function HandRaisePanel({
             style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
           />
         </svg>
-      </div>
-      <div className="flex min-h-px w-full flex-1 flex-col items-start justify-end">
-        {last ? (
-          <Button variant="primary" onClick={() => onConfirm(choices, other)}>
-            {data.confirmLabel}
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            trailing={<Icon src={arrowRightWhite} size={16} />}
-            onClick={() => setStep(step + 1)}
-          >
-            Next: {data.steps[step + 1].label.toLowerCase()}
-          </Button>
-        )}
       </div>
       <HandoffModal
         open={handoffOpen}

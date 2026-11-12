@@ -51,6 +51,7 @@ export function TaskRow({
         )}
       </div>
       <p
+        title={title}
         className={clsx(
           'min-w-px flex-1 truncate text-[12px] leading-[18px]',
           finished ? 'text-muted' : 'font-medium text-ink'

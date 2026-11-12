@@ -45,8 +45,11 @@ export function SettingsNav<T extends string>({
   }, [value]);
   return (
     <aside className="flex w-[240px] max-md:relative shrink-0 flex-col items-start self-stretch border-r border-line bg-white p-4 max-md:w-full max-md:border-r-0 max-md:border-b max-md:px-3 max-md:py-2">
-      <div className="flex h-[25px] w-full flex-col items-start px-2 pb-2 max-md:hidden">
-        <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+      <div className="flex w-full flex-col items-start px-2 pb-2 max-md:hidden">
+        <p
+          title={title}
+          className="w-full truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted"
+        >
           {title}
         </p>
       </div>
@@ -67,7 +70,7 @@ export function SettingsNav<T extends string>({
         ))}
         {more && (
           <>
-            <div className="flex h-[41px] w-full flex-col items-start px-2 pt-4 pb-2 max-md:hidden">
+            <div className="flex w-full flex-col items-start px-2 pt-4 pb-2 max-md:hidden">
               <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                 {more.title}
               </p>

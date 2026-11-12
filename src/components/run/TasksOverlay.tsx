@@ -1,7 +1,9 @@
-import clsx from 'clsx';
+import clsx from "clsx";
+import { useRef } from "react";
 
-import { TaskRow, type TaskRowState } from '@/components/map/TaskRow';
-import { Progress } from '@/components/ui/Progress';
+import { TaskRow, type TaskRowState } from "@/components/map/TaskRow";
+import { Progress } from "@/components/ui/Progress";
+import { useScrollEdges } from "@/lib/useScrollEdges";
 
 export type TaskItem = {
   /** Map node id, so picking a task can open its inspector. */
@@ -10,7 +12,7 @@ export type TaskItem = {
   state: TaskRowState;
 };
 
-const FINISHED: TaskRowState[] = ['done', 'reused'];
+const FINISHED: TaskRowState[] = ["done", "reused"];
 
 // Figma "Task progress" (anchored tasks overlay, 3.2-tasks 2362:26565): the run's task list, dropped 8px below the
 // Tasks chip (canvas 16, 60). 360px white card, control-border 1px (in layout), 10px radius, 16px padding, 6px gaps,
@@ -38,6 +40,8 @@ export function TasksOverlay({
   showProgress?: boolean;
   className?: string;
 }) {
+  const list = useRef<HTMLDivElement>(null);
+  const edges = useScrollEdges(list);
   const open = tasks.filter((t) => !FINISHED.includes(t.state));
   const finished = tasks.filter((t) => FINISHED.includes(t.state));
   const row = (t: TaskItem) => (
@@ -57,11 +61,11 @@ export function TasksOverlay({
         role="dialog"
         aria-label="Tasks"
         className={clsx(
-          'absolute top-[60px] left-4 z-20 flex max-h-[calc(100%-76px)] w-[360px] max-w-[calc(100%-32px)] flex-col items-start gap-1.5 overflow-y-auto rounded-[10px] border border-control-border bg-white p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)]',
-          className
+          "absolute top-[60px] left-4 z-20 flex max-h-[calc(100%-76px)] w-[360px] max-w-[calc(100%-32px)] flex-col items-start gap-1.5 overflow-hidden rounded-[10px] border border-control-border bg-white pt-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.1)]",
+          className,
         )}
       >
-        <div className="flex w-full shrink-0 items-start justify-between text-[12px] leading-[18px] font-semibold tracking-[-0.08px] whitespace-nowrap">
+        <div className="flex w-full shrink-0 items-start justify-between px-4 text-[12px] leading-[18px] font-semibold tracking-[-0.08px] whitespace-nowrap">
           <p className="text-ink">Tasks</p>
           {showClose && (
             <button
@@ -73,26 +77,39 @@ export function TasksOverlay({
             </button>
           )}
         </div>
-        <p className="w-full shrink-0 text-[11.5px] leading-[18px] tracking-[-0.08px] text-muted">
+        <p className="w-full shrink-0 px-4 text-[11.5px] leading-[18px] tracking-[-0.08px] text-muted">
           {summary ?? `${finished.length} of ${tasks.length} done`}
         </p>
         {showProgress && (
-          <Progress
-            value={(finished.length / tasks.length) * 100}
-            className="shrink-0"
-          />
+          <div className="w-full shrink-0 px-4">
+            <Progress value={(finished.length / tasks.length) * 100} />
+          </div>
         )}
-        <div className="flex w-full shrink-0 flex-col items-start pt-1.5">
-          {open.map(row)}
-        </div>
-        {finished.length > 0 && (
-          <>
-            <div className="h-px w-full shrink-0 bg-line" />
-            <div className="flex w-full shrink-0 flex-col items-start">
-              {finished.map(row)}
+        {/* The summary stays put; a long list scrolls under it, with a fade at the cut while there's more. */}
+        <div className="relative flex min-h-0 w-full flex-col">
+          <div
+            ref={list}
+            className="flex min-h-0 w-full flex-col items-start gap-1.5 overflow-y-auto overscroll-contain px-4 pb-4"
+          >
+            <div className="flex w-full shrink-0 flex-col items-start pt-1.5">
+              {open.map(row)}
             </div>
-          </>
-        )}
+            {finished.length > 0 && (
+              <>
+                <div className="h-px w-full shrink-0 bg-line" />
+                <div className="flex w-full shrink-0 flex-col items-start">
+                  {finished.map(row)}
+                </div>
+              </>
+            )}
+          </div>
+          {edges.bottom && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent"
+            />
+          )}
+        </div>
       </div>
     </>
   );

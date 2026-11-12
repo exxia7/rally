@@ -365,7 +365,6 @@ export default function PlanSandboxScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         panelOpen && (
           <PlanSandboxPanel

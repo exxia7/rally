@@ -273,4 +273,6 @@ export type AppState = {
   /** Return-to stack of screen ids (settings, Sandbox…): `useGo().back()` pops it. */
   returnTo: string[];
   speed: Speed;
+  /** The screen each workflow was last on (the sidebar's workflow list reopens it there). */
+  lastScreen?: Record<WorkflowId, string>;
 };

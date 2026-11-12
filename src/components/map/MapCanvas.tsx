@@ -95,12 +95,14 @@ function contentBounds(stage: HTMLElement, z: number): Box | null {
 
 // The part of the canvas a fitted map may use, in canvas px: FIT_PAD in from each edge and clear of the pinned
 // overlays (Tasks chip, Completed agents, legend, "What goes out", zoom controls). Each overlay reserves a band
-// along the edge it is pinned to, top/bottom or left/right, whichever costs the smaller share of the canvas.
-function fitArea(canvas: HTMLElement, exclude: Element): Box {
+// along one edge it is near: top/bottom or left/right. Of those choices, the one that lets a `bw`×`bh` map
+// (stage px) show largest wins, so a wide map keeps the canvas's width and a tall one its height.
+function fitArea(canvas: HTMLElement, exclude: Element, bw: number, bh: number): Box {
   const c = canvas.getBoundingClientRect();
   const W = c.width;
   const H = c.height;
-  const inset = { left: 0, top: 0, right: 0, bottom: 0 };
+  type Band = { side: keyof Box; size: number };
+  const choices: [Band, Band][] = [];
   const consider = (el: Element) => {
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) return;
@@ -111,21 +113,42 @@ function fitArea(canvas: HTMLElement, exclude: Element): Box {
     }
     const x = r.left - c.left;
     const y = r.top - c.top;
-    if (r.height / H <= r.width / W) {
-      if (y + r.height / 2 < H / 2)
-        inset.top = Math.max(inset.top, y + r.height + OVERLAY_GAP);
-      else inset.bottom = Math.max(inset.bottom, H - y + OVERLAY_GAP);
-    } else if (x + r.width / 2 < W / 2)
-      inset.left = Math.max(inset.left, x + r.width + OVERLAY_GAP);
-    else inset.right = Math.max(inset.right, W - x + OVERLAY_GAP);
+    const vertical: Band =
+      y + r.height / 2 < H / 2
+        ? { side: 'top', size: y + r.height + OVERLAY_GAP }
+        : { side: 'bottom', size: H - y + OVERLAY_GAP };
+    const horizontal: Band =
+      x + r.width / 2 < W / 2
+        ? { side: 'left', size: x + r.width + OVERLAY_GAP }
+        : { side: 'right', size: W - x + OVERLAY_GAP };
+    choices.push([vertical, horizontal]);
   };
   for (const el of canvas.children) if (el !== exclude) consider(el);
-  return {
-    left: Math.max(FIT_PAD, inset.left),
-    top: Math.max(FIT_PAD, inset.top),
-    right: W - Math.max(FIT_PAD, inset.right),
-    bottom: H - Math.max(FIT_PAD, inset.bottom),
-  };
+  let best: Box | null = null;
+  let bestZoom = -1;
+  // Few overlays (≤ 6), so every combination is cheap to try.
+  for (let mask = 0; mask < 1 << choices.length; mask++) {
+    const inset = { left: FIT_PAD, top: FIT_PAD, right: FIT_PAD, bottom: FIT_PAD };
+    choices.forEach((pair, i) => {
+      const band = pair[(mask >> i) & 1];
+      inset[band.side] = Math.max(inset[band.side], band.size);
+    });
+    const area = {
+      left: inset.left,
+      top: inset.top,
+      right: W - inset.right,
+      bottom: H - inset.bottom,
+    };
+    const zoom = Math.min(
+      (area.right - area.left) / Math.max(1, bw),
+      (area.bottom - area.top) / Math.max(1, bh)
+    );
+    if (zoom > bestZoom) {
+      bestZoom = zoom;
+      best = area;
+    }
+  }
+  return best ?? { left: FIT_PAD, top: FIT_PAD, right: W - FIT_PAD, bottom: H - FIT_PAD };
 }
 
 const typing = (t: EventTarget | null) =>
@@ -257,7 +280,12 @@ export function MapCanvas({
       right: stageWidth,
       bottom: stageHeight,
     };
-    const area = fitArea(cv, sc);
+    const area = fitArea(
+      cv,
+      sc,
+      bounds.right - bounds.left,
+      bounds.bottom - bounds.top
+    );
     const to = clamp(
       Math.min(
         (area.right - area.left) / Math.max(1, bounds.right - bounds.left),

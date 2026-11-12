@@ -1,8 +1,10 @@
 import clsx from 'clsx';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, type ReactNode, type Ref } from 'react';
 
 import close from '@/assets/icons/close.svg';
 import { IconButton } from '@/components/ui/IconButton';
+
+import { ScrollArea } from './ScrollArea';
 
 // The right-hand side panel (Figma "Artifact panel", e.g. 2362:23590; Chat · Sandbox · Decisions, inspector,
 // drawers): 400px, white, 1px line border, 12px radius, docked beside the main panel with the shell's 8px gap.
@@ -13,6 +15,9 @@ import { IconButton } from '@/components/ui/IconButton';
 // it is a full-screen sheet. Clicking the scrim closes it.
 // `header` replaces the built-in headers (the inspector's own header); `footer` is pinned under the scrolling body
 // (the inspector's Edit / I'll do this one bar).
+// The body is a ScrollArea between the header and the footer, which stay put: it scrolls when content outgrows it,
+// with a line under the header while scrolled and a fade at the bottom while there's more. `scroll={false}` hands
+// scrolling to the content (the run Chat scrolls its thread above its own composer).
 // `sheet="half"` (hand-raise, inspector, approval): under 768px a bottom sheet 56% of the screen tall instead of a
 // full-screen one, so the top bar's status pill and the card it's about stay in view above it.
 export function SidePanel({
@@ -26,6 +31,8 @@ export function SidePanel({
   children,
   className,
   bodyClassName,
+  scroll = true,
+  bodyRef,
 }: {
   sheet?: 'full' | 'half';
   title?: ReactNode;
@@ -37,6 +44,9 @@ export function SidePanel({
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
+  scroll?: boolean;
+  /** The scrolling body (e.g. to scroll back to the top when the content changes). */
+  bodyRef?: Ref<HTMLDivElement>;
 }) {
   // While it overlays the content (under 1280px) it behaves like a dialog: Escape closes it, unless a menu
   // inside it is open (that Escape belongs to the menu). Docked on desktop it stays put.
@@ -101,14 +111,20 @@ export function SidePanel({
               )}
             </div>
           ) : null)}
-        <div
-          className={clsx(
-            'flex min-h-px w-full flex-1 flex-col items-start overflow-y-auto',
-            bodyClassName
-          )}
-        >
-          {children}
-        </div>
+        {scroll ? (
+          <ScrollArea ref={bodyRef} className={bodyClassName}>
+            {children}
+          </ScrollArea>
+        ) : (
+          <div
+            className={clsx(
+              'flex min-h-0 w-full flex-1 flex-col items-start',
+              bodyClassName
+            )}
+          >
+            {children}
+          </div>
+        )}
         {footer}
       </aside>
     </>

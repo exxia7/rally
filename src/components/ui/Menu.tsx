@@ -1,12 +1,15 @@
 import clsx from 'clsx';
-import { useState, type ReactNode, type Ref } from 'react';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
+
+import { useFitInView } from '@/lib/useFitInView';
 
 import { Icon } from './Icon';
 
 // Popover menu from the attach menus (Figma "Attach menu", e.g. 2362:26459): white, 1px line-2 border (in layout),
 // 12px radius, 6px padding, 2px gap, soft 0/4/16 shadow. The parent positions it (absolute) and owns open state;
 // pair it with useOutsideClick. The highlighted row (well fill) follows the pointer and starts on the first row,
-// as the Figma frames show it.
+// as the Figma frames show it. It stays on screen: it shifts sideways, flips to the other side of its anchor and
+// scrolls when tall (useFitInView).
 export type MenuItemData = {
   key: string;
   label: string;
@@ -29,9 +32,15 @@ export function Menu({
   label?: string;
 }) {
   const [active, setActive] = useState(0);
+  const own = useRef<HTMLDivElement>(null);
+  useFitInView(own, [items.length]);
   return (
     <div
-      ref={ref}
+      ref={(el) => {
+        own.current = el;
+        if (typeof ref === 'function') ref(el);
+        else if (ref) ref.current = el;
+      }}
       role="menu"
       aria-label={label}
       className={clsx(

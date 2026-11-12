@@ -114,7 +114,7 @@ function SettingRow({
           <p className="h-5 w-full text-[13px] leading-[19.5px] text-ink-2">
             {name}
           </p>
-          <p className="h-[17px] w-full text-[11px] leading-[16.5px] text-muted">
+          <p className="w-full text-[11px] leading-[16.5px] text-muted">
             {hint}
           </p>
         </div>
@@ -186,7 +186,7 @@ export default function WorkflowSettingsScreen() {
   const backText = backLabel(go.backTarget('2.3'));
 
   return (
-    <AppShell sidebar="none">
+    <AppShell>
       <WorkflowTopBar
         view="planning"
         onViewChange={(v) =>
@@ -229,7 +229,7 @@ export default function WorkflowSettingsScreen() {
             <h1 className="pt-4 text-[26px] leading-8 font-semibold tracking-[-0.52px] whitespace-nowrap text-ink max-md:text-[22px] max-md:leading-7">
               Workflow settings
             </h1>
-            <p className="h-[26px] w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] whitespace-nowrap text-muted max-xl:h-auto max-xl:whitespace-normal">
+            <p className="w-full pt-1.5 text-[13px] leading-[19.5px] tracking-[-0.08px] text-muted">
               {`Only for ${wf.title}. Anything you don't change follows workspace settings.`}
             </p>
             <div className="grid w-full grid-cols-[410px_410px] items-start gap-5 pt-8 max-xl:grid-cols-1">
@@ -384,7 +384,7 @@ export default function WorkflowSettingsScreen() {
                       >
                         <div className="flex min-w-px flex-1 flex-col items-start">
                           <p className={clsx(value, 'h-5')}>{t.name}</p>
-                          <p className="h-[17px] text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
+                          <p className="text-[11px] leading-[16.5px] tracking-[-0.08px] whitespace-nowrap text-muted">
                             {t.helper}
                           </p>
                         </div>
@@ -412,7 +412,7 @@ export default function WorkflowSettingsScreen() {
                         >
                           LinkedIn
                         </p>
-                        <p className="h-[17px] truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted max-md:w-full">
+                        <p className="truncate text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted max-md:w-full">
                           {linkedIn
                             ? 'Publisher'
                             : 'Not connected · connect in workspace settings'}
@@ -442,14 +442,14 @@ export default function WorkflowSettingsScreen() {
                   <div className="flex w-full items-center pt-3">
                     <div className="flex min-w-px flex-1 flex-col items-start">
                       <p className={clsx(value, 'h-5')}>Spending cap</p>
-                      <p className="min-h-[33px] w-full text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
+                      <p className="w-full text-[11px] leading-[16.5px] tracking-[-0.08px] text-muted">
                         {`Used ${budgetUsed(wf)} so far · pauses and asks you at the cap`}
                       </p>
                     </div>
-                    <p className="h-[21px] w-12 shrink-0 pr-2 text-[14px] leading-[21px] font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
+                    <p className="shrink-0 pr-2 text-[14px] leading-5 font-semibold tracking-[-0.08px] whitespace-nowrap text-ink">
                       $2.00
                     </p>
-                    <Badge tone="blue" className="w-[87px]">
+                    <Badge tone="blue">
                       Changed here
                     </Badge>
                   </div>

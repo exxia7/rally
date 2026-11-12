@@ -11,11 +11,7 @@ import {
   AttachmentChips,
 } from '@/components/panels/AttachMenu';
 import { PlanComposer } from '@/components/panels/ChatComposer';
-import {
-  AssistantMessage,
-  ChatThread,
-  UserMessage,
-} from '@/components/panels/ChatMessage';
+import { Message, Thread } from '@/components/panels/ChatMessage';
 import {
   FileIcon,
   OutputCard,
@@ -163,7 +159,6 @@ export default function ChatStartScreen() {
 
   return (
     <AppShell
-      sidebar="none"
       aside={
         panelOpen && (
           <SidePanel
@@ -192,25 +187,23 @@ export default function ChatStartScreen() {
           className="flex min-h-px w-full flex-1 flex-col items-start overflow-y-auto"
         >
           <div className="flex w-full shrink-0 flex-col items-center">
-            <ChatThread>
-              {messages.map((m) =>
-                m.from === 'user' ? (
-                  <UserMessage
-                    key={m.id}
-                    text={m.text}
-                    className={
-                      answersLit && m.id <= START.length
-                        ? 'border-accent-line ring-2 ring-accent-soft'
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <AssistantMessage key={m.id} text={m.text}>
-                    {m.action === 'team' ? seeTeam : undefined}
-                  </AssistantMessage>
-                )
-              )}
-            </ChatThread>
+            <Thread density="main">
+              {messages.map((m) => (
+                <Message
+                  key={m.id}
+                  density="main"
+                  from={m.from}
+                  text={m.text}
+                  bubbleClassName={
+                    m.from === 'user' && answersLit && m.id <= START.length
+                      ? 'border-accent-line ring-2 ring-accent-soft'
+                      : undefined
+                  }
+                >
+                  {m.action === 'team' ? seeTeam : undefined}
+                </Message>
+              ))}
+            </Thread>
           </div>
         </div>
         <div className="flex w-[620px] max-w-full shrink-0 flex-col items-start pt-3 pb-8 max-md:px-3 max-md:pb-3">
@@ -314,17 +307,18 @@ function ResourcesBody({
         open={open !== null}
         onClose={() => setOpen(null)}
         label={open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
+        title={open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
+        description={
+          open === 'guide'
+            ? '12 pages. The Planner uses it for tone of voice.'
+            : 'The Planner keeps this up to date as you chat. Every helper reads it.'
+        }
+        footer={
+          <Button variant="secondary" onClick={() => setOpen(null)}>
+            Close
+          </Button>
+        }
       >
-        <div className="flex w-full flex-col items-start gap-1.5">
-          <p className="w-full text-[18px] leading-[26px] font-semibold text-ink">
-            {open === 'guide' ? 'Brand guide.pdf' : 'Launch brief'}
-          </p>
-          <p className="w-full text-[13px] leading-[19px] text-ink-2">
-            {open === 'guide'
-              ? '12 pages. The Planner uses it for tone of voice.'
-              : 'The Planner keeps this up to date as you chat. Every helper reads it.'}
-          </p>
-        </div>
         <dl className="flex w-full flex-col items-start gap-1.5 rounded-[10px] bg-well px-3.5 py-3 text-[13px] leading-[19px]">
           {(open === 'guide' ? BRAND_GUIDE : BRIEF_LINES(goal, wf.brief)).map((l) => (
             <div key={l.label} className="flex w-full items-start gap-2">
@@ -341,11 +335,6 @@ function ResourcesBody({
             </div>
           ))}
         </dl>
-        <div className="flex w-full justify-end">
-          <Button variant="secondary" onClick={() => setOpen(null)}>
-            Close
-          </Button>
-        </div>
       </Modal>
     </div>
   );

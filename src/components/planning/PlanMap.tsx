@@ -1,9 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import clsx from 'clsx';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { edgePath } from '@/components/map/connectors';
+import { useAdded, useGlide } from '@/lib/motion';
+import { useAppState } from '@/state/store';
 
 import { HelperCard, type HelperCardData } from './HelperCard';
 import { edgeKey } from './planEdit';
+import { MapPopoverHost } from './MapPopoverHost';
 import { AddStepButton, ApprovalGate, StageLabel } from './PlanMapParts';
 
 // Plan-map geometry, from the 2.3 map where cards draw at 0.85 (154.275px wide): 1.054px connectors with
@@ -113,6 +117,9 @@ export function PlanMap({
   className?: string;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
+  // Motion (CLAUDE.md "Motion"): after an edit, cards glide to their new places, connectors interpolate to their
+  // new routes and anything added fades in. A first paint is still.
+  const scope = `plan:${useAppState().activeId}`;
   const k = scale / BASE;
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const gateById = new Map((gates ?? []).map((g) => [g.id, g]));
@@ -125,6 +132,7 @@ export function PlanMap({
         x: side === 'out' ? n.x + CARD_W * scale : n.x,
         y: n.y + (HEADER_H / 2) * scale,
         port: true,
+        key: `${id}:${side}`,
       };
     const g = gateById.get(id);
     if (g)
@@ -132,6 +140,7 @@ export function PlanMap({
         x: side === 'out' ? g.x + g.width : g.x,
         y: g.y + (GATE_H * (g.scale ?? scale)) / 2,
         port: false,
+        key: `${id}:${side}`,
       };
     return null;
   };
@@ -142,8 +151,9 @@ export function PlanMap({
     const b = anchor(e.to, 'in');
     if (!a || !b) return [];
     const color = e.color ?? '#91ade8';
-    if (a.port) ports.set(`${a.x},${a.y}`, { x: a.x, y: a.y, color });
-    if (b.port) ports.set(`${b.x},${b.y}`, { x: b.x, y: b.y, color });
+    // Keyed by node side (one per position, as before), so a moving card's port glides with it.
+    if (a.port) ports.set(a.key, { x: a.x, y: a.y, color });
+    if (b.port) ports.set(b.key, { x: b.x, y: b.y, color });
     const lane = e.lane ?? (a.x + b.x) / 2;
     return [
       {
@@ -155,6 +165,12 @@ export function PlanMap({
       },
     ];
   });
+
+  const added = useAdded(scope, [
+    ...nodes.map((n) => `node:${n.id}`),
+    ...(gates ?? []).map((g) => `gate:${g.id}`),
+    ...lines.map((l) => `line:${l.key}`),
+  ]);
 
   return (
     <div
@@ -184,7 +200,13 @@ export function PlanMap({
         className="pointer-events-none absolute top-0 left-0"
       >
         {lines.map((l) => (
-          <path key={l.key} d={l.d} stroke={l.color} strokeWidth={STROKE * k} />
+          <PlanLine
+            key={l.key}
+            isNew={added.has(`line:${l.key}`)}
+            d={l.d}
+            color={l.color}
+            width={STROKE * k}
+          />
         ))}
         {onAddStep &&
           lines.map((l) => (
@@ -204,6 +226,8 @@ export function PlanMap({
             key={key}
             cx={p.x}
             cy={p.y}
+            className="pf-reroute"
+            style={{ cx: p.x, cy: p.y } as CSSProperties}
             r={PORT_R * k}
             fill="white"
             stroke={p.color}
@@ -212,23 +236,27 @@ export function PlanMap({
         ))}
       </svg>
       {gates?.map((g) => (
-        <div
+        <Placed
           key={g.id}
-          className="absolute"
-          style={{ left: g.x, top: g.y, opacity: g.dimmed ? 0.5 : undefined }}
+          isNew={added.has(`gate:${g.id}`)}
+          x={g.x}
+          y={g.y}
+          opacity={g.dimmed ? 0.5 : undefined}
         >
           <ApprovalGate
             label={g.label}
             scale={g.scale ?? scale}
             onClick={onGateClick ? () => onGateClick(g) : undefined}
           />
-        </div>
+        </Placed>
       ))}
       {nodes.map((n) => (
-        <div
+        <Placed
           key={n.id}
-          className="absolute"
-          style={{ left: n.x, top: n.y, opacity: n.opacity }}
+          isNew={added.has(`node:${n.id}`)}
+          x={n.x}
+          y={n.y}
+          opacity={n.opacity}
         >
           <HelperCard
             {...n}
@@ -238,7 +266,7 @@ export function PlanMap({
               onSettingClick ? (label) => onSettingClick(n, label) : undefined
             }
           />
-        </div>
+        </Placed>
       ))}
       {onAddStep &&
         lines.map((l) => {
@@ -266,10 +294,60 @@ export function PlanMap({
           );
         })}
       {overlays?.map((o) => (
-        <div key={o.id} className="absolute" style={{ left: o.x, top: o.y }}>
+        <MapPopoverHost key={o.id} x={o.x} y={o.y}>
           {o.content}
-        </div>
+        </MapPopoverHost>
       ))}
     </div>
+  );
+}
+
+// A free-placed card or gate: glides when an edit moves it; one added after the map was on screen rises in.
+function Placed({
+  isNew,
+  x,
+  y,
+  opacity,
+  children,
+}: {
+  isNew: boolean;
+  x: number;
+  y: number;
+  opacity?: number;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useGlide(ref, x, y);
+  return (
+    <div
+      ref={ref}
+      className={clsx('absolute', isNew && 'pf-rise')}
+      style={{ left: x, top: y, opacity }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// A connector: re-routes by interpolating its path (CSS `d`, where supported); a new one fades in.
+function PlanLine({
+  isNew,
+  d,
+  color,
+  width,
+}: {
+  isNew: boolean;
+  d: string;
+  color: string;
+  width: number;
+}) {
+  return (
+    <path
+      d={d}
+      style={{ d: `path("${d}")` } as CSSProperties}
+      className={clsx('pf-reroute', isNew && 'pf-fade')}
+      stroke={color}
+      strokeWidth={width}
+    />
   );
 }
