@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 import { useEffect, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import actionGlyph from '@/assets/icons/node-kind-action-glyph.svg';
 import outputGlyph from '@/assets/icons/node-kind-output-glyph.svg';
@@ -8,6 +7,8 @@ import taskGlyph from '@/assets/icons/node-kind-task-glyph.svg';
 import play16 from '@/assets/icons/play-16.svg';
 import type { AgentName } from '@/components/agents/characters';
 import { CompletedAgents } from '@/components/agents/CompletedAgents';
+import type { Branch } from '@/components/fork/branches';
+import { useForkRunView } from '@/components/fork/useForkRunView';
 import { TaskProgressChip } from '@/components/map/CanvasControls';
 import {
   FlowMap,
@@ -16,8 +17,8 @@ import {
   type MapNode,
   type MapOverlay,
 } from '@/components/map/FlowMap';
-import { MapCanvas } from '@/components/map/MapCanvas';
 import type { ForkNumber } from '@/components/map/forks';
+import { MapCanvas } from '@/components/map/MapCanvas';
 import type { NodeKindName } from '@/components/map/NodeKind';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import type { Decision } from '@/components/panels/DecisionLog';
@@ -27,11 +28,15 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PauseIcon } from '@/components/ui/PauseIcon';
 import type { RunState } from '@/components/ui/RunStatus';
-import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
 
 import { HandRaisePanel, type HandRaiseData } from './HandRaisePanel';
 import { InspectorPanel, type InspectorData } from './InspectorPanel';
-import { RunSidePanel, type RunChatMessage } from './RunSidePanel';
+import {
+  RunSidePanel,
+  type RunChatMessage,
+  type SandboxStep,
+} from './RunSidePanel';
 import type { SandboxSection } from './SandboxPanel';
 import { TasksOverlay, type TaskItem } from './TasksOverlay';
 
@@ -84,6 +89,8 @@ export type RunPanel =
   | { kind: 'tabs'; tab: PanelTab }
   | { kind: 'inspector'; nodeId: string; forkOpen?: boolean }
   | { kind: 'hand-raise' }
+  /** A branch's "Ready to post" once the run has forks: the approval scoped to that branch. */
+  | { kind: 'approval'; branch: string }
   | null;
 
 const STAGE = { width: 1362, docked: 954, height: 830 };
@@ -111,7 +118,8 @@ function useMediaQuery(query: string) {
 // docked canvas is narrower than 954px, so the stage starts scaled down to fit its width (as Fit view would).
 // A helper's raised hand opens `data.handRaise` in the side panel (or `handRaisedScreen` when there is none).
 export function RunScreenLayout({
-  data,
+  data: frameData,
+  drawnForks,
   title,
   initialPanel = null,
   initialTasksOpen = false,
@@ -126,8 +134,16 @@ export function RunScreenLayout({
   onInspectorFork,
   onForkCreate,
   nodeLinks,
+  paused: pausedProp,
+  onPauseToggle,
+  agentNames,
+  planningTarget = '2.3',
+  onEditNode,
 }: {
   data: RunData;
+  /** The forks this frame draws, with Figma's names and briefs (4.5, 6.5, 6.6): a fork you created in the same
+   *  colour is shown under your name. */
+  drawnForks?: Branch[];
   title?: string;
   initialPanel?: RunPanel;
   initialTasksOpen?: boolean;
@@ -142,7 +158,7 @@ export function RunScreenLayout({
    *  while a fork is being set up). */
   canvasOverlay?: ReactNode | ((panel: RunPanel) => ReactNode);
   /** The hand-raise panel's last button (default: open the rerun confirm frame 4.1b). */
-  onHandRaiseConfirm?: () => void;
+  onHandRaiseConfirm?: (choices?: number[], other?: string) => void;
   /** A map card's own Rerun button (hand-raised cards). Default: same as `onHandRaiseConfirm`. */
   onNodeRerun?: (node: MapNode) => void;
   /** Inspector "Rerun from here" (default: 6.1). */
@@ -153,11 +169,37 @@ export function RunScreenLayout({
   onForkCreate?: (nodeId: string, instruction: string) => void;
   /** Nodes that lead to another frame instead of their inspector (node id → screen id). */
   nodeLinks?: Record<string, string>;
+  /** Controlled pause (the store's run.paused); without it, Pause is local state. */
+  paused?: boolean;
+  onPauseToggle?: () => void;
+  /** Renamed helpers for the agents bar (character → name). */
+  agentNames?: Partial<Record<AgentName, string>>;
+  /** Where the Planning toggle goes. */
+  planningTarget?: string;
+  /** Inspector "Edit" (default: the 2.4 drawer frame). */
+  onEditNode?: (nodeId: string) => void;
 }) {
-  const navigate = useNavigate();
+  const go = useGo();
   const xl = useMediaQuery(XL);
-  const [paused, setPaused] = useState(initialPaused);
+  const [localPaused, setPaused] = useState(initialPaused);
+  const paused = pausedProp ?? localPaused;
+  // While a hand is raised the run waits for you: Resume opens the hand-raise panel instead.
+  const togglePause = () => {
+    if (status?.state === 'waiting' && data.handRaise && paused)
+      setPanel({ kind: 'hand-raise' });
+    else if (onPauseToggle) onPauseToggle();
+    else setPaused((p) => !p);
+  };
   const [panel, setPanel] = useState<RunPanel>(initialPanel);
+  // Forks (store): every branch drawn, the Branches row, fork-scoped approval, the inline Fork card.
+  const forks = useForkRunView({
+    data: frameData,
+    drawn: drawnForks,
+    panel,
+    setPanel,
+    inline: !onInspectorFork,
+  });
+  const data = forks.data;
   const [tasksOpen, setTasksOpen] = useState(initialTasksOpen);
   const [takenOver, setTakenOver] = useState<Set<string>>(() => new Set());
 
@@ -168,14 +210,15 @@ export function RunScreenLayout({
 
   const inspect = (nodeId: string) => setPanel({ kind: 'inspector', nodeId });
   const onNodeClick = (node: MapNode) => {
-    if (nodeLinks?.[node.id]) navigate(screenPath(nodeLinks[node.id]));
+    const branchPanel = forks.nodePanel(node);
+    if (branchPanel) setPanel(branchPanel);
+    else if (nodeLinks?.[node.id]) go(nodeLinks[node.id]);
     else if (node.avatar?.state === 'hand-raised') {
       if (data.handRaise) setPanel({ kind: 'hand-raise' });
-      else navigate(screenPath(handRaisedScreen));
+      else go(handRaisedScreen);
     } else inspect(node.id);
   };
-  const confirmHandRaise =
-    onHandRaiseConfirm ?? (() => navigate(screenPath('4.1b')));
+  const confirmHandRaise = onHandRaiseConfirm ?? (() => go('4.1b'));
 
   // Phones open the map on the node that needs you, else the first one working.
   const focusNode =
@@ -201,6 +244,8 @@ export function RunScreenLayout({
         onConfirm={confirmHandRaise}
       />
     );
+  else if (panel?.kind === 'approval')
+    aside = forks.renderApproval(panel.branch);
   else if (panel?.kind === 'tabs')
     aside = (
       <RunSidePanel
@@ -213,31 +258,42 @@ export function RunScreenLayout({
         chat={data.chat}
         chatSuggestions={data.chatSuggestions}
         onDecisionChange={() => setPanel({ kind: 'tabs', tab: 'chat' })}
-        onDecisionFork={() => navigate(screenPath('4.4'))}
+        steps={notStartedSteps(data)}
+        onDecisionFork={() => go('4.4')}
       />
     );
-  else if (inspected)
+  const inspectorData =
+    inspected &&
+    forks.inspector(
+      data.inspectors?.[inspected.id] ?? inspectorFromNode(inspected),
+      inspected
+    );
+  if (!aside && inspected && inspectorData)
     aside = (
       <InspectorPanel
         key={inspected.id}
-        data={data.inspectors?.[inspected.id] ?? inspectorFromNode(inspected)}
+        data={inspectorData}
         onClose={() => setPanel(null)}
         forkOpen={panel?.kind === 'inspector' && !!panel.forkOpen}
         onForkOpenChange={(forkOpen) =>
           setPanel({ kind: 'inspector', nodeId: inspected.id, forkOpen })
         }
-        onForkCreate={(text) => onForkCreate?.(inspected.id, text)}
+        onForkCreate={(text) =>
+          onForkCreate
+            ? onForkCreate(inspected.id, text)
+            : forks.create(inspected.id, text, inspectorData)
+        }
         onFork={() =>
-          onInspectorFork
-            ? onInspectorFork(inspected.id)
-            : navigate(screenPath('6.1'))
+          onInspectorFork ? onInspectorFork(inspected.id) : go('6.1')
         }
         onRerun={() =>
-          onInspectorRerun
-            ? onInspectorRerun(inspected.id)
-            : navigate(screenPath('6.1'))
+          onInspectorRerun ? onInspectorRerun(inspected.id) : go('6.1')
         }
-        onEdit={() => navigate(screenPath('2.4'))}
+        onEdit={() =>
+          onEditNode
+            ? onEditNode(inspected.id)
+            : go('2.4', { returnHere: true })
+        }
         takenOver={takenOver.has(inspected.id)}
         onTakeOver={() =>
           setTakenOver((prev) => {
@@ -254,12 +310,13 @@ export function RunScreenLayout({
       <WorkflowTopBar
         title={title}
         view="flowchart"
-        onViewChange={(v) => v === 'planning' && navigate(screenPath('2.3'))}
+        onViewChange={(v) => v === 'planning' && go(planningTarget)}
         status={status?.state ?? (paused ? 'paused' : 'running')}
         statusLabel={
-          status?.label ?? `${paused ? 'Paused' : 'Running'} · ${cost}`
+          status?.label ??
+          `${paused ? 'Paused' : 'Running'} · ${forks.swap(cost)}`
         }
-        onSettings={() => navigate(screenPath('2.8'))}
+        onSettings={() => go('2.8', { returnHere: true })}
         panelOpen={panel !== null}
         onTogglePanel={() =>
           setPanel((p) => (p ? null : { kind: 'tabs', tab: 'sandbox' }))
@@ -267,7 +324,7 @@ export function RunScreenLayout({
         action={
           <Button
             leading={paused ? <Icon src={play16} size={16} /> : <PauseIcon />}
-            onClick={() => setPaused((p) => !p)}
+            onClick={togglePause}
             aria-label={paused ? 'Resume' : 'Pause'}
             className="max-md:px-2"
           >
@@ -283,6 +340,8 @@ export function RunScreenLayout({
         stageHeight={STAGE.height}
         fitWidth={docked}
         focus={focus}
+        // Phones: a hand-raise or inspector opens as a half-height sheet, so keep the card above it.
+        focusAt={panel && panel.kind !== 'tabs' ? 0.2 : 0.5}
         zoomClassName="max-md:bottom-[95px]"
         overlay={
           <>
@@ -306,11 +365,13 @@ export function RunScreenLayout({
             />
             <CompletedAgents
               agents={data.completed}
+              names={agentNames}
               className="absolute bottom-[16.26px] left-4 max-md:right-4"
             />
             {typeof canvasOverlay === 'function'
               ? canvasOverlay(panel)
               : canvasOverlay}
+            {forks.overlay}
             {tasksOpen && (
               <TasksOverlay
                 tasks={data.tasks}
@@ -364,8 +425,20 @@ const KIND_GLYPH: Record<NodeKindName, string | null> = {
   output: outputGlyph,
 };
 
-// Inspector content for a node without hand-written inspector data, built from its map card.
-function inspectorFromNode(n: MapNode): InspectorData {
+// Steps the Sandbox's "Add to…" menu offers: tasks that haven't started, named by their helper.
+function notStartedSteps(data: RunData): SandboxStep[] {
+  return data.tasks
+    .filter((t) => t.state === 'waiting' && t.id)
+    .flatMap((t) => {
+      const n = data.map.nodes.find((x) => x.id === t.id);
+      return n ? [{ id: n.id, name: n.agent ?? n.title, detail: n.title }] : [];
+    });
+}
+
+// Inspector content for a node without hand-written inspector data, built from its map card. 5.1 and 5.2 use it
+// read-only for the finished run's cards.
+// eslint-disable-next-line react-refresh/only-export-components -- a plain helper shared with the approval screens
+export function inspectorFromNode(n: MapNode): InspectorData {
   const working = n.state === 'working';
   const notStarted = n.state === 'waiting' || n.status?.text.startsWith('Wait');
   const who = n.agent ?? 'this helper';

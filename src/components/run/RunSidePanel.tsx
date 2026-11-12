@@ -8,10 +8,18 @@ import { PanelTabs, type PanelTab } from '@/components/panels/PanelTabs';
 import { SidePanel } from '@/components/panels/SidePanel';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import type { MenuItemData } from '@/components/ui/Menu';
 
-import { SandboxPanel, type SandboxSection } from './SandboxPanel';
+import {
+  type SandboxItem,
+  SandboxPanel,
+  type SandboxSection,
+} from './SandboxPanel';
 
 export type RunChatMessage = { from: 'assistant' | 'user'; text: string };
+
+/** A step that hasn't started: the run Sandbox's "Add to…" menu offers it. */
+export type SandboxStep = { id: string; name: string; detail: string };
 
 // The run side panel (3.3 Sandbox 2362:24915, 3.4 Decisions 2362:25044): SidePanel with run Panel tabs
 // (Chat · Sandbox · Decisions · N). Sandbox adds a Primary Small "Import" on the right of the tabs.
@@ -27,7 +35,9 @@ export function RunSidePanel({
   chatSuggestions,
   onDecisionChange,
   onDecisionFork,
+  steps = [],
 }: {
+  steps?: SandboxStep[];
   tab: PanelTab;
   onTabChange: (tab: PanelTab) => void;
   onClose: () => void;
@@ -42,23 +52,109 @@ export function RunSidePanel({
 }) {
   const [sections, setSections] = useState(sandbox);
   const [imports, setImports] = useState(0);
-  const importFile = () => {
+  // Import adds to Assets; a section's "+" imports into that section (Skills get a skill, others a file).
+  const importFile = (into?: SandboxSection) => {
     const n = imports + 1;
     setImports(n);
+    const target = into?.id === 'skills' ? into.id : sections[0]?.id;
+    const name = target === 'skills' ? `New skill ${n}` : `Upload ${n}.pdf`;
     setSections((prev) =>
-      prev.map((s, i) =>
-        i === 0
+      prev.map((s) =>
+        s.id === target
           ? {
               ...s,
               open: true,
               items: [
-                { name: `Upload ${n}.pdf`, source: 'New · not used yet' },
+                { name, source: 'New · not used yet' },
                 ...s.items,
               ],
             }
           : s
       )
     );
+  };
+
+  // "Add to <step>…" on a row: only steps that haven't started take new items (the Sandbox note says so).
+  // STATE: the store should add the resource to that helper's skills/files/tools so its inspector, the plan
+  // drawer and the step's run read it; here only the row's "used by" line changes.
+  const addTo = (item: SandboxItem, section: SandboxSection, step: SandboxStep) =>
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === section.id
+          ? {
+              ...s,
+              items: s.items.map((it) =>
+                it.name === item.name
+                  ? {
+                      ...it,
+                      source: it.source.startsWith('New')
+                        ? step.name
+                        : it.source.includes(step.name)
+                          ? it.source
+                          : `${it.source}, ${step.name}`,
+                    }
+                  : it
+              ),
+            }
+          : s
+      )
+    );
+  const rowMenu = (
+    item: SandboxItem,
+    section: SandboxSection
+  ): MenuItemData[] | undefined => {
+    if (section.content) return undefined;
+    if (!steps.length)
+      return [
+        {
+          key: 'none',
+          label: 'Every step has started',
+          description: 'New items apply to the next run',
+        },
+      ];
+    return steps.map((st) => ({
+      key: st.id,
+      label: `Add to ${st.name}`,
+      description: item.source.includes(st.name)
+        ? 'Already has it'
+        : `${st.detail} · hasn’t started`,
+      onSelect: () => addTo(item, section, st),
+    }));
+  };
+
+  // A decision's "Change" opens the Chat tab with "Change: <decision> → " typed; sending it updates the entry.
+  const [log, setLog] = useState(decisions);
+  const [changing, setChanging] = useState<Decision | null>(null);
+  const changeDecision = (d: Decision) => {
+    setChanging(d);
+    if (onDecisionChange) onDecisionChange(d);
+    else onTabChange('chat');
+  };
+  const applyChange = (text: string) => {
+    if (!changing) return null;
+    const prefix = `Change: ${changing.title} →`;
+    const to = text.startsWith(prefix)
+      ? text.slice(prefix.length).trim()
+      : text.replace(/^change:?/i, '').trim();
+    if (!to) return null;
+    const old = changing.title;
+    // STATE: the store's decisions[] should record this (changedByYou), and the helpers whose steps haven't
+    // started should read the new value (launch facts, approval copy).
+    setLog((all) =>
+      all.map((d) =>
+        d.id === changing.id
+          ? {
+              ...d,
+              title: to,
+              basis: `You changed it from “${old}”`,
+              tag: 'Changed by you',
+              time: 'Just now',
+            }
+          : d
+      )
+    );
+    setChanging(null);
+    return `Updated: ${to}. It’s in the decision log, and the helpers whose steps haven’t started will use it.`;
   };
 
   return (
@@ -78,7 +174,7 @@ export function RunSidePanel({
             variant="primary"
             size="sm"
             leading={<Icon src={plusWhite} size={16} />}
-            onClick={importFile}
+            onClick={() => importFile()}
             aria-label="Import"
             className="max-md:px-1.5"
           >
@@ -89,18 +185,28 @@ export function RunSidePanel({
     >
       {tab === 'sandbox' && (
         // Remount when an import lands so the Assets section opens on it.
-        <SandboxPanel key={imports} sections={sections} />
+        <SandboxPanel
+          key={imports}
+          sections={sections}
+          rowMenu={rowMenu}
+          onAdd={importFile}
+        />
       )}
       {tab === 'decisions' && (
         <DecisionLog
-          decisions={decisions}
+          decisions={log}
           more={decisionsMore}
-          onChange={onDecisionChange}
+          onChange={changeDecision}
           onFork={onDecisionFork}
         />
       )}
       {tab === 'chat' && (
-        <RunChat initial={chat} suggestions={chatSuggestions} />
+        <RunChat
+          initial={chat}
+          suggestions={chatSuggestions}
+          draft={changing ? `Change: ${changing.title} → ` : undefined}
+          onSendChange={changing ? applyChange : undefined}
+        />
       )}
     </SidePanel>
   );
@@ -110,9 +216,15 @@ export function RunSidePanel({
 function RunChat({
   initial,
   suggestions,
+  draft,
+  onSendChange,
 }: {
   initial: RunChatMessage[];
   suggestions?: string[];
+  /** Prefilled composer text (a decision's Change). */
+  draft?: string;
+  /** Applies a decision change; returns the reply, or null when the text wasn't one. */
+  onSendChange?: (text: string) => string | null;
 }) {
   const [messages, setMessages] = useState(initial);
   const scroller = useRef<HTMLDivElement>(null);
@@ -122,15 +234,19 @@ function RunChat({
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages.length, initial.length]);
 
-  const send = (text: string) =>
+  const send = (text: string) => {
+    const changed = onSendChange?.(text);
     setMessages((m) => [
       ...m,
       { from: 'user', text },
       {
         from: 'assistant',
-        text: 'Got it. I’ll pass that to the helpers whose steps haven’t started yet.',
+        text:
+          changed ??
+          'Got it. I’ll pass that to the helpers whose steps haven’t started yet.',
       },
     ]);
+  };
 
   return (
     <div className="flex min-h-px w-full flex-1 flex-col">
@@ -147,6 +263,8 @@ function RunChat({
         )}
       </div>
       <ChatComposer
+        key={draft}
+        defaultText={draft}
         onSend={send}
         suggestions={messages.length === initial.length ? suggestions : []}
       />

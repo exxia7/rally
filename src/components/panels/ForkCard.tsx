@@ -7,6 +7,8 @@ import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
 import { TextArea } from '@/components/ui/TextArea';
 
+import { FORK_CARD_OPTIONS } from './forkCardOptions';
+
 /** What a Fork card says; the inspector data carries it for steps that can fork (4.4, 6.4). */
 export type ForkCardContent = {
   title?: string;
@@ -24,17 +26,7 @@ export function ForkCard({
   title = 'New fork from Launch copy',
   original = '“Your money finally has a coach…”',
   prompt = 'What should the fork try?',
-  options = [
-    {
-      label: 'Compare to Penny',
-      text: 'Compare us to Penny up front: they give tips, we know your budget.',
-    },
-    {
-      label: 'Lead with the price',
-      text: 'Lead with the price: $4/month, less than one coffee.',
-    },
-    { label: 'Shorter', text: 'Make every piece shorter: one line, one link.' },
-  ],
+  options = FORK_CARD_OPTIONS,
   note = 'Earlier steps are reused. 3 helpers work on a new branch · about 1 min. The original path stays as it is.',
   helpers = ['Writer', 'Community', 'Publisher'],
   onCreate,

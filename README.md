@@ -31,5 +31,7 @@ It works from phone width up to large desktop; at 1440×900 it matches the Figma
 | `node scripts/box-audit.mjs 3.2` | Compares element positions and sizes with Figma's layout data |
 | `node scripts/dead-click-audit.mjs` | Clicks everything on every screen and lists controls that do nothing |
 | `npx tsc -b && npx eslint src` | Typecheck and lint |
+| `node scripts/story-e2e.mjs` | Walks the main story on the live store (needs `npm run dev`) |
+| `node scripts/baseline-compare.mjs` | Pixel-for-pixel compare of the last pixel-diff renders with `design/out/baseline-app/` |
 
 `CLAUDE.md` has the build conventions.

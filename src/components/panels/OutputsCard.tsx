@@ -78,12 +78,20 @@ export function OutputsCard({
   initial = DEFAULT_OUTPUTS,
   showAdd = true,
   className,
+  onChange,
 }: {
   initial?: OutputItem[];
   showAdd?: boolean;
   className?: string;
+  /** Called with the new list after a remove or an add (the plan screens write it to the store). */
+  onChange?: (items: OutputItem[]) => void;
 }) {
-  const [items, setItems] = useState(initial);
+  const [items, setItemsState] = useState(initial);
+  const setItems = (fn: (all: OutputItem[]) => OutputItem[]) => {
+    const next = fn(items);
+    setItemsState(next);
+    onChange?.(next);
+  };
   return (
     <div
       className={clsx(

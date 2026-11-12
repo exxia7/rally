@@ -150,10 +150,16 @@ export function MapCanvas({
   zoomClassName,
   zoomPosition = 'right',
   focus,
+  focusAt = 0.5,
+  phoneZoom = PHONE_ZOOM,
   fitWidth,
   className,
   children,
 }: {
+  /** Phones: where `focus` lands, as a fraction of the canvas height (0.2 keeps it above a half-height sheet). */
+  focusAt?: number;
+  /** Phones: the opening zoom (the plan map's cards are drawn at 0.85, so it opens larger to stay readable). */
+  phoneZoom?: number;
   stageWidth?: number;
   stageHeight?: number;
   /** What the Figma zoom readout shows at design size (the frames say 83%). */
@@ -173,7 +179,7 @@ export function MapCanvas({
   const scroller = useRef<HTMLDivElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(() => (isPhone() ? PHONE_ZOOM : 1));
+  const [zoom, setZoom] = useState(() => (isPhone() ? phoneZoom : 1));
   // Slack (px) around the stage once Fit has been used; null keeps the opening, centred layout.
   const [free, setFree] = useState<{ x: number; y: number } | null>(null);
   const prevZoom = useRef(zoom);
@@ -188,7 +194,7 @@ export function MapCanvas({
     const fx = focus?.x ?? stageWidth / 2;
     const fy = focus?.y ?? stageHeight / 2;
     el.scrollLeft = fx * zoom - el.clientWidth / 2;
-    el.scrollTop = fy * zoom - el.clientHeight / 2;
+    el.scrollTop = fy * zoom - el.clientHeight * focusAt;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, for the opening view
   }, []);
 

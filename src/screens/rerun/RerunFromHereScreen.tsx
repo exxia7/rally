@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { AgentAvatar } from '@/components/agents/AgentAvatar';
 import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
-import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
 
 import { COPY_DONE_RUN, RERUN_NOTE_DEFAULT } from './data';
 
@@ -16,21 +16,21 @@ export const screenId = ['6.1', '6.2'];
 // an optional note for what Writer should change. Confirming goes to 6.3 Rerunning with that note.
 export default function RerunFromHereScreen() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const go = useGo();
   const [confirm, setConfirm] = useState(id === '6.2');
   return (
     <>
       <RunScreenLayout
         data={COPY_DONE_RUN}
         initialPanel={{ kind: 'inspector', nodeId: 'writer' }}
-        onInspectorFork={() => navigate(screenPath('6.4'))}
+        onInspectorFork={() => go('6.4')}
         onInspectorRerun={() => setConfirm(true)}
       />
       <ConfirmDialog
         open={confirm}
         onClose={() => setConfirm(false)}
         onConfirm={(_, note) =>
-          navigate(screenPath('6.3'), { state: { note } })
+          go('6.3', { state: { note } })
         }
         title="Rerun Writer?"
         body="Rerunning “Launch copy” also reruns every agent that depends on it. Their current work will be replaced with new versions."

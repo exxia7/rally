@@ -23,6 +23,7 @@ export function ToolPicker({
   scale,
   className,
   style,
+  toolSource,
 }: {
   helper: string;
   selected: string[];
@@ -34,6 +35,8 @@ export function ToolPicker({
   scale?: number;
   className?: string;
   style?: CSSProperties;
+  /** A tool row's source text ("Connected", "Not connected"); defaults to the tool list's. */
+  toolSource?: (name: string) => string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const refs = useRef([ref]).current;
@@ -59,7 +62,7 @@ export function ToolPicker({
         <ToolRow
           key={t.name}
           name={t.name}
-          source={t.source}
+          source={toolSource?.(t.name) ?? t.source}
           checked={selected.includes(t.name)}
           onToggle={() => onToggle(t.name)}
           fill

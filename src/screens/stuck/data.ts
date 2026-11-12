@@ -1,3 +1,4 @@
+import type { AgentName } from '@/components/agents/characters';
 import type { MapEdge, MapNode } from '@/components/map/FlowMap';
 import type { HandRaiseData } from '@/components/run/HandRaisePanel';
 import type { RunData } from '@/components/run/RunScreenLayout';
@@ -322,3 +323,78 @@ export const PRICE_MISMATCH_RUN: RunData = {
   tasksSummary: '5 of 10 done · waiting on you',
   handRaise: HAND_RAISE_PRICE,
 };
+
+// ---- What each hand-raise choice does (the live store applies these; see src/state/runView.ts) ----------------
+
+/** One option's consequences: the steps it redoes, the line it adds to 5.2 "What you fixed", and what changes. */
+export type FixEffect = {
+  /** Run-map steps that redo their work (the helper count in the option's description comes from these). */
+  affects: string[];
+  fixed: string;
+  /** The Strategist's note while it redoes its card (4.2). */
+  note?: string;
+  /** The Strategist's decision once it's redone. */
+  decided?: string;
+  /** Launch facts the choice changes. */
+  facts?: { date?: string; price?: string };
+  /** The copy still mentions Penny (the X post leads with it). */
+  mentionsPenny?: boolean;
+};
+
+/** Per hand raise, per step, per option: lines up with HAND_RAISE_MISSING / HAND_RAISE_PRICE. */
+export const FIX_EFFECTS: Record<'missing' | 'price', FixEffect[][]> = {
+  missing: [
+    [
+      {
+        affects: ['decision', 'writer', 'discord'],
+        fixed: 'Kept Mar 12 and mentioned Penny in the copy',
+        note: 'Adding: how we differ from Penny',
+        decided: 'Decided: existing budgeters, vs Penny',
+        mentionsPenny: true,
+      },
+      {
+        affects: [
+          'plan',
+          'scout',
+          'decision',
+          'writer',
+          'designer',
+          'discord',
+          'schedule',
+        ],
+        fixed: 'Moved the launch to Mar 14, after Penny',
+        note: 'Moving the launch to Mar 14',
+        decided: 'Decided: existing budgeters, Mar 14',
+        facts: { date: 'Mar 14' },
+      },
+    ],
+    [
+      {
+        affects: ['decision', 'writer'],
+        fixed: 'Said what you get for $12/mo',
+      },
+      { affects: ['decision'], fixed: 'Left pricing out of the launch' },
+    ],
+  ],
+  price: [
+    [
+      {
+        affects: ['writer'],
+        fixed: 'Changed the price in the copy from $15 to $12',
+      },
+      {
+        affects: ['writer', 'discord', 'schedule'],
+        fixed: 'Changed the launch fact to $15/mo',
+        facts: { price: '$15/mo' },
+      },
+    ],
+  ],
+};
+
+/** 4.1b "Rerun confirm" as Figma lists it (agent, step). The live list comes from the chosen fixes (runView). */
+export const RERUN_CONFIRM_DRAWN: [AgentName, string][] = [
+  ['Writer', 'Launch copy'],
+  ['Designer', 'Visuals'],
+  ['Community', 'Discord post'],
+  ['Publisher', 'Schedule launch'],
+];

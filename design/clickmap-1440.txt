@@ -1,0 +1,1503 @@
+
+=== 2.1 (13)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "AI coach launch": nothing
+  button "Budgeting app launch": nothing
+  button "Pricing update": nothing
+  textarea "Launch brief": input
+  button "Attach": change +[Upload files | Brand guide, logo, screenshots | Paste a link] -0
+  button "Send": nothing
+
+=== 1.1 (15)
+  a "Pathfinder home": nothing
+  a "Workflows": nothing
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  button "Workspace settings": nav -> /s/1.2
+  input "Search workflows": input
+  button "All · 4": nothing
+  button "Running · 1": change +[] -4
+  button "Needs you · 1": change +[] -4
+  button "Status": change +[Any status | Drafts] -0
+  button "New workflow": nav -> /s/2.1
+  button "! AI Coach launch Running Needs your inp": nav -> /s/4.1
+  button "Pricing change announcement Draft Edited": nav -> /s/2.1
+  button "Product Hunt relaunch Done Launched Feb ": nav -> /s/5.2
+  button "Hiring: founding designer Done Posted Ja": nav -> /s/5.2
+
+=== 2.2 (16)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "See your team": nav -> /s/2.3
+  button "Attach": change +[Upload files | Brand guide, logo, screenshots | Paste a link] -0
+  input "Add goals or channels (optional)": input
+  button "Send": nothing
+  button "Close panel": change +[] -4
+  button "Open": nothing
+  button "E Your answers in this chat “launch camp": nothing
+  button "PDF Brand guide.pdf 12 pages · used for ": nothing
+
+=== 2.1-attach (16)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "AI coach launch": change +[] -4
+  button "Budgeting app launch": change +[] -4
+  button "Pricing update": change +[] -4
+  textarea "Launch brief": input
+  button "Attach": change +[] -4
+  button[menuitem] "Upload files Brand guide, logo, screensh": change +[] -4
+  button[menuitem] "Paste a link Inspiration, past posts": change +[Link] -4
+  button[menuitem] "Add a skill Reusable how-tos, like brand": change +[Skill · Brand voice] -4
+  button "Send": change +[] -4
+
+=== 2.2-attach (19)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "See your team": nav -> /s/2.3
+  button "Attach": change +[] -4
+  button[menuitem] "Upload files Brand guide, logo, screensh": change +[Got it. I've added that to the launch brief.] -4
+  button[menuitem] "Paste a link Inspiration, past posts": change +[Got it. I've added that to the launch brief.] -4
+  button[menuitem] "Add a skill Reusable how-tos, like brand": change +[Got it. I've added that to the launch brief.] -4
+  input "Add goals or channels (optional)": input
+  button "Send": change +[] -4
+  button "Close panel": change +[] -4
+  button "Open": change +[] -4
+  button "E Your answers in this chat “launch camp": change +[] -4
+  button "PDF Brand guide.pdf 12 pages · used for ": change +[] -4
+
+=== 2.4c (1)
+  a "All screens": nav -> /screens
+
+=== 1.2 (26)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nothing
+  a "Lumen workspace": nav -> /
+  button[tab] "General": nothing
+  button[tab] "Connected tools": nothing
+  button[tab] "Brand kit": nothing
+  button[tab] "Permission presets": nothing
+  button[tab] "People and approvals": nothing
+  button[tab] "Usage and budget": nothing
+  button[tab] "Notifications": nothing
+  button "Make default": nothing
+  button "Edit": nav -> /s/2.7
+  button "Edit": nav -> /s/2.7
+  button "Make default": nothing
+  button "Edit": nav -> /s/2.7
+  button "New preset": nav -> /s/2.7
+  button "Manage": nothing
+  button "Manage": nothing
+  button "Manage": nothing
+  button "More for Brand guide.pdf": change +[Remove] -0
+  button "More for Logo.svg": change +[Remove] -0
+  button "More for Brand voice": change +[Remove] -0
+  button "Upload a file or skill": nothing
+  button "Invite": change +[Send invite | Cancel] -1
+
+=== 2.3 (48)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Planner | From Sandbox | Built in] -0
+  div[button] "Scout Checks what competitors are doing ": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Scout | From Sandbox | Built in] -0
+  div[button] "Insights Reads what your waitlist told y": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Strategist Picks who it's for and what t": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Skills": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Writer Writes your posts and email Model": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Skills": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Designer Makes the images Model Claude H": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Designer | From Sandbox | Built in] -0
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Publisher Posts everything on launch day": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Publisher | From Sandbox | Built in] -0
+  button "Edit Ads": change +[83% | Saved | What it does] -4
+  button "Edit Posts": change +[83% | Saved | What it does] -4
+  button "Add an output": change +[New output | New] -0
+  button "Zoom out": change +[63%] -1
+  button "Zoom in": change +[77%] -1
+  button "Fit view": nothing
+  button[tab] "Chat": nothing
+  button[tab] "Sandbox": nav -> /s/2.6
+  button "I also want to post on our Discord forum": nav -> /s/2.5
+  button "Make the Writer more playful, and add a ": change +[Updated | Writes your posts, email and a TikTok script | Tone] -1
+  input "Ask for changes…": input
+  button "Send": nothing
+
+=== 2.4d (48)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Planner | From Sandbox | Built in] -1
+  div[button] "Scout Checks what competitors are doing ": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Scout | From Sandbox | Built in] -1
+  div[button] "Insights Reads what your waitlist told y": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Strategist Picks who it's for and what t": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Skills": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Writer Updated Writes your posts, email ": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tone": change +[83% | Saved | What it does] -4
+  button "Edit Skills": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Designer Makes the images Model Claude H": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Designer | From Sandbox | Built in] -1
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Publisher Posts everything on launch day": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Publisher | From Sandbox | Built in] -1
+  button "Edit Ads": change +[83% | Saved | What it does] -4
+  button "Edit Posts": change +[83% | Saved | What it does] -4
+  button "Add an output": change +[New output] -0
+  button "Zoom out": change +[63%] -1
+  button "Zoom in": change +[77%] -1
+  button "Fit view": nothing
+  button[tab] "Chat": nothing
+  button[tab] "Sandbox": nav -> /s/2.6
+  button "Undo": change +[Writes your posts and email | Undone. Writer is back to how it was, and the TikTok script is gone.] -4
+  input "Ask for changes…": input
+  button "Send": nothing
+
+=== 2.4 (56)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[70%] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Model": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Tools": change +[Tools for Planner | From Sandbox | Built in] -4
+  div[button] "Scout Checks what competitors are doing ": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Model": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Tools": change +[Tools for Scout | From Sandbox | Built in] -4
+  div[button] "Insights Reads what your waitlist told y": change +[~2k tokens · $0.01 | Your launch | Passes on · to Strategist] -4
+  button "Edit Model": change +[~2k tokens · $0.01 | Your launch | Passes on · to Strategist] -4
+  button "Edit Files": change +[~2k tokens · $0.01 | Your launch | Passes on · to Strategist] -4
+  div[button] "Strategist Picks who it's for and what t": nothing
+  button "Edit Model": nothing
+  button "Edit Skills": nothing
+  button "Edit Files": nothing
+  div[button] "Writer Writes your posts and email Model": change +[~6k tokens · $0.06 | Passes on · to Publisher | Posts, email, Product Hunt page] -4
+  button "Edit Model": change +[~6k tokens · $0.06 | Passes on · to Publisher | Posts, email, Product Hunt page] -4
+  button "Edit Skills": change +[~6k tokens · $0.06 | Passes on · to Publisher | Posts, email, Product Hunt page] -4
+  button "Edit Files": change +[~6k tokens · $0.06 | Passes on · to Publisher | Posts, email, Product Hunt page] -4
+  div[button] "Designer Makes the images Model Claude H": change +[~3k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Model": change +[~3k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Tools": change +[Tools for Designer | From Sandbox | Built in] -4
+  button "Edit Files": change +[~3k tokens · $0.01 | Built in | Docs] -4
+  div[button] "Publisher Posts everything on launch day": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Model": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Tools": change +[Tools for Publisher | From Sandbox | Built in] -4
+  button "Edit Ads": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Edit Posts": change +[~2k tokens · $0.01 | Built in | Docs] -4
+  button "Add an output": change +[New output | New] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": nothing
+  button "Close helper": change +[70% | Chat | Sandbox] -4
+  input "Helper name": input
+  textarea "": input
+  button[tab] "Haiku 5.5": change +[~4k tokens · $0.02] -1
+  button[tab] "Opus 5.5": nothing
+  button "Remove Positioning playbook": change +[] -2
+  button "Remove Competitor notes": change +[] -2
+  button "Add from Sandbox": nav -> /s/2.6
+  button "Upload": nothing
+  button "Team default · when unsure": change +[Always · before every step | Never · run on its own] -0
+  button "Edit": change +[Done] -1
+  button "Edit": change +[Done] -1
+  button "Remove helper": change +[70% | Chat | Sandbox] -4
+  button "Duplicate": nav -> /s/2.5
+
+=== 2.4b (58)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": change +[] -4
+  div[button] "Planner Plans the timeline and budget Mo": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Planner] -1
+  div[button] "Scout Checks what competitors are doing ": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": nothing
+  div[button] "Insights Reads what your waitlist told y": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Strategist Picks who it's for and what t": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Skills": nothing
+  button "Edit Files": nothing
+  div[button] "Writer Writes your posts and email Model": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Skills": change +[83% | Saved | What it does] -4
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Designer Makes the images Model Claude H": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Designer] -1
+  button "Edit Files": change +[83% | Saved | What it does] -4
+  div[button] "Publisher Posts everything on launch day": change +[83% | Saved | What it does] -4
+  button "Edit Model": change +[83% | Saved | What it does] -4
+  button "Edit Tools": change +[Tools for Publisher] -1
+  button "Edit Ads": change +[83% | Saved | What it does] -4
+  button "Edit Posts": change +[83% | Saved | What it does] -4
+  button[checkbox] "Web search Built in": nothing
+  button[checkbox] "Docs Built in": change +[Web search, Docs] -0
+  button[checkbox] "Image maker Built in": change +[Web search, Image maker] -0
+  button[checkbox] "Calendar Built in": change +[Web search, Calendar] -0
+  button[checkbox] "Email Connected": change +[Web search, Email] -0
+  button[checkbox] "X Connected": change +[Web search, X] -0
+  button[checkbox] "LinkedIn Connected": change +[Web search, LinkedIn] -0
+  button[checkbox] "Discord Connected": change +[Web search, Discord] -0
+  button "Connect a tool": nav -> /s/2.7
+  button "Open full editor": change +[83% | Saved | What it does] -4
+  button "Add an output": change +[New output | New] -4
+  button "Zoom out": change +[63%] -4
+  button "Zoom in": change +[77%] -4
+  button "Fit view": change +[] -4
+  button[tab] "Chat": change +[] -4
+  button[tab] "Sandbox": nav -> /s/2.6
+  button "I also want to post on our Discord forum": nav -> /s/2.5
+  button "Make the Writer more playful, and add a ": change +[Updated | Writes your posts, email and a TikTok script | Tone] -4
+  input "Ask for changes…": input
+  button "Send": change +[] -4
+
+=== 2.4b-full (63)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[70%] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": change +[Timeline, budget, launch date] -1
+  button "Edit Model": change +[Timeline, budget, launch date] -1
+  button "Edit Tools": change +[Tools for Planner | From Sandbox | Open full editor] -4
+  div[button] "Scout Checks what competitors are doing ": nothing
+  button "Edit Model": nothing
+  button "Edit Tools": change +[Tools for Scout | From Sandbox | Open full editor] -4
+  div[button] "Insights Reads what your waitlist told y": change +[File · from Sandbox | What waitlist members asked for] -4
+  button "Edit Model": change +[File · from Sandbox | What waitlist members asked for] -4
+  button "Edit Files": change +[File · from Sandbox | What waitlist members asked for] -4
+  div[button] "Strategist Picks who it's for and what t": change +[~4k tokens · $0.04 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Model": change +[~4k tokens · $0.04 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Skills": change +[~4k tokens · $0.04 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Files": change +[~4k tokens · $0.04 | Skill · how-to guide | File · from Sandbox] -4
+  div[button] "Writer Writes your posts and email Model": change +[~6k tokens · $0.06 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Model": change +[~6k tokens · $0.06 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Skills": change +[~6k tokens · $0.06 | Skill · how-to guide | File · from Sandbox] -4
+  button "Edit Files": change +[~6k tokens · $0.06 | Skill · how-to guide | File · from Sandbox] -4
+  div[button] "Designer Makes the images Model Claude H": change +[~3k tokens · $0.01 | File · from Sandbox | Passes on · to Publisher] -4
+  button "Edit Model": change +[~3k tokens · $0.01 | File · from Sandbox | Passes on · to Publisher] -4
+  button "Edit Tools": change +[Tools for Designer | From Sandbox | Open full editor] -4
+  button "Edit Files": change +[~3k tokens · $0.01 | File · from Sandbox | Passes on · to Publisher] -4
+  div[button] "Publisher Posts everything on launch day": change +[Writer and Designer, after your OK | Passes on · to your audience | Posts on X, LinkedIn and email] -4
+  button "Edit Model": change +[Writer and Designer, after your OK | Passes on · to your audience | Posts on X, LinkedIn and email] -4
+  button "Edit Tools": change +[Tools for Publisher | From Sandbox | Open full editor] -4
+  button "Edit Ads": change +[Writer and Designer, after your OK | Passes on · to your audience | Posts on X, LinkedIn and email] -4
+  button "Edit Posts": change +[Writer and Designer, after your OK | Passes on · to your audience | Posts on X, LinkedIn and email] -4
+  button "Add an output": change +[New output | New] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": nothing
+  button "Close helper": change +[70% | Chat | Sandbox] -4
+  input "Helper name": input
+  textarea "": input
+  button[tab] "Haiku 5.5": nothing
+  button[tab] "Opus 5.5": change +[~2k tokens · $0.02] -1
+  button[checkbox] "Web search Built in": nothing
+  button[checkbox] "Docs Built in": change +[Web search, Docs] -0
+  button[checkbox] "Image maker Built in": change +[Web search, Image maker] -0
+  button[checkbox] "Calendar Built in": change +[Web search, Calendar] -0
+  button[checkbox] "Email Connected": change +[Web search, Email] -0
+  button[checkbox] "X Connected": change +[Web search, X] -0
+  button[checkbox] "LinkedIn Connected": change +[Web search, LinkedIn] -0
+  button[checkbox] "Discord Connected": change +[Web search, Discord] -0
+  button "Connect a tool": nav -> /s/2.7
+  button "Add from Sandbox": nav -> /s/2.6
+  button "Upload": nothing
+  button "Edit": change +[Done] -1
+  button "Edit": change +[Done] -1
+  button "Team default · when unsure": nothing
+  button "Remove helper": change +[70% | Chat | Sandbox] -4
+  button "Duplicate": nav -> /s/2.5
+
+=== 2.4e (55)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": change +[Publisher will wait for your OK before it posts or spends.] -0
+  div[button] "Planner Plans the timeline and budget Mo": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Tools": nav -> /s/2.4
+  div[button] "Scout Checks what competitors are doing ": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Tools": nav -> /s/2.4
+  div[button] "Insights Reads what your waitlist told y": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Strategist Picks who it's for and what t": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Skills": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Writer Writes your posts and email Model": nothing
+  button "Edit Model": nothing
+  button "Edit Skills": change +[Publisher will wait for your OK before it posts or spends.] -0
+  button "Edit Files": change +[Publisher will wait for your OK before it posts or spends.] -0
+  div[button] "Designer Makes the images Model Claude H": change +[On its own | Publisher will run without asking. Workspace rules still apply.] -0
+  button "Edit Model": nothing
+  button "Edit Tools": nothing
+  button "Edit Files": nothing
+  div[button] "Publisher Posts everything on launch day": nothing
+  button "Edit Model": nothing
+  button "Edit Tools": nothing
+  button "Edit Ads": nothing
+  button "Edit Posts": nothing
+  div[button] "Community New Posts your launch in Disco": change +[Before Community runs | Community posts your launch in Discord.] -2
+  button "Edit Model": change +[Before Community runs | Community posts your launch in Discord.] -2
+  button "Edit Tools": change +[Before Community runs | Community posts your launch in Discord.] -2
+  button "Edit Posts": change +[Before Community runs | Community posts your launch in Discord.] -2
+  button[radio] "Ask me first Waits for your OK before it": change +[Publisher will wait for your OK before it posts or spends.] -0
+  button[radio] "Only when it spends money Posts on sched": change +[On schedule | Publisher will post on schedule and ask before any ad spend.] -1
+  button[radio] "Just go Runs without asking. Workspace r": change +[On its own | Publisher will run without asking. Workspace rules still apply.] -0
+  button "Permissions": nav -> /s/2.7
+  button "Add an output": change +[New output] -4
+  button "Zoom out": change +[63%] -4
+  button "Zoom in": change +[77%] -4
+  button "Fit view": change +[] -4
+  button[tab] "Chat": change +[] -4
+  button[tab] "Sandbox": nav -> /s/2.6
+  button "Undo": change +[Undone. No Community helper, and Discord post is off What goes out.] -4
+  input "Ask for changes…": input
+  button "Send": change +[] -4
+
+=== 3.1 (8)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button[tab] "Planning": nav -> /s/2.1
+  button[tab] "Flowchart": nothing
+  button "Planning": nav -> /s/2.1
+
+=== 2.8 (31)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.3
+  button "Start launch": nav -> /s/3.2
+  button[tab] "Permissions": nothing
+  button[tab] "Launch facts": nothing
+  button[tab] "Tools": nothing
+  button[tab] "Budget": nothing
+  button[tab] "Approvers": nothing
+  button[tab] "Duplicate or save as template": nothing
+  button[tab] "Archive": nothing
+  button "Back to the map": nav -> /s/2.3
+  button "Careful": change +[Before every choice | Careful preset is $0] -2
+  button "Balanced": nothing
+  button "Hands-off": change +[Just go | Hands-off preset is $50] -2
+  button "Custom": change +[Custom preset is $0] -2
+  button "Edit": change +[Done] -1
+  button "Edit": change +[Done] -1
+  button "Edit": change +[Done] -1
+  button "Edit": change +[Done] -1
+  button[switch] "Discord": nothing
+  button[switch] "Email (Resend)": nothing
+  button[switch] "X": nothing
+  button[switch] "Web search": nothing
+  button[switch] "LinkedIn (connect in workspace settings)": nav -> /s/1.2
+
+=== 3.2 (25)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Show side panel": change +[Chat | Sandbox | Decisions · 2] -0
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -0
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -0
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Original path | Scout · 6 apps compared | Fork from here] -0
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Insights · 61% want coaching | Fork from here] -0
+  div[button] "Decision · Strategist Not sure Who is th": change +[Original path | Strategist · Decided: existing budgeters | Fork from here] -0
+  div[button] "Output · Writer Launch copy X post Your ": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -0
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -0
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waits for Writer | Fork from here] -0
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Mar 12, 9am | Fork from here] -0
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -0
+  button "Tasks 4 of 10 done": change +[4 of 10 done · about 4 min left | Running | Needs your OK] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": nothing
+  button "Fit view": nothing
+
+=== 2.5 (51)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Tools": nav -> /s/2.4
+  div[button] "Scout Checks what competitors are doing ": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Tools": nav -> /s/2.4
+  div[button] "Insights Reads what your waitlist told y": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Strategist Picks who it's for and what t": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Skills": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Writer Writes your posts and email Model": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Skills": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Designer Makes the images Model Claude H": nav -> /s/2.4
+  button "Edit Model": nav -> /s/2.4
+  button "Edit Tools": nav -> /s/2.4
+  button "Edit Files": nav -> /s/2.4
+  div[button] "Publisher Posts everything on launch day": change +[Before Publisher runs | Publisher posts for you and can spend up to $50 on ads. | Ask me first] -0
+  button "Edit Model": change +[Before Publisher runs | Publisher posts for you and can spend up to $50 on ads. | Ask me first] -0
+  button "Edit Tools": change +[Before Publisher runs | Publisher posts for you and can spend up to $50 on ads. | Ask me first] -0
+  button "Edit Ads": change +[Before Publisher runs | Publisher posts for you and can spend up to $50 on ads. | Ask me first] -0
+  button "Edit Posts": change +[Before Publisher runs | Publisher posts for you and can spend up to $50 on ads. | Ask me first] -0
+  div[button] "Community New Posts your launch in Disco": change +[Before Community runs | Community posts your launch in Discord. | Ask me first] -0
+  button "Edit Model": change +[Before Community runs | Community posts your launch in Discord. | Ask me first] -0
+  button "Edit Tools": change +[Before Community runs | Community posts your launch in Discord. | Ask me first] -0
+  button "Edit Posts": change +[Before Community runs | Community posts your launch in Discord. | Ask me first] -0
+  button "Add an output": change +[New output] -0
+  button "Zoom out": change +[63%] -1
+  button "Zoom in": nothing
+  button "Fit view": nothing
+  button[tab] "Chat": nothing
+  button[tab] "Sandbox": nav -> /s/2.6
+  button "Undo": change +[Undone. No Community helper, and Discord post is off What goes out.] -4
+  input "Ask for changes…": input
+  button "Send": nothing
+
+=== 2.6 (44)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": nav -> /s/2.4
+  div[button] "Scout Checks what competitors are doing ": nav -> /s/2.4
+  div[button] "Insights Reads what your waitlist told y": nav -> /s/2.4
+  div[button] "Strategist Picks who it's for and what t": nav -> /s/2.4
+  div[button] "Writer Writes your posts and email Model": nav -> /s/2.4
+  div[button] "Designer Makes the images Model Claude H": nav -> /s/2.4
+  div[button] "Publisher Posts everything on launch day": nav -> /s/2.4
+  div[button] "Community New Posts your launch in Disco": nav -> /s/2.4
+  button "Add an output": change +[New output] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[89%] -1
+  button[tab] "Chat": nav -> /s/2.5
+  button[tab] "Sandbox": nothing
+  button "Import": change +[7 | Upload 1.pdf | Not used yet] -1
+  button "Assets 6": change +[Brand guide.pdf | Logo.svg | 3 inspo images] -0
+  button "Add to Assets": change +[Brand guide.pdf | Logo.svg | 3 inspo images] -0
+  button "Skills 2": nothing
+  button "Add to Skills": nothing
+  button "Tools 5": change +[] -4
+  button "Add to Tools": nothing
+  div[button] "Web search Built in": nothing
+  div[button] "Image maker Built in": nothing
+  div[button] "Email (Resend) Connected": nothing
+  div[button] "X Connected": nothing
+  div[button] "Discord Connected": nothing
+  button "Launch facts 3": change +[Launch on Mar 12 | From your chat | 2,800 waitlist signups] -0
+  button "Add to Launch facts": change +[Launch on Mar 12 | From your chat | 2,800 waitlist signups] -0
+  button "Permissions 4": change +[Start from a saved preset | Careful | Balanced] -0
+  button "Add to Permissions": change +[Start from a saved preset | Careful | Balanced] -0
+  button "Estimate 3": change +[About 9 min | Run time | ~38k tokens] -0
+  button "Add to Estimate": change +[About 9 min | Run time | ~38k tokens] -0
+
+=== 2.7 (46)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings] -0
+  button[tab] "Planning": nothing
+  button[tab] "Flowchart": nav -> /s/3.1
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Start launch": nav -> /s/3.1
+  button "You approve": nothing
+  div[button] "Planner Plans the timeline and budget Mo": nav -> /s/2.4
+  div[button] "Scout Checks what competitors are doing ": nav -> /s/2.4
+  div[button] "Insights Reads what your waitlist told y": nav -> /s/2.4
+  div[button] "Strategist Picks who it's for and what t": nav -> /s/2.4
+  div[button] "Writer Writes your posts and email Model": nav -> /s/2.4
+  div[button] "Designer Makes the images Model Claude H": nav -> /s/2.4
+  div[button] "Publisher Posts everything on launch day": nav -> /s/2.4
+  button "Add an output": change +[New output | New] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[125%] -1
+  button[tab] "Chat": nav -> /s/2.3
+  button[tab] "Sandbox": nothing
+  button "Import": change +[7 | Upload 1.pdf | Not used yet] -1
+  button "Assets 6": change +[Brand guide.pdf | Logo.svg | 3 inspo images] -0
+  button "Add to Assets": change +[Brand guide.pdf | Logo.svg | 3 inspo images] -0
+  button "Skills 2": nothing
+  button "Add to Skills": nothing
+  button "Tools 5": change +[Built in | Email (Resend) | Connected] -0
+  button "Add to Tools": change +[Built in | Email (Resend) | Connected] -0
+  button "Launch facts 3": change +[Launch on Mar 12 | From your chat | 2,800 waitlist signups] -0
+  button "Add to Launch facts": change +[Launch on Mar 12 | From your chat | 2,800 waitlist signups] -0
+  button "Permissions 4": change +[] -4
+  button "Add to Permissions": nothing
+  button "Careful": change +[Using the Careful preset from workspace settings. Change anything to make it Custom for this workflo] -1
+  button "Balanced": nothing
+  button "Hands-off": change +[Using the Hands-off preset from workspace settings. Change anything to make it Custom for this workf] -1
+  button "Custom": change +[Custom for this workflow. Save it as a preset to use it again. A helper can still override in its De] -1
+  button[radio] "Before every choice": change +[Custom for this workflow. Save it as a preset to use it again. A helper can still override in its De] -1
+  button[radio] "Only when they're unsure Recommended": nothing
+  button[radio] "Just go": change +[Custom for this workflow. Save it as a preset to use it again. A helper can still override in its De] -1
+  button "Save as a new preset": nav -> /s/1.2
+  button "Estimate 3": change +[About 9 min | Run time | ~38k tokens] -0
+  button "Add to Estimate": change +[About 9 min | Run time | ~38k tokens] -0
+
+=== 3.2-tasks (35)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Show side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": nothing
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[] -4
+  div[button] "Output · Designer Visuals Social image [": change +[] -4
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Waits for your OK": change +[] -4
+  button "Tasks 4 of 10 done": change +[] -4
+  button "Launch copy Running": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  button "Visuals Running": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -4
+  button "Your launch Running": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Ready to post Needs your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Discord post Waiting": change +[Original path | Community · Waits for Writer | Fork from here] -4
+  button "Schedule launch Waiting": change +[Original path | Publisher · Mar 12, 9am | Fork from here] -4
+  button "Launch plan Done": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  button "Competitor scan Done": change +[Original path | Scout · 6 apps compared | Fork from here] -4
+  button "Waitlist survey Done": change +[Original path | Insights · 61% want coaching | Fork from here] -4
+  button "Who is this launch for? Done": change +[Original path | Strategist · Decided: existing budgeters | Fork from here] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+
+=== 3.3 (40)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Original path | Scout · 6 apps compared | Fork from here] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Insights · 61% want coaching | Fork from here] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Original path | Strategist · Decided: existing budgeters | Fork from here] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waits for Writer | Fork from here] -4
+  div[button] "Action · Publisher Your OK Schedule laun": gone
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Tasks 4 of 10 done": change +[4 of 10 done · about 4 min left | Running | Needs your OK] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button[tab] "Chat": change +[Mar 12, to our 2,800 waitlist signups | Your launch is running. Writer is on 3 of 5 pieces and Desig] -4
+  button[tab] "Sandbox": nothing
+  button[tab] "Decisions · 2": change +[Everything your helpers decided and everything you chose, newest first. | All · 2 | Yours · 0] -4
+  button "Import": change +[8 | Upload 1.pdf | Show 4 more] -3
+  button "Assets 7": change +[] -4
+  button "Add to Assets": nothing
+  button "Show 3 more": change +[Waitlist export.csv | App screenshots.zip | Pricing page.url] -1
+  button "Skills 2": change +[Brand voice | Writer | Post examples] -0
+  button "Add to Skills": change +[Brand voice | Writer | Post examples] -0
+  button "Tools 5": change +[Web search | Scout, Insights | Image maker] -0
+  button "Add to Tools": change +[Web search | Scout, Insights | Image maker] -0
+  button "Launch facts 3": change +[Launch on Mar 12, 9am | 2,800 waitlist signups | $300 budget] -0
+  button "Add to Launch facts": change +[Launch on Mar 12, 9am | 2,800 waitlist signups | $300 budget] -0
+  button "Permissions 4": change +[Post to Discord | Asks you first | Schedule on X] -0
+  button "Add to Permissions": change +[Post to Discord | Asks you first | Schedule on X] -0
+
+=== 3.4 (35)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Planner · Timeline and $300 budget | Try another direction. The original path stays ] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Original path | Scout · 6 apps compared | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Insights · 61% want coaching | Try another direction. The original path stays as it ] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Original path | Strategist · Decided: existing budgeters | Try another direction. The original path ] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waits for Writer | Try another direction. The original path stays as it ] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Mar 12, 9am | Try another direction. The original path stays as it is.] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Try another direction. The original path stays as it is. | Rerun from here] -4
+  button "Tasks 4 of 10 done": change +[4 of 10 done · about 4 min left | Running | Needs your OK] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button[tab] "Chat": change +[Mar 12, to our 2,800 waitlist signups | Your launch is running. Writer is on 3 of 5 pieces and Desig] -4
+  button[tab] "Sandbox": change +[Import | Running now. New items go to steps that haven’t started; running steps keep what they have.] -4
+  button[tab] "Decisions · 2": nothing
+  button "All · 2": nothing
+  button "Yours · 0": change +[You haven’t changed anything in this run yet.] -4
+  button "Helpers · 2": nothing
+  button "Change": change +[Mar 12, to our 2,800 waitlist signups | Your launch is running. Writer is on 3 of 5 pieces and Desig] -4
+  button "Fork from here": nav -> /s/4.4
+  button "Change": change +[Mar 12, to our 2,800 waitlist signups | Your launch is running. Writer is on 3 of 5 pieces and Desig] -4
+  button "Export decision log": change +[Exported] -1
+
+=== 3.5 (32)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Run this step again. Earlier steps stay as they are. | Brief | Status] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Planner · Timeline and $300 budget | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Scout · 6 apps compared | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Insights · 61% want coaching | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Strategist · Decided: existing budgeters | Run this step again. Earlier steps stay as they are. | St] -4
+  div[button] "Output · Writer Launch copy X post Your ": nothing
+  div[button] "Output · Designer Visuals Social image [": change +[Designer · Making image 1 of 3 | Designer wrote | Available once Designer finishes. Earlier steps st] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Community · Waits for Writer | Available once this step has run. | Status] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Publisher · Mar 12, 9am | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Available once this step has run. | Status] -4
+  button "Tasks 4 of 10 done": change +[4 of 10 done · about 4 min left | Running | Needs your OK] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "See all 4 pieces": nothing
+  button "Fork from here Try another direction. Th": nav -> /s/6.1
+  button(dis) "Rerun from here Available once Writer fi": nothing
+  button "Add": nav -> /s/2.4
+  button "Edit": nav -> /s/2.4
+  button "I'll do this one": change +[Writer · Working · 4 pieces · You’re doing this one | Hand it back] -2
+
+=== 3.3-tasks (50)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": nothing
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Strategist · Decided: existing budgeters | Fork from here] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[] -4
+  div[button] "Output · Designer Visuals Social image [": change +[] -4
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Waits for your OK": change +[] -4
+  button "Tasks 4 of 10 done": change +[] -4
+  button "Launch copy Running": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  button "Visuals Running": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -4
+  button "Your launch Running": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Ready to post Needs your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Discord post Waiting": change +[Original path | Community · Waits for Writer | Fork from here] -4
+  button "Schedule launch Waiting": change +[Original path | Publisher · Mar 12, 9am | Fork from here] -4
+  button "Launch plan Done": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  button "Competitor scan Done": change +[Original path | Scout · 6 apps compared | Fork from here] -4
+  button "Waitlist survey Done": change +[Original path | Insights · 61% want coaching | Fork from here] -4
+  button "Who is this launch for? Done": change +[Original path | Strategist · Decided: existing budgeters | Fork from here] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+  button[tab] "Chat": change +[] -4
+  button[tab] "Sandbox": change +[] -4
+  button[tab] "Decisions · 2": change +[] -4
+  button "Import": change +[] -4
+  button "Assets 7": change +[] -4
+  button "Add to Assets": change +[] -4
+  button "Show 3 more": change +[] -4
+  button "Skills 2": change +[] -4
+  button "Add to Skills": change +[] -4
+  button "Tools 5": change +[] -4
+  button "Add to Tools": change +[] -4
+  button "Launch facts 3": change +[] -4
+  button "Add to Launch facts": change +[] -4
+  button "Permissions 4": change +[] -4
+  button "Add to Permissions": change +[] -4
+
+=== 3.4-tasks (45)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Planner · Timeline and $300 budget | Try another direction. The original path stays ] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": nothing
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Strategist · Decided: existing budgeters | Try another direction. The original path ] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[] -4
+  div[button] "Output · Designer Visuals Social image [": change +[] -4
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Waits for your OK": change +[] -4
+  button "Tasks 4 of 10 done": change +[] -4
+  button "Launch copy Running": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  button "Visuals Running": change +[Original path | Designer · Making image 1 of 3 | Designer wrote] -4
+  button "Your launch Running": change +[Original path | Try another direction. The original path stays as it is. | Rerun from here] -4
+  button "Ready to post Needs your OK": change +[Original path | Try another direction. The original path stays as it is. | Rerun from here] -4
+  button "Discord post Waiting": change +[Original path | Community · Waits for Writer | Try another direction. The original path stays as it ] -4
+  button "Schedule launch Waiting": change +[Original path | Publisher · Mar 12, 9am | Try another direction. The original path stays as it is.] -4
+  button "Launch plan Done": change +[Original path | Planner · Timeline and $300 budget | Try another direction. The original path stays ] -4
+  button "Competitor scan Done": change +[Original path | Scout · 6 apps compared | Try another direction. The original path stays as it is.] -4
+  button "Waitlist survey Done": change +[Original path | Insights · 61% want coaching | Try another direction. The original path stays as it ] -4
+  button "Who is this launch for? Done": change +[Original path | Strategist · Decided: existing budgeters | Try another direction. The original path ] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+  button[tab] "Chat": change +[] -4
+  button[tab] "Sandbox": change +[] -4
+  button[tab] "Decisions · 2": change +[] -4
+  button "All · 2": change +[] -4
+  button "Yours · 0": change +[] -4
+  button "Helpers · 2": change +[] -4
+  button "Change": change +[] -4
+  button "Fork from here": change +[] -4
+  button "Change": change +[] -4
+  button "Export decision log": change +[] -4
+
+=== 3.5-tasks (42)
+  a "Pathfinder home": nothing
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Planner · Timeline and $300 budget | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Run this step again. Earlier steps stay as they are. | Brief | Status] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": nothing
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Strategist · Decided: existing budgeters | Run this step again. Earlier steps stay as they are. | St] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[] -4
+  div[button] "Output · Designer Visuals Social image [": change +[] -4
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Waits for your OK": change +[] -4
+  button "Tasks 4 of 10 done": change +[] -4
+  button "Launch copy Running": change +[] -4
+  button "Visuals Running": change +[Designer · Making image 1 of 3 | Designer wrote | Available once Designer finishes. Earlier steps st] -4
+  button "Your launch Running": change +[Run this step again. Earlier steps stay as they are. | Brief | Status] -4
+  button "Ready to post Needs your OK": change +[Available once this step has run. | Status] -4
+  button "Discord post Waiting": change +[Community · Waits for Writer | Available once this step has run. | Status] -4
+  button "Schedule launch Waiting": change +[Publisher · Mar 12, 9am | Run this step again. Earlier steps stay as they are. | Status] -4
+  button "Launch plan Done": change +[Planner · Timeline and $300 budget | Run this step again. Earlier steps stay as they are. | Status] -4
+  button "Competitor scan Done": change +[Scout · 6 apps compared | Run this step again. Earlier steps stay as they are. | Status] -4
+  button "Waitlist survey Done": change +[Insights · 61% want coaching | Run this step again. Earlier steps stay as they are. | Status] -4
+  button "Who is this launch for? Done": change +[Strategist · Decided: existing budgeters | Run this step again. Earlier steps stay as they are. | St] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+  button "Close inspector": change +[] -4
+  button "See all 4 pieces": change +[] -4
+  button "Fork from here Try another direction. Th": change +[] -4
+  button(dis) "Rerun from here Available once Writer fi": change +[] -4
+  button "Add": change +[] -4
+  button "Edit": change +[] -4
+  button "I'll do this one": change +[] -4
+
+=== 4.2 (25)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Show side panel": change +[Chat | Sandbox | Decisions · 2] -0
+  button "Pause": change +[Resume] -1
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -0
+  div[button] "Action · Planner Launch plan Reused": change +[Original path | Planner · Reused | Fork from here] -0
+  div[button] "Action · Scout Competitor scan Reused": change +[Original path | Scout · Reused | Fork from here] -0
+  div[button] "Action · Insights Waitlist survey Reused": change +[Original path | Insights · Reused | Fork from here] -0
+  div[button] "Decision · Strategist Who is this launch": change +[Original path | Strategist · Redoing · 1 of 3 | Fork from here] -0
+  div[button] "Output · Writer Launch copy X post Your ": nav -> /s/4.3
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Reused | Designer wrote] -0
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waiting for new copy | Fork from here] -0
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Reused | Fork from here] -0
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -0
+  button "Tasks Rerunning": change +[Close | Only affected work is redone · about 40 sec | Running] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+
+=== 4.1 (34)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nothing
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Resume": change +[Pause] -1
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Original path | Scout · 6 apps compared | Fork from here] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Insights · 61% want coaching | Fork from here] -4
+  div[button] "Decision · Strategist Who is this launch": nothing
+  button "Rerun": change +[Rerun Strategist? | Rerunning "Who is this launch for?" also reruns every agent that depends on it. ] -0
+  div[button] "Output · Writer Launch copy X post Your ": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Waiting for Strategist's card | Designer wrote] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waits for Writer | Fork from here] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Mar 12, 9am | Fork from here] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Tasks 3 of 10 done": change +[3 of 10 done · waiting on you | Needs your OK | Running] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button[tab] "1 Competitor dates": nothing
+  button[tab] "2 Competitor pricing": change +[Penny’s coach is free. AI Coach is $12/mo. | Scout compared prices but left them out of the handoff.] -4
+  button "See the full handoff (4 items)": nothing
+  button[radio] "Keep Mar 12 and mention Penny in the cop": nothing
+  button[radio] "Move the launch to Mar 14 7 helpers redo": nothing
+  input "Something else": input
+  button "Next: competitor pricing": change +[Penny’s coach is free. AI Coach is $12/mo. | Scout compared prices but left them out of the handoff.] -4
+
+=== 4.1b (37)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Hide side panel": change +[] -4
+  button "Resume": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[] -4
+  div[button] "Decision · Strategist Who is this launch": change +[] -4
+  button "Rerun": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": nothing
+  div[button] "Output · Designer Visuals Social image [": nothing
+  div[button] "Action · Community Your OK Discord post ": nothing
+  div[button] "Action · Publisher Your OK Schedule laun": nothing
+  div[button] "Output Ready to post Waits for your OK": nothing
+  button "Tasks 3 of 10 done": change +[] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+  button "Close inspector": change +[] -4
+  button[tab] "1 Competitor dates": change +[] -4
+  button[tab] "2 Competitor pricing": change +[] -4
+  button "See the full handoff (4 items)": change +[] -4
+  button[radio] "Keep Mar 12 and mention Penny in the cop": change +[] -4
+  button[radio] "Move the launch to Mar 14 7 helpers redo": change +[] -4
+  input "Something else": input
+  button "Next: competitor pricing": change +[] -4
+  button[checkbox] "Don't show this again": nothing
+  button "Cancel": change +[] -4
+  button "Rerun 5 agents": nav -> /s/4.2
+
+=== 4.3 (32)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Resume": change +[Pause] -1
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Planner Launch plan Reused": change +[Original path | Planner · Reused | Fork from here] -4
+  div[button] "Action · Scout Competitor scan Reused": change +[Original path | Scout · Reused | Fork from here] -4
+  div[button] "Action · Insights Waitlist survey Reused": change +[Original path | Insights · Reused | Fork from here] -4
+  div[button] "Decision · Strategist Updated Who is thi": change +[Original path | Strategist · Decided: existing budgeters, vs Penny | Fork from here] -4
+  div[button] "Output · Writer Launch copy X post Your ": nothing
+  button "Rerun": nav -> /s/5.1
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Reused | Designer wrote] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Waiting for new copy | Fork from here] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Reused | Fork from here] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Tasks 5 of 10 done": change +[5 of 10 done · waiting on you | Needs your OK | Running] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "See the full handoff (4 items)": nothing
+  button[radio] "Use $12/mo from your launch facts 1 help": nothing
+  button[radio] "Change the launch fact to $15/mo 3 helpe": nothing
+  input "Something else": input
+  button "Confirm": nav -> /s/5.1
+
+=== 4.2-tasks (36)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Show side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Scout · Reused | Fork from here] -4
+  div[button] "Action · Planner Launch plan Reused": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Scout Competitor scan Reused": change +[Original path | Planner · Reused | Fork from here] -4
+  div[button] "Action · Insights Waitlist survey Reused": change +[] -4
+  div[button] "Decision · Strategist Who is this launch": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": change +[] -4
+  div[button] "Output · Designer Visuals Social image [": change +[] -4
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Waits for your OK": change +[] -4
+  button "Tasks Rerunning": change +[] -4
+  button "Close": change +[] -4
+  button "Who is this launch for? Running": change +[Original path | Strategist · Redoing · 1 of 3 | Fork from here] -4
+  button "Your launch Running": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Ready to post Needs your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  button "Launch copy Waiting": change +[Original path | Writer · Working · 4 pieces | Writer wrote] -4
+  button "Discord post Waiting": change +[Original path | Community · Waiting for new copy | Fork from here] -4
+  button "Launch plan Reused": change +[Original path | Planner · Reused | Fork from here] -4
+  button "Competitor scan Reused": change +[Original path | Scout · Reused | Fork from here] -4
+  button "Waitlist survey Reused": change +[Original path | Insights · Reused | Fork from here] -4
+  button "Visuals Reused": change +[Original path | Designer · Reused | Designer wrote] -4
+  button "Schedule launch Reused": change +[Original path | Publisher · Reused | Fork from here] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+
+=== 5.2 (26)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[] -4
+  div[button] "Decision · Strategist Updated Who is thi": nothing
+  div[button] "Output · Writer Updated Launch copy X po": nothing
+  div[button] "Output · Designer Visuals Social image [": nothing
+  div[button] "Action · Community Your OK Discord post ": change +[] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[] -4
+  div[button] "Output Ready to post Posted": change +[] -4
+  button "Tasks 10 of 10 done": change +[] -4
+  button "Allow": change +[Community will post to Discord on its own next time. | Allowed | Undo] -3
+  button "Keep asking": change +[Community will keep asking before it posts. | Keeps asking | Undo] -3
+  button "Export summary": change +[Copied] -1
+  button "Done": nav -> /
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[22%] -1
+
+=== 5.1 (42)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": nothing
+  div[button] "Action · Planner Launch plan Timeline an": nothing
+  div[button] "Action · Scout Competitor scan 6 apps co": nothing
+  div[button] "Action · Insights Waitlist survey 61% wa": nothing
+  div[button] "Decision · Strategist Updated Who is thi": nothing
+  div[button] "Output · Writer Updated Launch copy X po": nothing
+  div[button] "Output · Designer Visuals Social image [": nothing
+  div[button] "Action · Community Your OK Discord post ": nothing
+  div[button] "Action · Publisher Your OK Schedule laun": nothing
+  div[button] "Output Ready to post 6 items waiting": nothing
+  button "Tasks 9 of 10 done": nav -> /s/3.2-tasks
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "Approve": change +[5 waiting for your OK · $0.31 | Approved | Undo] -2
+  button "Edit": nav -> /s/3.5
+  button "Don't post": change +[5 waiting for your OK · $0.31 | Won't post | Undo] -2
+  button "Approve": change +[5 waiting for your OK · $0.31 | Approved | Undo] -2
+  button "Edit": nav -> /s/3.5
+  button "Don't post": change +[5 waiting for your OK · $0.31 | Won't post | Undo] -2
+  button "Approve": change +[5 waiting for your OK · $0.31 | Approved | Undo] -2
+  button "Edit": nav -> /s/3.5
+  button "Don't post": change +[5 waiting for your OK · $0.31 | Won't post | Undo] -2
+  button "Approve": change +[5 waiting for your OK · $0.31 | Approved | Undo] -2
+  button "Edit": nav -> /s/3.5
+  button "Don't post": change +[5 waiting for your OK · $0.31 | Won't post | Undo] -2
+  button "Approve": change +[Ready to launch · $0.31 | Approved | Undo] -4
+  button "Edit": nav -> /s/3.2
+  button "Don't post": nothing
+  button "Approve all 5": change +[Ready to launch · $0.31 | Approved | Undo] -4
+  button "Decide later": nav -> /s/3.2
+
+=== 6.1 (32)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Run this step again. Earlier steps stay as they are. | Brief | Status] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Planner · Timeline and $300 budget | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Scout · 6 apps compared | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Insights · 61% want coaching | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Strategist · Decided: existing budgeters | Run this step again. Earlier steps stay as they are. | St] -4
+  div[button] "Output · Writer Launch copy X post Your ": nothing
+  div[button] "Output · Designer Visuals Social image [": change +[Designer · Making image 1 of 3 | Designer wrote | Available once Designer finishes. Earlier steps st] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Community · Waits for Writer | Available once this step has run. | Status] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Publisher · Mar 12, 9am | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Available once this step has run. | Status] -4
+  button "Tasks 5 of 10 done": change +[5 of 10 done · about 3 min left | Running | Needs your OK] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "See all 5 pieces": nothing
+  button "Fork from here Try another direction. Th": nav -> /s/6.4
+  button "Rerun from here Redo this step with a no": change +[Rerun Writer? | Rerunning “Launch copy” also reruns every agent that depends on it. Their current wo] -0
+  button "Add": nav -> /s/2.4
+  button "Edit": nav -> /s/2.4
+  button "I'll do this one": change +[Writer · Done · 5 pieces · You’re doing this one | Hand it back] -2
+
+=== 6.2 (36)
+  a "Pathfinder home": change +[] -4
+  a "Workflows": change +[] -4
+  a "Needs you": change +[] -4
+  a "Workspace settings": change +[] -4
+  a "Workflows": change +[] -4
+  button "Workflow menu": change +[] -4
+  button[tab] "Planning": change +[] -4
+  button[tab] "Flowchart": change +[] -4
+  button "Workflow settings": change +[] -4
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[] -4
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[] -4
+  div[button] "Output · Writer Launch copy X post Your ": nothing
+  div[button] "Output · Designer Visuals Social image [": nothing
+  div[button] "Action · Community Your OK Discord post ": nothing
+  div[button] "Action · Publisher Your OK Schedule laun": nothing
+  div[button] "Output Ready to post Waits for your OK": nothing
+  button "Tasks 5 of 10 done": change +[] -4
+  button "Zoom out": change +[] -4
+  button "Zoom in": change +[] -4
+  button "Fit view": change +[] -4
+  button "Close inspector": change +[] -4
+  button "See all 5 pieces": change +[] -4
+  button "Fork from here Try another direction. Th": change +[] -4
+  button "Rerun from here Redo this step with a no": change +[] -4
+  button "Add": change +[] -4
+  button "Edit": change +[] -4
+  button "I'll do this one": change +[] -4
+  textarea "e.g. Make it shorter": input
+  button[checkbox] "Don't show this again": nothing
+  button "Cancel": change +[] -4
+  button "Rerun 3 agents": nav -> /s/6.3
+
+=== 6.3 (32)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Resume] -1
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Run this step again. Earlier steps stay as they are. | Brief | Status] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Planner · Timeline and $300 budget | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Scout · 6 apps compared | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Insights · 61% want coaching | Run this step again. Earlier steps stay as they are. | Status] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Strategist · Decided: existing budgeters | Run this step again. Earlier steps stay as they are. | St] -4
+  div[button] "Output · Writer Launch copy X post Penny": nothing
+  div[button] "Output · Designer Visuals Social image [": change +[Designer · Making image 1 of 3 | Designer wrote | Available once Designer finishes. Earlier steps st] -4
+  div[button] "Action · Community Will rerun Your OK Di": change +[Community · Waits for copy | Available once this step has run. | Status] -4
+  div[button] "Action · Publisher Will rerun Your OK Sc": change +[Publisher · Waits for copy | Available once this step has run. | Status] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Available once this step has run. | Status] -4
+  button "Tasks Rerunning · 1 of 3 done": change +[Only Launch copy and what uses it rerun · the old version is kept | Running | Waiting] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "See previous version": nothing
+  button "Fork from here Try another direction. Th": nav -> /s/6.4
+  button(dis) "Rerun from here Running now. You can rer": nothing
+  button "Add": nav -> /s/2.4
+  button "Edit": nav -> /s/2.4
+  button "I'll do this one": change +[Writer · Rerunning · 2 of 5 pieces · You’re doing this one | Hand it back] -2
+
+=== 4.4 (32)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Resume": change +[Pause] -1
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Try another direction. The original path stays as it is. | Rerun from here | Run this step again. Ea] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Planner · Timeline and $300 budget | Try another direction. The original path stays as it is. | Reru] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Scout · 6 apps compared | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Insights · 61% want coaching | Try another direction. The original path stays as it is. | Rerun from] -4
+  div[button] "Decision · Strategist Updated Who is thi": change +[Try another direction. The original path stays as it is.] -4
+  div[button] "Output · Writer Will rerun Launch copy X": change +[Writer · Done · 5 pieces | Writer wrote | Try another direction. The original path stays as it is.] -4
+  div[button] "Output · Designer Will rerun Visuals Soc": change +[Designer · Done · 3 images | Designer wrote | Try another direction. The original path stays as it i] -4
+  div[button] "Action · Community Will rerun Your OK Di": change +[Community · Done | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Action · Publisher Will rerun Your OK Sc": change +[Publisher · Mar 12, 9am | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Try another direction. The original path stays as it is. | Rerun from here | Available once this ste] -4
+  button "Tasks 8 of 10 done": change +[8 of 10 done · waits for your OK | Needs your OK | Waiting] -0
+  button "Zoom out": change +[75%] -1
+  button "Zoom in": change +[91%] -1
+  button "Fit view": change +[82%] -1
+  button "Close inspector": change +[] -4
+  button "First-time budgeters": nothing
+  button "Couples budgeting together": nothing
+  button "Students": nothing
+  textarea "What the fork should try": input
+  button "Create fork": nav -> /s/4.5
+  button "Cancel": change +[Try another direction. The original path stays as it is.] -4
+
+=== 4.5 (31)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · First-timers · $0.33 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Original path | Planner · Timeline and $300 budget | Fork from here] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Original path | Scout · 6 apps compared | Fork from here] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Original path | Insights · 61% want coaching | Fork from here] -4
+  div[button] "Decision · Strategist Updated Who is thi": nothing
+  div[button] "Output · Writer Launch copy X post Penny": change +[Original path | Writer · Done · 5 pieces | Writer wrote] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Original path | Designer · Done · 3 images | Designer wrote] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Original path | Community · Done | Fork from here] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Original path | Publisher · Mar 12, 9am | Fork from here] -4
+  div[button] "Output Ready to post Waits for your OK": change +[Original path | Fork from here | Try another direction. The original path stays as it is.] -4
+  div[button] "Output · Writer Launch copy X post Never": change +[Writer · on First-timers · Writing 1 of 5 pieces | Writer is writing | Fork from here] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Designer · on First-timers · Making image 1 of 3 | Designer is writing | Fork from here] -4
+  div[button] "Action · Community Your OK Discord post ": change +[Community · on First-timers · Waits for Writer | Fork from here | Try another direction from this st] -4
+  div[button] "Action · Publisher Your OK Schedule laun": change +[Publisher · on First-timers · Waits for Writer | Fork from here | Try another direction from this st] -4
+  div[button] "Output Ready to post Waits for your OK": change +[on First-timers · Waits for your OK | Fork from here | Try another direction from this step. First-t] -4
+  button "Tasks First-timers · 0 of 4 done": change +[First-timers · 0 of 4 done · about 1 min left | Running | Waiting] -0
+  button "Zoom out": gone
+  button "Zoom in": gone
+  button "Fit view": gone
+  button "Close inspector": gone
+
+=== 6.4 (37)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": change +[Paused · $0.18 | Resume] -2
+  div[button] "Task Your launch Launch AI Coach to 2,80": change +[Try another direction. The original path stays as it is. | Rerun from here | Run this step again. Ea] -4
+  div[button] "Action · Planner Launch plan Timeline an": change +[Planner · Timeline and $300 budget | Try another direction. The original path stays as it is. | Reru] -4
+  div[button] "Action · Scout Competitor scan 6 apps co": change +[Scout · 6 apps compared | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Action · Insights Waitlist survey 61% wa": change +[Insights · 61% want coaching | Try another direction. The original path stays as it is. | Rerun from] -4
+  div[button] "Decision · Strategist Not sure Who is th": change +[Strategist · Decided: existing budgeters | Try another direction. The original path stays as it is. ] -4
+  div[button] "Output · Writer Will rerun Launch copy X": change +[Try another direction. The original path stays as it is. | Rerun from here | Run this step again. Ea] -4
+  div[button] "Output · Designer Visuals Social image [": change +[Designer · Making image 1 of 3 | Designer wrote | Try another direction. The original path stays as ] -4
+  div[button] "Action · Community Will rerun Your OK Di": change +[Community · Done | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Action · Publisher Will rerun Your OK Sc": change +[Publisher · Done | Try another direction. The original path stays as it is. | Rerun from here] -4
+  div[button] "Output Ready to post Waits for your OK": gone
+  button "Tasks 5 of 10 done": gone
+  button "Original": gone
+  button "+ New fork": gone
+  button "Zoom out": gone
+  button "Zoom in": gone
+  button "Fit view": gone
+  button "Close inspector": gone
+  button "See all 5 pieces": gone
+  button "Compare to Penny": gone
+  button "Lead with the price": gone
+  button "Shorter": gone
+  textarea "What the fork should try": input
+  button "Create fork": gone
+  button "Cancel": gone
+  button "Edit": gone
+  button "I'll do this one": gone
+
+=== 6.5 (35)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": nav -> /s/2.8
+  button "Hide side panel": change +[] -4
+  button "Pause": gone
+  div[button] "Task Your launch Launch AI Coach to 2,80": gone
+  div[button] "Action · Planner Launch plan Timeline an": gone
+  div[button] "Action · Scout Competitor scan 6 apps co": gone
+  div[button] "Action · Insights Waitlist survey 61% wa": gone
+  div[button] "Decision · Strategist Not sure Who is th": gone
+  div[button] "Output · Writer Launch copy X post Your ": gone
+  div[button] "Output · Designer Visuals Social image [": gone
+  div[button] "Action · Community Your OK Discord post ": gone
+  div[button] "Action · Publisher Your OK Schedule laun": gone
+  div[button] "Output Ready to post Waits for your OK": gone
+  div[button] "Output · Writer Launch copy X post Penny": gone
+  div[button] "Action · Community Your OK Discord post ": gone
+  div[button] "Action · Publisher Your OK Schedule laun": gone
+  div[button] "Output Ready to post Waits for your OK": gone
+  button "Tasks Vs Penny · 1 of 3 done": gone
+  button "Zoom out": gone
+  button "Zoom in": gone
+  button "Fit view": gone
+  button "Close inspector": gone
+  button "Fork from here Try another direction. Th": gone
+  button(dis) "Rerun from here Running now. You can rer": gone
+  button "Add": gone
+  button "Edit": gone
+  button "I'll do this one": gone
+
+=== 6.6 (36)
+  a "Pathfinder home": nav -> /
+  a "Workflows": nav -> /
+  a "Needs you": nav -> /s/4.1
+  a "Workspace settings": nav -> /s/1.2
+  a "Workflows": nav -> /
+  button "Workflow menu": change +[All workflows | Workflow settings | Permissions] -0
+  button[tab] "Planning": nav -> /s/2.3
+  button[tab] "Flowchart": nothing
+  button "Workflow settings": gone
+  button "Hide side panel": gone
+  button "Pause": gone
+  div[button] "Task Your launch Launch AI Coach to 2,80": gone
+  div[button] "Action · Planner Launch plan Timeline an": gone
+  div[button] "Action · Scout Competitor scan 6 apps co": gone
+  div[button] "Action · Insights Waitlist survey 61% wa": gone
+  div[button] "Decision · Strategist Not sure Who is th": gone
+  div[button] "Output · Writer Launch copy X post Your ": gone
+  div[button] "Output · Designer Visuals Social image [": gone
+  div[button] "Action · Community Your OK Discord post ": gone
+  div[button] "Action · Publisher Your OK Schedule laun": gone
+  div[button] "Output Ready to post Waits for your OK": gone
+  div[button] "Output · Writer Launch copy X post Penny": gone
+  div[button] "Action · Community Your OK Discord post ": gone
+  div[button] "Action · Publisher Your OK Schedule laun": gone
+  div[button] "Output Ready to post Waits for your OK": gone
+  div[button] "Action · Community Your OK Discord post ": gone
+  div[button] "Output Ready to post Waits for your OK": gone
+  button "Tasks Vs Penny · 1 of 3 done": gone
+  button "Zoom out": gone
+  button "Zoom in": gone
+  button "Fit view": gone
+  button "Close inspector": gone
+  button "Fork from here Try another direction fro": gone
+  button(dis) "Rerun from here Waits for Writer on Vs P": gone
+  button "Edit": gone
+  button "I'll do this one": gone

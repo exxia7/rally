@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import chevronDown14 from '@/assets/icons/chevron-down-14.svg';
 import more from '@/assets/icons/more.svg';
@@ -15,6 +14,7 @@ import { RunStatus, type RunState } from '@/components/ui/RunStatus';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
 
 import { Breadcrumb } from './Breadcrumb';
 
@@ -60,7 +60,7 @@ export function WorkflowTopBar({
   /** Drops the title menu chevron (a new, unsaved workflow: 3.1). */
   hideTitleMenu?: boolean;
 }) {
-  const navigate = useNavigate();
+  const go = useGo();
   const [titleMenu, setTitleMenu] = useState(false);
   const [moreMenu, setMoreMenu] = useState(false);
   const titleRef = useRef<HTMLDivElement>(null);
@@ -74,17 +74,22 @@ export function WorkflowTopBar({
     {
       key: 'all',
       label: 'All workflows',
-      onSelect: () => navigate(screenPath('1.1')),
+      onSelect: () => go('1.1'),
     },
+    // Both remember where you came from (2.8's Back returns there). From a run, Permissions opens the workflow's
+    // own Permissions (2.8, which opens on that card) instead of the planning Sandbox (2.7).
     {
       key: 'settings',
       label: 'Workflow settings',
-      onSelect: () => navigate(screenPath('2.8')),
+      onSelect: () => go('2.8', { returnHere: true }),
     },
     {
       key: 'permissions',
       label: 'Permissions',
-      onSelect: () => navigate(screenPath('2.7')),
+      onSelect: () =>
+        view === 'flowchart'
+          ? go('2.8', { returnHere: true })
+          : go('2.7'),
     },
   ];
   const moreItems: MenuItemData[] = [
@@ -127,7 +132,8 @@ export function WorkflowTopBar({
                   aria-haspopup="menu"
                   aria-expanded={titleMenu}
                   onClick={() => setTitleMenu((o) => !o)}
-                  className="flex shrink-0 rounded-[4px] hover:bg-hover"
+                  // 14px chevron; on phones a transparent 40px hit area around it (the look is unchanged).
+                  className="flex shrink-0 rounded-[4px] hover:bg-hover max-md:relative max-md:before:absolute max-md:before:-inset-[13px]"
                 >
                   <Icon src={chevronDown14} size={14} />
                 </button>
@@ -148,8 +154,9 @@ export function WorkflowTopBar({
               label="View"
               options={[
                 // Figma _Segment widths in the top bar (e.g. 2362:24749): 81 + 90 → 177px control.
-                { value: 'planning', label: 'Planning', minWidth: 81 },
-                { value: 'flowchart', label: 'Flowchart', minWidth: 90 },
+                // Phones: "Plan" / "Run", so the workflow title isn't cut to "AI …".
+                { value: 'planning', label: 'Planning', minWidth: 81, shortLabel: 'Plan' },
+                { value: 'flowchart', label: 'Flowchart', minWidth: 90, shortLabel: 'Run' },
               ]}
               value={view}
               onChange={onViewChange}

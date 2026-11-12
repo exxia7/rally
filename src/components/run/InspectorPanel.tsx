@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import forkIcon from '@/assets/icons/fork.svg';
 import plusGray from '@/assets/icons/plus-gray.svg';
 import rerunDim from '@/assets/icons/rerun-dim.svg';
@@ -14,6 +16,8 @@ import { SidePanel } from '@/components/panels/SidePanel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+
+import { PiecesModal } from './DetailModals';
 
 export type InspectorStepAction = {
   description: string;
@@ -101,8 +105,14 @@ export function InspectorPanel({
   takenOver?: boolean;
   onTakeOver?: () => void;
 }) {
+  // The preview's own link, when the screen doesn't handle it: "See all N pieces" lists Writer's pieces and
+  // "See previous version" shows the last finished copy (DetailModals).
+  const [detail, setDetail] = useState(false);
+  const action = data.preview?.action ?? '';
+  const piecesMatch = /^See all (\d+) pieces$/.exec(action);
   return (
     <SidePanel
+      sheet="half"
       onClose={onClose}
       bodyClassName="px-6 py-5 max-md:px-4"
       header={
@@ -147,7 +157,7 @@ export function InspectorPanel({
             working={data.preview.working}
             fork={data.preview.fork}
             action={data.preview.action}
-            onAction={onPreviewAction}
+            onAction={onPreviewAction ?? (() => setDetail(true))}
           />
         )}
         {data.brief && (
@@ -226,6 +236,14 @@ export function InspectorPanel({
           </div>
         )}
       </div>
+      {(piecesMatch || action === 'See previous version') && (
+        <PiecesModal
+          open={detail}
+          onClose={() => setDetail(false)}
+          written={piecesMatch ? Number(piecesMatch[1]) : undefined}
+          previousNote={piecesMatch ? undefined : data.preview?.quote}
+        />
+      )}
     </SidePanel>
   );
 }

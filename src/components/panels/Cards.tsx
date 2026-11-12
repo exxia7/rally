@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import checkBadge from '@/assets/icons/check-badge.svg';
+import checkWhite from '@/assets/icons/check-white.svg';
 import chevronRightDark from '@/assets/icons/chevron-right-dark.svg';
 import dragHandle from '@/assets/icons/drag-handle.svg';
 import liveDot from '@/assets/icons/live-dot.svg';
@@ -14,6 +15,7 @@ import { FORK_COLOR, type ForkNumber } from '@/components/map/forks';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { TextArea } from '@/components/ui/TextArea';
 
 // Figma "Handoff problem card" (2362:30161): red card showing what a handoff between helpers missed, with its
 // source. #fff1f1 fill, 1px problem border, 10px radius, 16px padding. The kind ("Missing") is SemiBold red; the
@@ -88,10 +90,16 @@ export function ResourceRow({
   onDragEnd,
   onClick,
   expanded,
+  checked,
+  onCheckedChange,
   className,
 }: {
   name: string;
   source?: string;
+  /** With `onCheckedChange`, the row's box is a real checkbox: unticked it looks as before, ticked it fills
+   *  accent with a white check (the solid Checkbox). */
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
   onDragStart?: (e: DragEvent) => void;
   onDragEnd?: (e: DragEvent) => void;
   /** Tap path for touch screens, where dragging doesn't work (2.6 opens an "Add to…" menu). */
@@ -126,7 +134,27 @@ export function ResourceRow({
       )}
     >
       <Icon src={dragHandle} size={14} />
-      <span className="size-4 shrink-0 rounded-[5px] border border-line-2 bg-white" />
+      {onCheckedChange ? (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={!!checked}
+          aria-label={`Select ${name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCheckedChange(!checked);
+          }}
+          onKeyDown={(e) => e.stopPropagation()}
+          className={clsx(
+            'flex size-4 shrink-0 items-center justify-center rounded-[5px] border',
+            checked ? 'border-accent bg-accent' : 'border-line-2 bg-white'
+          )}
+        >
+          {checked && <Icon src={checkWhite} size={7.545} />}
+        </button>
+      ) : (
+        <span className="size-4 shrink-0 rounded-[5px] border border-line-2 bg-white" />
+      )}
       <p className="h-[18px] min-w-px flex-1 truncate text-[12px] leading-[18px] tracking-[-0.08px] text-ink">
         {name}
       </p>
@@ -223,6 +251,7 @@ export function ApprovalItem({
   initial = 'waiting',
   state: stateProp,
   onEdit,
+  onBodyChange,
   onChange,
   className,
 }: {
@@ -232,12 +261,25 @@ export function ApprovalItem({
   channelNote?: string;
   initial?: ApprovalState;
   state?: ApprovalState;
+  /** Edit leaves the card (old behaviour). Without it, Edit edits the text in place: a Text area with Save / Cancel. */
   onEdit?: () => void;
+  /** The saved text after an in-place edit. */
+  onBodyChange?: (text: string) => void;
   onChange?: (state: ApprovalState) => void;
   className?: string;
 }) {
   const [inner, setInner] = useState<ApprovalState>(initial);
   const state = stateProp ?? inner;
+  const [text, setText] = useState(body);
+  const [draft, setDraft] = useState<string | null>(null);
+  const save = () => {
+    const t = draft?.trim();
+    if (t) {
+      setText(t);
+      onBodyChange?.(t);
+    }
+    setDraft(null);
+  };
   const set = (s: ApprovalState) => {
     setInner(s);
     onChange?.(s);
@@ -273,16 +315,41 @@ export function ApprovalItem({
           </p>
         </div>
       )}
-      <p
-        className={clsx(
-          'w-[320px] max-w-full pt-1.5 pb-[0.7px] text-[13px] leading-[17.188px] tracking-[-0.08px]',
-          off ? 'text-[#a0a3aa]' : 'text-ink-2'
-        )}
-      >
-        {body}
-      </p>
+      {draft !== null ? (
+        <div className="w-full pt-1.5">
+          <TextArea
+            autoFocus
+            aria-label={`Edit ${title}`}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setDraft(null);
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save();
+            }}
+            className="h-auto min-h-[96px] resize-y"
+          />
+        </div>
+      ) : (
+        <p
+          className={clsx(
+            'w-[320px] max-w-full pt-1.5 pb-[0.7px] text-[13px] leading-[17.188px] tracking-[-0.08px]',
+            off ? 'text-[#a0a3aa]' : 'text-ink-2'
+          )}
+        >
+          {text}
+        </p>
+      )}
       <div className="flex w-full items-center pt-2.5">
-        {state === 'waiting' ? (
+        {draft !== null ? (
+          <div className="flex items-start gap-1.5">
+            <Button variant="primary" size="sm" onClick={save}>
+              Save
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+              Cancel
+            </Button>
+          </div>
+        ) : state === 'waiting' ? (
           <div className="flex w-full items-center justify-between">
             <div className="flex items-start gap-1.5">
               <Button
@@ -292,7 +359,11 @@ export function ApprovalItem({
               >
                 Approve
               </Button>
-              <Button variant="ghost" size="sm" onClick={onEdit}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEdit ?? (() => setDraft(text))}
+              >
                 Edit
               </Button>
             </div>

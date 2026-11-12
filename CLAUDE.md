@@ -2,7 +2,8 @@
 
 Clickable prototype of Pathfinder, built pixel-exact from the Figma wireframes
 (file `uL2LNYWjWvYM9rPXjwDwAr`, section `2362:50744` "emily's pass"). Vite + React 19 + TypeScript +
-Tailwind v4. No backend: data is mock, state is local React state, every frame is a route.
+Tailwind v4. No backend: data is mock, state lives in one store (`src/state`, see "App state"), every frame is a
+route.
 
 Prefix node commands with `source ~/.nvm/nvm.sh &&` to get Node 22.
 
@@ -78,9 +79,73 @@ Edits to a shared component must be backwards compatible, because other screens 
 
 It's a clickable prototype: things that look clickable do something. Prefer real local state (open/close
 menus, switch tabs, toggle, type in the composer, drag a resource) inside a screen. When an action moves
-to a different frame in the flow, `navigate(screenPath('<id>'))`. The flow order follows the chapters
+to a different frame in the flow, `useGo()` → `go('<id>')` (never `navigate` directly: see "App state"). The flow order follows the chapters
 (Home → Plan → Run → Stuck → Approve → Rerun/fork) and the frame numbers. Map overlays (`*-tasks`)
 open from the Tasks chip, and the attach menus (`*-attach`) open from the composer's attach button.
+
+## App state
+
+Every screen is a view of one store plus its own UI state (open panel, tab, drawer, hover). Never keep workflow
+data (helpers, outputs, run progress, approvals, choices) in a screen's `useState`, and never jump to a fixed frame
+to "show" a state: change the store and let the screen render it.
+
+- `src/state/types.ts`: the entities (`AppState` → `workspace`, `workflows[id]`, `order`, `activeId`, `returnTo`,
+  `speed`). A `Workflow` holds the brief, chats, `helpers`/`helperOrder`/`removed`, `planSteps` (steps added on a
+  line), `outputs`, `resources` (assets, skills, tools, launch `facts`), `permissions`, `run` (phase, beat, paused,
+  per-step overrides), `handRaises`, `decisions` (yours), `reruns`, `approvals`, `forks` + `chosenVersion`.
+- `src/state/store.ts`: `useAppState()`, `useWorkflow()` (the active workflow), `dispatch(action)`. Every change is
+  an `Action` handled in `reduce`; add a new action there rather than mutating state anywhere else. The store is
+  persisted to sessionStorage (reload and Back keep it). Additive fields are fine; give them a default in
+  `scenes.ts` so every scene sets them.
+- `src/state/scenes.ts`: `sceneFor(id)` builds the whole store state for Figma frame `id` from the screens' data
+  files (`aiCoachPlan`, `communityPlan`, `aiCoachMap`, `stuck/data`, `launchMap`…). Data lives in those files;
+  scenes and selectors import it, never copy it.
+- Selectors (pure functions of a workflow): `planView.ts` (`planLayout(wf, 'full'|'compact'|'wide')`, `estimate`,
+  `planSuggestions`, `bridgeEdges`), `runView.ts` (`runData(wf)` for RunScreenLayout, `runStatus`, `runCost`,
+  `handRaiseData`, `rerunConfirm`, `approvalItems`, `summaryView`, `workflowCard`, `agentNames`, `goneSteps`).
+  Derive counts and lists here; never hard-code "4 of 10" or "5 agents" in a screen.
+- `asDrawn`: a scene marks its workflow with the frame id. While it's set, selectors return Figma's literal text
+  where Figma disagrees with its own data (counts, the estimate, 4.1b's list). The first action that changes the
+  workflow clears it. This is what keeps direct loads pixel-exact while live flows stay consistent.
+
+### Seeded vs carried navigation
+
+- A direct load (typed URL, `/`, a link from `/screens`) has no carried history state, so `Seeded` in `App.tsx` seeds
+  the store from that frame's scene, then marks the entry carried. The pixel diff therefore always sees the scene.
+- In-app moves use `useGo()` from `src/state/nav.ts`: `go('3.2')` navigates with `{ carried: true }`, so the next
+  screen renders the live store. `go(id, { returnHere: true })` pushes the current screen on the return-to stack and
+  `go.back('2.3')` pops back to it (fallback if empty). `go(id, { state })` adds history state (6.3's note). Links
+  use `state={CARRY}`. Never call `navigate(screenPath(…))` directly.
+- `/screens` has "Reset demo" (clears the session and reseeds Home).
+
+### The run timeline
+
+`src/state/timeline.ts`: `BEATS` is the scripted story (launch → deciding → running 3.2 → handRaise1 4.1 → rerun
+4.2 → handRaise2 4.3 → finishing → approval 5.1 → launched 5.2). `installTimeline` advances the active workflow's
+beat with a timer (`run/advance`) while it's running and not paused or held; beats that wait for you advance when you
+answer (`handRaise/confirm`, `approval/launch`). Beats whose helper was removed are skipped. Speed: `?speed=fast`
+(10×), `?speed=hold` (frozen) or `?speed=normal`, remembered in the store. Run screens call
+`useRunFrameSync(id)` so they replace themselves with the beat's frame when it moves on (the hand-raise panel opens
+in place). Scenes for frames not on the timeline yet (forks, rerun from a step) set `run.hold`.
+
+Run screens use `useLiveRun(id)` (`src/state/useRun.ts`): it returns the props for RunScreenLayout (data, status,
+controlled Pause, renamed agents, Planning target) and does the frame sync. Shared actions with navigation live in
+`src/state/actions.ts` (`useStartLaunch()`: `run/start` then go to the run). `window.__pathfinder` (dev only) exposes
+`{ store, dispatch }` for scripts.
+
+Checks for this layer: `node scripts/story-e2e.mjs` walks the main story with a removed and a renamed helper;
+`node scripts/baseline-compare.mjs` compares the latest pixel-diff screenshots with `design/out/baseline-app/` pixel
+for pixel (refresh that folder from a known-good run). Small UI that isn't in Figma goes in `design/non-figma-ui.md`.
+
+### How a screen reads and writes
+
+```tsx
+const wf = useWorkflow();
+const go = useGo();
+const data = useMemo(() => runData(wf), [wf]);      // derive, don't copy
+dispatch({ type: 'helper/remove', id: 'designer' }); // write through an action
+go('3.2');                                           // move with carried state
+```
 
 ## Responsive: every screen size
 

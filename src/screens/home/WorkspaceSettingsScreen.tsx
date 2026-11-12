@@ -1,5 +1,10 @@
-import { useCallback, useRef, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {
+  useCallback,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 
 import lock from '@/assets/icons/lock.svg';
 import more from '@/assets/icons/more.svg';
@@ -17,11 +22,14 @@ import { UserAvatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import { Menu } from '@/components/ui/Menu';
+import { Menu, type MenuItemData } from '@/components/ui/Menu';
 import { TextInput } from '@/components/ui/TextInput';
 import { useOutsideClick } from '@/lib/useOutsideClick';
 import { Progress } from '@/components/ui/Progress';
 import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
+
+import { PRESETS, TOOLS } from './workspaceData';
 
 export const screenId = '1.2';
 
@@ -44,39 +52,6 @@ const NAV: { value: Section; label: string }[] = [
   { value: 'notifications', label: 'Notifications' },
 ];
 
-const PRESETS = [
-  {
-    key: 'careful',
-    name: 'Careful',
-    rules: 'Ask before every choice · posting waits · $0 ads',
-  },
-  {
-    key: 'balanced',
-    name: 'Balanced',
-    rules: 'Ask when unsure · posting waits · $0 ads',
-  },
-  {
-    key: 'hands-off',
-    name: 'Hands-off',
-    rules: 'Just go · posting still waits · $50 ads',
-  },
-];
-
-const TOOLS = [
-  {
-    name: 'Discord',
-    detail: '#launches · used in 2 workflows',
-    connected: true,
-  },
-  {
-    name: 'Email (Resend)',
-    detail: 'hello@lumen.app · used in 3 workflows',
-    connected: true,
-  },
-  { name: 'X', detail: '@lumenapp · used in 3 workflows', connected: true },
-  { name: 'LinkedIn', detail: 'Not connected', connected: false },
-];
-
 const BRAND: { name: string; kind: 'File' | 'Skill' }[] = [
   { name: 'Brand guide.pdf', kind: 'File' },
   { name: 'Logo.svg', kind: 'File' },
@@ -92,7 +67,7 @@ const PEOPLE: { initial: string; name: string; you?: boolean }[] = [
 // Figma 1.2 "Workspace settings" (2362:23330). Button widths are the Figma instance widths: Figma's Inter
 // sets these labels ~1px wider than Chrome, so hugging them would shift every right-aligned button.
 export default function WorkspaceSettingsScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
   const [section, setSection] = useState<Section>('presets');
   const [defaultPreset, setDefaultPreset] = useState('balanced');
   const [tools, setTools] = useState(TOOLS);
@@ -167,7 +142,7 @@ export default function WorkspaceSettingsScreen() {
                             variant="secondary"
                             size="sm"
                             className="w-[49px]"
-                            onClick={() => navigate(screenPath('2.7'))}
+                            onClick={() => go('2.7')}
                           >
                             Edit
                           </Button>
@@ -179,7 +154,7 @@ export default function WorkspaceSettingsScreen() {
                     <SettingsLinkButton
                       icon={plusDark14}
                       label="New preset"
-                      onClick={() => navigate(screenPath('2.7'))}
+                      onClick={() => go('2.7')}
                     />
                   </div>
                   <div className="flex w-full flex-col items-start pt-3">
@@ -216,9 +191,35 @@ export default function WorkspaceSettingsScreen() {
                         {t.connected ? (
                           <>
                             <Badge tone="green">Connected</Badge>
-                            <Button variant="secondary" size="sm" className="w-[73px]">
-                              Manage
-                            </Button>
+                            <RowMenu
+                              label={`${t.name} actions`}
+                              top="top-8"
+                              items={[
+                                {
+                                  key: 'disconnect',
+                                  label: 'Disconnect',
+                                  description: 'Workflows ask you to connect it again',
+                                  onSelect: () =>
+                                    setTools((all) =>
+                                      all.map((x) =>
+                                        x.name === t.name
+                                          ? { ...x, connected: false }
+                                          : x
+                                      )
+                                    ),
+                                },
+                              ]}
+                              trigger={(p) => (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="w-[73px]"
+                                  {...p}
+                                >
+                                  Manage
+                                </Button>
+                              )}
+                            />
                           </>
                         ) : (
                           <Button
@@ -368,13 +369,23 @@ export default function WorkspaceSettingsScreen() {
   );
 }
 
-// "More" on a Brand kit row: a one-item menu (Remove) under the button, right-aligned with it.
-function BrandItemMenu({
-  name,
-  onRemove,
+// A button that opens a small menu under it, right-aligned with it: "More" on a Brand kit row (Remove) and
+// "Manage" on a connected tool (Disconnect).
+type TriggerProps = {
+  'aria-haspopup': 'menu';
+  'aria-expanded': boolean;
+  onClick: () => void;
+};
+function RowMenu({
+  label,
+  items,
+  trigger,
+  top = 'top-6',
 }: {
-  name: string;
-  onRemove: () => void;
+  label: string;
+  items: MenuItemData[];
+  trigger: (props: TriggerProps) => ReactNode;
+  top?: string;
 }) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement>(null);
@@ -382,25 +393,46 @@ function BrandItemMenu({
   useOutsideClick([anchor], open, close);
   return (
     <div ref={anchor} className="relative flex">
-      <button
-        type="button"
-        aria-label={`More for ${name}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="flex rounded-[4px] hover:bg-hover"
-      >
-        <Icon src={more} size={16} />
-      </button>
+      {trigger({
+        'aria-haspopup': 'menu',
+        'aria-expanded': open,
+        onClick: () => setOpen((o) => !o),
+      })}
       {open && (
         <Menu
-          label={`${name} actions`}
+          label={label}
           onClose={close}
-          className="absolute top-6 right-0 w-[160px]"
-          items={[{ key: 'remove', label: 'Remove', onSelect: onRemove }]}
+          className={`absolute right-0 w-[200px] ${top}`}
+          items={items}
         />
       )}
     </div>
+  );
+}
+
+function BrandItemMenu({
+  name,
+  onRemove,
+}: {
+  name: string;
+  onRemove: () => void;
+}) {
+  return (
+    <RowMenu
+      label={`${name} actions`}
+      items={[{ key: 'remove', label: 'Remove', onSelect: onRemove }]}
+      trigger={(p) => (
+        // 16px icon; on phones a transparent 40px hit area around it (the look is unchanged).
+        <button
+          type="button"
+          aria-label={`More for ${name}`}
+          {...p}
+          className="flex rounded-[4px] hover:bg-hover max-md:relative max-md:before:absolute max-md:before:-inset-3"
+        >
+          <Icon src={more} size={16} />
+        </button>
+      )}
+    />
   );
 }
 

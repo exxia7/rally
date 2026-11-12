@@ -13,7 +13,10 @@ import { IconButton } from '@/components/ui/IconButton';
 // it is a full-screen sheet. Clicking the scrim closes it.
 // `header` replaces the built-in headers (the inspector's own header); `footer` is pinned under the scrolling body
 // (the inspector's Edit / I'll do this one bar).
+// `sheet="half"` (hand-raise, inspector, approval): under 768px a bottom sheet 56% of the screen tall instead of a
+// full-screen one, so the top bar's status pill and the card it's about stay in view above it.
 export function SidePanel({
+  sheet = 'full',
   title,
   tabs,
   onClose,
@@ -24,6 +27,7 @@ export function SidePanel({
   className,
   bodyClassName,
 }: {
+  sheet?: 'full' | 'half';
   title?: ReactNode;
   tabs?: ReactNode;
   onClose?: () => void;
@@ -59,6 +63,8 @@ export function SidePanel({
           'flex h-full w-[400px] shrink-0 flex-col items-start overflow-clip rounded-card border border-line bg-white',
           'max-xl:absolute max-xl:inset-y-2 max-xl:right-2 max-xl:z-40 max-xl:h-auto max-xl:max-w-[calc(100%-16px)] max-xl:shadow-[0px_8px_32px_0px_rgba(0,0,0,0.16)]',
           'max-md:fixed max-md:inset-0 max-md:w-full max-md:max-w-none max-md:rounded-none max-md:border-0',
+          sheet === 'half' &&
+            'max-md:top-auto max-md:h-[56dvh] max-md:rounded-t-[16px] max-md:shadow-[0px_-8px_32px_0px_rgba(0,0,0,0.16)]',
           className
         )}
       >

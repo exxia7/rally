@@ -1,6 +1,7 @@
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
 
 import { FORK_DECISION_RUNNING_RUN } from './data';
+import { FIRST_TIMERS } from './drawnForks';
 
 export const screenId = '4.5';
 
@@ -11,6 +12,7 @@ export default function ForkDecisionRunningScreen() {
   return (
     <RunScreenLayout
       data={FORK_DECISION_RUNNING_RUN}
+      drawnForks={[FIRST_TIMERS]}
       initialPanel={{ kind: 'inspector', nodeId: 'decision' }}
       cost="First-timers · $0.33"
     />

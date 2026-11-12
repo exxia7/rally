@@ -28,6 +28,7 @@ export function PlanCanvas({
   overlays,
   outputs,
   outputsKey,
+  onOutputsChange,
   zoomLabelBase = 70,
   stageWidth = 954,
   stageHeight = 830,
@@ -46,6 +47,7 @@ export function PlanCanvas({
   outputs: OutputItem[];
   /** Change it to reset the outputs card to `outputs` (it keeps its own add/remove state). */
   outputsKey?: string;
+  onOutputsChange?: (items: OutputItem[]) => void;
   zoomLabelBase?: number;
   stageWidth?: number;
   stageHeight?: number;
@@ -67,12 +69,16 @@ export function PlanCanvas({
       zoomLabelBase={zoomLabelBase}
       zoomPosition="left"
       focus={focus}
+      // Phones: the plan cards are drawn at 0.85 with 9.9px text; open at 1.2× instead of the run map's 0.8×,
+      // so a card's text reads at about 10–12px.
+      phoneZoom={1.2}
       overlay={
         <>
           <PlanLegend className="absolute bottom-[70px] left-5 max-md:hidden" />
           <OutputsCard
             key={outputsKey}
             initial={outputs}
+            onChange={onOutputsChange}
             className={clsx(
               'absolute right-4 bottom-4 z-10 max-md:bottom-[60px] max-md:max-w-[calc(100%-32px)]',
               !outputsOpen && 'max-md:hidden'

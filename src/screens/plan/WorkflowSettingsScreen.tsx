@@ -1,11 +1,11 @@
 import clsx from 'clsx';
 import { type ReactNode, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import arrowLeftDark from '@/assets/icons/arrow-left-dark.svg';
 import lockAmber from '@/assets/icons/lock-amber-10.svg';
 import { SettingsNav } from '@/components/nav/SettingsNav';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
+import { ConfirmDialog } from '@/components/panels/ConfirmDialog';
 import { SettingsCard } from '@/components/panels/SettingsCard';
 import { AppShell } from '@/components/shell/AppShell';
 import { UserAvatar } from '@/components/ui/Avatar';
@@ -13,8 +13,9 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
+import { useToast } from '@/components/ui/Toast';
 import { Toggle } from '@/components/ui/Toggle';
-import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
 
 export const screenId = '2.8';
 
@@ -113,37 +114,52 @@ function SettingRow({
 // Figma 2.8 "Workflow settings" (2362:24542): settings that apply to this workflow only, over the workspace
 // defaults. Same page layout as 1.2 (side nav, 920px content, two 410px card columns).
 export default function WorkflowSettingsScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
   const [section, setSection] = useState<Section | undefined>();
   const [preset, setPreset] = useState<Preset>('balanced');
   const [tools, setTools] = useState(TOOLS);
   const [facts, setFacts] = useState(FACTS);
   const [editing, setEditing] = useState<string | null>(null);
 
+  const [confirm, setConfirm] = useState<'duplicate' | 'archive' | null>(
+    null
+  );
+  const [toast, showToast] = useToast();
+  const [archived, setArchived] = useState(false);
+
   const goTo = (s: Section) => {
+    if (s === 'duplicate' || s === 'archive') {
+      setConfirm(s);
+      return;
+    }
     setSection(s);
-    if (s === 'duplicate' || s === 'archive') return;
     document
       .getElementById(`wf-settings-${s}`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const check = PRESETS.find((p) => p.value === preset)!.check;
+  // Opened from a run (the run's settings button or its ⌄ menu): Back returns to the run, and the main action
+  // is "Back to run" instead of Start launch.
+  const fromRun = /^[3-6]\./.test(go.backTarget('2.3'));
+  const back = () => go.back('2.3');
 
   return (
     <AppShell sidebar="none">
       <WorkflowTopBar
         view="planning"
-        onViewChange={(v) => v === 'flowchart' && navigate(screenPath('3.1'))}
+        onViewChange={(v) =>
+          v === 'flowchart' && (fromRun ? back() : go('3.1'))
+        }
         estimate="About 9 min · $0.30"
-        onSettings={() => navigate(screenPath('2.3'))}
+        onSettings={back}
         settingsActive
         action={
           <Button
             variant="primary"
             className="w-[100px]"
-            onClick={() => navigate(screenPath('3.2'))}
+            onClick={() => (fromRun ? back() : go('3.2'))}
           >
-            Start launch
+            {fromRun ? 'Back to run' : 'Start launch'}
           </Button>
         }
       />
@@ -151,7 +167,14 @@ export default function WorkflowSettingsScreen() {
         <SettingsNav
           title="AI Coach launch"
           items={NAV}
-          more={{ title: 'More', items: MORE }}
+          more={{
+            title: 'More',
+            items: archived
+              ? MORE.map((m) =>
+                  m.value === 'archive' ? { ...m, label: 'Restore' } : m
+                )
+              : MORE,
+          }}
           value={section}
           onChange={goTo}
         />
@@ -162,7 +185,7 @@ export default function WorkflowSettingsScreen() {
                 size="sm"
                 className="w-[140px]"
                 leading={<Icon src={arrowLeftDark} size={16} />}
-                onClick={() => navigate(screenPath('2.3'))}
+                onClick={back}
               >
                 Back to the map
               </Button>
@@ -330,7 +353,7 @@ export default function WorkflowSettingsScreen() {
                       <Toggle
                         label="LinkedIn (connect in workspace settings)"
                         checked={false}
-                        onChange={() => navigate(screenPath('1.2'))}
+                        onChange={() => go('1.2')}
                       />
                     </div>
                   </div>
@@ -380,6 +403,49 @@ export default function WorkflowSettingsScreen() {
           </div>
         </div>
       </div>
+      {/* "Duplicate or save as template" and "Archive" confirm first, then say what happened. */}
+      <ConfirmDialog
+        key={`duplicate-${confirm === 'duplicate'}`}
+        open={confirm === 'duplicate'}
+        onClose={() => setConfirm(null)}
+        title="Duplicate AI Coach launch"
+        body="Makes a new draft with the same team, settings and launch facts. Runs, decisions and approvals stay here."
+        note={{ label: 'Name', defaultValue: 'AI Coach launch copy' }}
+        confirmLabel="Duplicate"
+        onConfirm={(_, name) => {
+          setConfirm(null);
+          // STATE: the store should add a draft workflow (copy of helpers, settings and facts, no run) named
+          // `name`, so it shows on Home and its toast action can open it.
+          showToast({ message: `Created “${name.trim() || 'AI Coach launch copy'}” as a draft` });
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === 'archive'}
+        onClose={() => setConfirm(null)}
+        title={archived ? 'Restore AI Coach launch' : 'Archive AI Coach launch'}
+        body={
+          archived
+            ? 'It goes back to Workflows with its run and history.'
+            : 'It leaves Workflows and stops any run. Its history is kept, and you can restore it here.'
+        }
+        confirmLabel={archived ? 'Restore' : 'Archive'}
+        onConfirm={() => {
+          setConfirm(null);
+          // STATE: the store should set this workflow's status to archived (hidden from Home's list, run
+          // stopped) and clear it on Undo / Restore.
+          const next = !archived;
+          setArchived(next);
+          showToast(
+            next
+              ? {
+                  message: 'Archived AI Coach launch',
+                  action: { label: 'Undo', onClick: () => setArchived(false) },
+                }
+              : { message: 'Restored AI Coach launch' }
+          );
+        }}
+      />
+      {toast}
     </AppShell>
   );
 }

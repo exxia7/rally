@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 
 import plusIcon from '@/assets/icons/plus.svg';
 import searchIcon from '@/assets/icons/search.svg';
@@ -13,40 +12,22 @@ import { Button } from '@/components/ui/Button';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { Icon } from '@/components/ui/Icon';
 import { StatusFilter, type StatusFilterValue } from '@/components/ui/StatusFilter';
-import { screenPath } from '@/screens/registry';
+import { cardTarget, useGo } from '@/state/nav';
+import { workflowCard } from '@/state/runView';
+import { dispatch, useAppState } from '@/state/store';
+import type { Workflow } from '@/state/types';
 
-const WORKFLOWS: WorkflowCardData[] = [
-  {
-    title: 'AI Coach launch',
-    status: 'Running',
-    meta: 'Needs your input',
-    preview: 'ai-coach',
-    needsYou: true,
-    // "Needs your input": opens the raised hand waiting on you (4.1).
-    to: '4.1',
-  },
-  {
-    title: 'Pricing change announcement',
-    status: 'Draft',
-    meta: 'Edited 2 hours ago',
-    preview: 'pricing',
-    to: '2.1',
-  },
-  {
-    title: 'Product Hunt relaunch',
-    status: 'Done',
-    meta: 'Launched Feb 2',
-    preview: 'product-launch',
-    to: '5.2',
-  },
-  {
-    title: 'Hiring: founding designer',
-    status: 'Done',
-    meta: 'Posted Jan 18',
-    preview: 'hiring',
-    to: '5.2',
-  },
-];
+function homeCard(wf: Workflow): WorkflowCardData {
+  const card = workflowCard(wf);
+  return {
+    title: wf.title,
+    status: card.status,
+    meta: card.meta,
+    preview: wf.preview,
+    needsYou: card.needsYou,
+    to: cardTarget(wf),
+  };
+}
 
 type Filter = 'all' | 'running' | 'needs-you';
 
@@ -54,11 +35,25 @@ export const screenId = '1.1';
 
 // Figma 1.1 "Home · your workflows" (2362:23299)
 export default function HomeScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilterValue>('all');
 
+  const app = useAppState();
+  // Cards are the store's workflows: the live one says running / needs you / done as it goes.
+  const WORKFLOWS = useMemo(
+    () =>
+      app.order
+        .map((id) => app.workflows[id])
+        .filter(Boolean)
+        .map((wf) => ({ wf, ...homeCard(wf) })),
+    [app]
+  );
+  const open = (wf: Workflow) => {
+    dispatch({ type: 'wf/open', id: wf.id });
+    go(cardTarget(wf));
+  };
   const visible = WORKFLOWS.filter(
     (w) =>
       (filter === 'all' ||
@@ -83,7 +78,7 @@ export default function HomeScreen() {
             <Button
               variant="secondary"
               className="w-[148.031px] max-md:hidden"
-              onClick={() => navigate(screenPath('1.2'))}
+              onClick={() => go('1.2')}
             >
               Workspace settings
             </Button>
@@ -111,19 +106,19 @@ export default function HomeScreen() {
               selected={filter === 'all'}
               onClick={() => setFilter('all')}
             >
-              All · 4
+              {`All · ${WORKFLOWS.length}`}
             </ChoiceChip>
             <ChoiceChip
               selected={filter === 'running'}
               onClick={() => setFilter('running')}
             >
-              Running · 1
+              {`Running · ${WORKFLOWS.filter((w) => w.status === 'Running').length}`}
             </ChoiceChip>
             <ChoiceChip
               selected={filter === 'needs-you'}
               onClick={() => setFilter('needs-you')}
             >
-              Needs you · 1
+              {`Needs you · ${WORKFLOWS.filter((w) => w.needsYou).length}`}
             </ChoiceChip>
             <StatusFilter value={status} onChange={setStatus} />
             <div className="flex min-w-fit flex-1 justify-end max-md:fixed max-md:right-4 max-md:bottom-[calc(56px+16px+env(safe-area-inset-bottom))] max-md:z-10 max-md:flex-none">
@@ -131,7 +126,10 @@ export default function HomeScreen() {
                 variant="primary"
                 className="max-md:h-10 max-md:shadow-[0_4px_12px_rgba(16,18,24,0.18)]"
                 leading={<Icon src={plusIcon} size={16} />}
-                onClick={() => navigate(screenPath('2.1'))}
+                onClick={() => {
+                  dispatch({ type: 'wf/new' });
+                  go('2.1');
+                }}
               >
                 New workflow
               </Button>
@@ -140,9 +138,9 @@ export default function HomeScreen() {
           <div className="flex w-full flex-wrap content-start items-start gap-5 pt-3 max-xl:grid max-xl:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-md:gap-3 max-md:pb-20 *:max-xl:w-auto">
             {visible.map((w) => (
               <WorkflowCard
-                key={w.title}
+                key={w.wf.id}
                 {...w}
-                onClick={() => navigate(screenPath(w.to))}
+                onClick={() => open(w.wf)}
               />
             ))}
           </div>

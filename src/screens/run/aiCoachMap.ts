@@ -374,3 +374,119 @@ export const AI_COACH_RUN: RunData = {
   chatSuggestions: AI_COACH_CHAT_SUGGESTIONS,
   inspectors: AI_COACH_INSPECTOR,
 };
+
+// ---- The timeline before 3.2 (no Figma frame; built from the 3.2 map) ------------------------------------------
+
+/** Which run-map step each plan helper works on (the run map is the plan's helpers, one step each). */
+export const STEP_OF_HELPER: Record<string, string> = {
+  planner: 'plan',
+  scout: 'scout',
+  insights: 'insights',
+  strategist: 'decision',
+  writer: 'writer',
+  designer: 'designer',
+  community: 'discord',
+  publisher: 'schedule',
+};
+
+const pendingFrom = (from: string[]): MapEdge[] =>
+  AI_COACH_EDGES.map((e) =>
+    from.includes(e.from)
+      ? {
+          ...e,
+          status: 'pending',
+          marker: e.marker && { ...e.marker, status: 'pending' },
+        }
+      : e
+  );
+
+const waitingOutput = (id: 'writer' | 'designer', text: string) => {
+  const n = AI_COACH_NODES.find((x) => x.id === id)!;
+  return {
+    ...n,
+    state: 'waiting' as const,
+    preview: undefined,
+    status: { text },
+    avatar: { agent: n.avatar!.agent, state: 'idle' as const },
+  };
+};
+
+const tasksWith = (states: Record<string, TaskItem['state']>): TaskItem[] =>
+  AI_COACH_TASKS.map((t) => ({ ...t, state: states[t.id!] ?? t.state }));
+
+/** Just launched: the research helpers start, everyone else waits. */
+export const AI_COACH_LAUNCH_RUN: RunData = {
+  ...AI_COACH_RUN,
+  map: {
+    ...AI_COACH_RUN.map,
+    nodes: AI_COACH_NODES.map((n) => {
+      const research: Record<string, [string, AgentName]> = {
+        plan: ['Making the plan', 'Planner'],
+        scout: ['Comparing apps', 'Scout'],
+        insights: ['Reading the survey', 'Insights'],
+      };
+      if (research[n.id])
+        return {
+          ...n,
+          state: 'working',
+          status: { text: research[n.id][0], tone: 'live' },
+          avatar: { agent: research[n.id][1], state: 'working' },
+        };
+      if (n.id === 'decision')
+        return {
+          ...n,
+          state: 'waiting',
+          flag: undefined,
+          status: { text: 'Waits for research' },
+        };
+      if (n.id === 'writer' || n.id === 'designer')
+        return waitingOutput(n.id, 'Waits for Strategist');
+      return n;
+    }),
+    edges: pendingFrom(['plan', 'scout', 'insights', 'decision']),
+  },
+  completed: [],
+  tasks: tasksWith({
+    writer: 'waiting',
+    designer: 'waiting',
+    plan: 'running',
+    scout: 'running',
+    insights: 'running',
+    decision: 'waiting',
+  }),
+  chat: [
+    AI_COACH_CHAT[0],
+    {
+      from: 'assistant',
+      text: 'Your launch is running. Planner, Scout and Insights are on the research. I’ll check with you before anything is posted.',
+    },
+  ],
+};
+
+/** Research is in: Strategist decides who the launch is for. */
+export const AI_COACH_DECIDING_RUN: RunData = {
+  ...AI_COACH_LAUNCH_RUN,
+  map: {
+    ...AI_COACH_RUN.map,
+    nodes: AI_COACH_NODES.map((n) => {
+      if (n.id === 'decision')
+        return {
+          ...n,
+          state: 'working',
+          flag: undefined,
+          status: { text: 'Deciding who it’s for', tone: 'live' },
+          avatar: { agent: 'Strategist', state: 'working' },
+        };
+      if (n.id === 'writer' || n.id === 'designer')
+        return waitingOutput(n.id, 'Waits for Strategist');
+      return n;
+    }),
+    edges: pendingFrom(['decision']),
+  },
+  completed: ['Planner', 'Scout', 'Insights'],
+  tasks: tasksWith({
+    writer: 'waiting',
+    designer: 'waiting',
+    decision: 'running',
+  }),
+};

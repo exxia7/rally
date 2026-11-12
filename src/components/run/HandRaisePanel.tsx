@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { RadioCard } from '@/components/ui/RadioCard';
 
+import { HandoffModal } from './DetailModals';
+
 export type HandRaiseProblem = {
   /** "Missing", "Mismatch". */
   kind: string;
@@ -61,12 +63,14 @@ export function HandRaisePanel({
     data.steps.map(() => 0)
   );
   const [other, setOther] = useState('');
+  const [handoffOpen, setHandoffOpen] = useState(false);
   const current = data.steps[step];
   const last = step === data.steps.length - 1;
   const { problem } = current;
 
   return (
     <SidePanel
+      sheet="half"
       onClose={onClose}
       bodyClassName="overflow-x-clip px-6 py-5 max-md:px-4"
       header={
@@ -106,6 +110,7 @@ export function HandRaisePanel({
           detail={problem.detail}
           action={problem.action}
           actionTop={problem.actionTop}
+          onAction={() => setHandoffOpen(true)}
           className="w-full"
           // Figma's whole-pixel card height; a minimum, so narrow phones can wrap more.
           style={problem.height ? { minHeight: problem.height } : undefined}
@@ -172,6 +177,11 @@ export function HandRaisePanel({
           </Button>
         )}
       </div>
+      <HandoffModal
+        open={handoffOpen}
+        onClose={() => setHandoffOpen(false)}
+        data={data}
+      />
     </SidePanel>
   );
 }

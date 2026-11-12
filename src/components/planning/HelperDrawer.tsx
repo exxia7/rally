@@ -67,6 +67,8 @@ export function HelperDrawer({
   onRemove,
   onDuplicate,
   onConnectTool,
+  checksOptions = CHECKS_OPTIONS,
+  toolSource,
 }: {
   helper: HelperDraft;
   onChange: (patch: Partial<HelperDraft>) => void;
@@ -74,6 +76,10 @@ export function HelperDrawer({
   onRemove?: () => void;
   onDuplicate?: () => void;
   onConnectTool?: () => void;
+  /** "Checks with you" choices (the screen's permission model: src/state/permissions.ts). */
+  checksOptions?: string[];
+  /** A tool row's source text ("Connected", "Not connected"); defaults to the tool list's. */
+  toolSource?: (name: string) => string;
 }) {
   const hasTools = helper.tools !== undefined;
   const fileInput = useRef<HTMLInputElement>(null);
@@ -113,6 +119,7 @@ export function HelperDrawer({
   const checks = (
     <ChecksWithYou
       value={helper.checks}
+      options={checksOptions}
       onChange={(v) => onChange({ checks: v })}
       hintClassName={hasTools ? 'h-[22px]' : 'h-[23px]'}
     />
@@ -174,7 +181,7 @@ export function HelperDrawer({
                   <ToolRow
                     key={t.name}
                     name={t.name}
-                    source={t.source}
+                    source={toolSource?.(t.name) ?? t.source}
                     dense
                     checked={helper.tools?.includes(t.name)}
                     onToggle={() =>
@@ -296,10 +303,12 @@ function FieldLabel({ children }: { children: ReactNode }) {
 // "Checks with you": a 36px dropdown (1px line-2, 10px radius) that overrides the team's ask-first rule.
 function ChecksWithYou({
   value,
+  options,
   onChange,
   hintClassName,
 }: {
   value: string;
+  options: string[];
   onChange: (v: string) => void;
   hintClassName?: string;
 }) {
@@ -330,7 +339,7 @@ function ChecksWithYou({
             label="Checks with you"
             onClose={closeMenu}
             className="absolute top-10 left-0 w-full"
-            items={CHECKS_OPTIONS.map((o) => ({
+            items={options.map((o) => ({
               key: o,
               label: o,
               onSelect: () => onChange(o),

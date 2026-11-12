@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom';
 
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
-import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
+import { dispatch } from '@/state/store';
+import { useLiveRun } from '@/state/useRun';
 
-import { PRICE_MISMATCH_RUN } from './data';
 
 export const screenId = '4.3';
 
@@ -11,14 +11,22 @@ export const screenId = '4.3';
 // handoff doesn't match the launch facts; the side panel offers two fixes. Confirm (or the card's Rerun) applies
 // the pick and the run moves on to the approval (5.1).
 export default function PriceMismatchScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
+  const { layout } = useLiveRun('4.3');
   return (
     <RunScreenLayout
-      data={PRICE_MISMATCH_RUN}
+      {...layout}
       initialPanel={{ kind: 'hand-raise' }}
-      initialPaused
-      status={{ state: 'waiting', label: 'Needs you · $0.23' }}
-      onHandRaiseConfirm={() => navigate(screenPath('5.1'))}
+      onHandRaiseConfirm={(choices, other) => {
+        dispatch({
+          type: 'handRaise/confirm',
+          id: 'price',
+          choices: choices ?? [0],
+          other: other ?? '',
+        });
+        // Writer finishes, then Community and Publisher; the approval opens when they're done.
+        go('3.2', { replace: true });
+      }}
     />
   );
 }

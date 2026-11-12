@@ -16,7 +16,7 @@ const DONE_AGENT_W: Record<AgentName, number> = {
 };
 
 // Figma "Done agent" (2362:29175): avatar (Done) + name.
-export function DoneAgent({ agent }: { agent: AgentName }) {
+export function DoneAgent({ agent, name }: { agent: AgentName; name?: string }) {
   return (
     <div
       className="flex shrink-0 flex-col items-center gap-0.5"
@@ -28,7 +28,7 @@ export function DoneAgent({ agent }: { agent: AgentName }) {
         badgeText={{ size: 10, leading: 14 }}
       />
       <p className="pt-px text-[10px] leading-[14px] tracking-[-0.0503px] whitespace-nowrap text-muted">
-        {agent}
+        {name ?? agent}
       </p>
     </div>
   );
@@ -38,10 +38,13 @@ export function DoneAgent({ agent }: { agent: AgentName }) {
 // Place 16px from the canvas left and bottom. Under 768px it scrolls sideways instead of overflowing.
 export function CompletedAgents({
   agents,
+  names,
   label,
   className,
 }: {
   agents: AgentName[];
+  /** Renamed helpers: character → the name you gave it. */
+  names?: Partial<Record<AgentName, string>>;
   label?: string;
   className?: string;
 }) {
@@ -53,11 +56,12 @@ export function CompletedAgents({
       )}
     >
       <p className="min-w-[83px] shrink-0 text-[12px] leading-[18px] font-semibold tracking-[-0.0503px] whitespace-nowrap text-ink">
-        {label ?? `${agents.length} agents done`}
+        {label ??
+          `${agents.length} ${agents.length === 1 ? 'agent' : 'agents'} done`}
       </p>
       <div className="h-7 w-px shrink-0 bg-line" />
       {agents.map((a) => (
-        <DoneAgent key={a} agent={a} />
+        <DoneAgent key={a} agent={a} name={names?.[a]} />
       ))}
     </div>
   );

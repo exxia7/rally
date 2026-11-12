@@ -5,7 +5,8 @@ import { FORK_COLOR, type ForkNumber } from '@/components/map/forks';
 
 // Figma "Branch tab" (2362:29280): branch switcher on the canvas, 28px pill. Selected = soft blue fill,
 // Default = text only, Add = dashed "+ fork" slot. An Add slot for a fork being set up (6.4's "+ New fork") takes
-// that fork's colour for its dashed border and label.
+// that fork's colour for its dashed border and label. A fork's own tab (the Branches row on run screens with forks)
+// takes its colour for the label, and a tint of it when selected.
 export function BranchTab({
   label,
   state = 'default',
@@ -33,9 +34,16 @@ export function BranchTab({
         className
       )}
       style={
-        state === 'add' && fork
-          ? { borderColor: FORK_COLOR[fork], color: FORK_COLOR[fork] }
-          : undefined
+        !fork
+          ? undefined
+          : state === 'add'
+            ? { borderColor: FORK_COLOR[fork], color: FORK_COLOR[fork] }
+            : {
+                color: FORK_COLOR[fork],
+                // A selected fork tab is the fork's colour on an 8% tint of it (as Original is accent on accent-soft).
+                backgroundColor:
+                  state === 'selected' ? `${FORK_COLOR[fork]}14` : undefined,
+              }
       }
     >
       {label}

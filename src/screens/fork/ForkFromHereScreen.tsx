@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom';
 
+import { useCreateFork } from '@/components/fork/useForkRunView';
 import { BranchTab, Branches } from '@/components/nav/BranchTab';
 import { RunScreenLayout } from '@/components/run/RunScreenLayout';
-import { screenPath } from '@/screens/registry';
+import { useGo } from '@/state/nav';
 
 import { FORK_FROM_STEP_RUN } from './data';
+import { VS_PENNY } from './drawnForks';
 
 export const screenId = '6.4';
 
@@ -12,12 +13,22 @@ export const screenId = '6.4';
 // open and the canvas's Branches row (16, 62) shows the new fork's slot in Fork 1's colour while it is set up.
 // Create fork starts "Vs Penny" (6.5); Cancel closes the card and the slot.
 export default function ForkFromHereScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
+  const createFork = useCreateFork();
   return (
     <RunScreenLayout
       data={FORK_FROM_STEP_RUN}
       initialPanel={{ kind: 'inspector', nodeId: 'writer', forkOpen: true }}
-      onForkCreate={() => navigate(screenPath('6.5'))}
+      // The fork is named from the chip or text you chose (2g); 6.5 draws it under that name.
+      onForkCreate={(from, instruction) => {
+        createFork({
+          from,
+          parent: 'original',
+          instruction,
+          drawnName: VS_PENNY.name,
+        });
+        go('6.5');
+      }}
       canvasOverlay={(panel) =>
         panel?.kind === 'inspector' &&
         panel.forkOpen && (

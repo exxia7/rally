@@ -2,6 +2,8 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { CARRY } from '@/state/nav';
+
 // Figma "Breadcrumb" (2362:29234): top-bar path. Parents are grey links, then a "/" (#b4b6bc) and the current
 // page in Medium ink. Regular/Medium 14/20, 6px gaps. `after` sits right after the current label
 // (the title menu chevron). Under 768px only the current label shows, truncated.
@@ -31,6 +33,7 @@ export function Breadcrumb({
           {p.to ? (
             <Link
               to={p.to}
+              state={CARRY}
               className="text-[14px] leading-5 tracking-[-0.08px] whitespace-nowrap text-muted hover:text-ink"
             >
               {p.label}

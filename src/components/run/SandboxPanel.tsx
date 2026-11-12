@@ -29,16 +29,19 @@ export type SandboxSection = {
 // "Show N more" (20px in). Rows drag onto helpers on the map: `onRowDragStart` / `onRowDragEnd` tell the screen
 // which resource is in flight. The plan Sandbox (2.6, 2.7) puts its note in the panel header: `note={null}`.
 // Touch screens can't drag, so `rowMenu` gives a row a tap path: return menu items (e.g. "Add to Community") and a
-// tap opens them under the row; return undefined to keep the row drag-only (desktop).
+// tap opens them under the row; return undefined to keep the row drag-only. Row checkboxes tick (local selection).
+// A section's "+" opens it and calls `onAdd` (the run Sandbox imports into that section).
 export function SandboxPanel({
   sections,
   note = 'Running now. New items go to steps that haven’t started; running steps keep what they have.',
   onRowDragStart,
   onRowDragEnd,
   rowMenu,
+  onAdd,
 }: {
   sections: SandboxSection[];
   note?: string | null;
+  onAdd?: (section: SandboxSection) => void;
   onRowDragStart?: (item: SandboxItem, section: SandboxSection) => void;
   onRowDragEnd?: () => void;
   rowMenu?: (
@@ -55,6 +58,14 @@ export function SandboxPanel({
     () => new Set(sections.filter((s) => s.open).map((s) => s.id)),
   );
   const [expanded, setExpanded] = useState(() => new Set<string>());
+  const [ticked, setTicked] = useState(() => new Set<string>());
+  const tick = (key: string, on: boolean) =>
+    setTicked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   const toggle = (id: string, to?: boolean) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -93,7 +104,10 @@ export function SandboxPanel({
                 <button
                   type="button"
                   aria-label={`Add to ${s.title}`}
-                  onClick={() => toggle(s.id, true)}
+                  onClick={() => {
+                    toggle(s.id, true);
+                    onAdd?.(s);
+                  }}
                   className="flex shrink-0 rounded-[4px] hover:bg-hover"
                 >
                   <Icon src={plusGray14} size={14} />
@@ -114,6 +128,10 @@ export function SandboxPanel({
                             : undefined
                         }
                         onDragEnd={onRowDragEnd}
+                        checked={ticked.has(`${s.id}/${item.name}`)}
+                        onCheckedChange={(on) =>
+                          tick(`${s.id}/${item.name}`, on)
+                        }
                         onClick={
                           rowMenu
                             ? () => {

@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router-dom';
 
 import logo31 from '@/assets/icons/logo-31.svg';
 import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { AppShell } from '@/components/shell/AppShell';
 import { Icon } from '@/components/ui/Icon';
-import { screenPath } from '@/screens/registry';
+import { planFrame, useGo } from '@/state/nav';
+import { useWorkflow } from '@/state/store';
 
 export const screenId = '3.1';
 
@@ -12,14 +12,17 @@ export const screenId = '3.1';
 // canvas (#fcfcfd) centres the "Switch to Planning" empty state: 56px workflow-logo tile (31px logo), SemiBold
 // 20/28 title, 14/22 line 8px below.
 export default function FlowchartEmptyScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
+  const wf = useWorkflow();
+  // Planning returns to where you came from (2.1, 2.2 or 2.3), not always the empty brief.
+  const toPlanning = () => go.back(planFrame(wf.planStage));
   return (
     <AppShell sidebar="none">
       <WorkflowTopBar
-        title="New workflow"
-        hideTitleMenu
+        title={wf.title}
+        hideTitleMenu={wf.isNew}
         view="flowchart"
-        onViewChange={(v) => v === 'planning' && navigate(screenPath('2.1'))}
+        onViewChange={(v) => v === 'planning' && toPlanning()}
       />
       <div className="flex min-h-px w-full flex-1 items-center justify-center bg-canvas px-4">
         <div className="flex w-[420px] max-w-full flex-col items-center text-center">
@@ -35,7 +38,7 @@ export default function FlowchartEmptyScreen() {
             Switch to the{' '}
             <button
               type="button"
-              onClick={() => navigate(screenPath('2.1'))}
+              onClick={toPlanning}
               className="hover:text-accent hover:underline"
             >
               Planning

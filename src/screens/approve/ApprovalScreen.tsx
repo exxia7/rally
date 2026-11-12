@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import checkBadge from '@/assets/icons/check-badge.svg';
 import lockAmber from '@/assets/icons/lock-amber-10.svg';
@@ -15,92 +14,61 @@ import { AppShell } from '@/components/shell/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import { screenPath } from '@/screens/registry';
-
+import { InspectorPanel } from '@/components/run/InspectorPanel';
+import { inspectorFromNode } from '@/components/run/RunScreenLayout';
+import { TasksOverlay } from '@/components/run/TasksOverlay';
+import { planFrame, useGo, useRunFrameSync } from '@/state/nav';
 import {
-  APPROVAL_DONE,
-  APPROVAL_MAP_SCALE,
-  LAUNCH_EDGES,
-  LAUNCH_MAP,
-  launchNodes,
-} from './launchMap';
+  agentNames,
+  approvalItems,
+  approvalWaiting,
+  money,
+  runCost,
+  runData,
+} from '@/state/runView';
+import { dispatch, useWorkflow } from '@/state/store';
+
+import { APPROVAL_MAP_SCALE, LAUNCH_MAP } from './launchMap';
 
 export const screenId = '5.1';
-
-type Item = {
-  id: string;
-  title: string;
-  when: string;
-  body: string;
-  channelNote?: string;
-  /** Figma's item height: its text boxes round each line up to whole pixels. */
-  minH: string;
-};
-
-const ITEMS: Item[] = [
-  {
-    id: 'ph',
-    title: 'Product Hunt page',
-    when: 'Mar 12 · 12:01am PT',
-    body: 'Lumen AI Coach: the budgeting coach for people who already budget',
-    minH: 'min-h-[130px]',
-  },
-  {
-    id: 'x',
-    title: 'X post',
-    when: 'Mar 12 · 9am',
-    body: 'Penny gives tips. AI Coach knows your actual budget. Live Mar 12.',
-    minH: 'min-h-[130px]',
-  },
-  {
-    id: 'li',
-    title: 'LinkedIn post',
-    when: 'Mar 12 · 9am',
-    body: 'We built AI Coach for people who already budget and want someone in their corner.',
-    minH: 'min-h-[130px]',
-  },
-  {
-    id: 'discord',
-    title: 'Discord post',
-    when: 'Mar 12 · 11am',
-    channelNote: 'Posts to your #launches channel',
-    body: 'We made a budgeting coach for people who already budget. Feedback welcome',
-    minH: 'min-h-[156px]',
-  },
-  {
-    id: 'email',
-    title: 'Waitlist email · 2,800 people',
-    when: 'Mar 12 · 9am',
-    channelNote: 'Sent with Resend from hello@lumen.app',
-    body: "Subject: You're in. Meet AI Coach",
-    minH: 'min-h-[139px]',
-  },
-];
-
-const NODES = launchNodes('approval');
 
 // Figma 5.1 "Approval" (2362:25491): the finished run map (drawn at 0.68 beside the docked panel) and the
 // "Ready to post" approval panel. Approve / Don't post / Undo change each item; "Approve all" approves what's
 // left and opens the launch summary (5.2).
 export default function ApprovalScreen() {
-  const navigate = useNavigate();
+  const go = useGo();
+  const wf = useWorkflow();
+  useRunFrameSync('5.1');
   const [panelOpen, setPanelOpen] = useState(true);
-  const [states, setStates] = useState<Record<string, ApprovalState>>(() =>
-    Object.fromEntries(ITEMS.map((i) => [i.id, 'waiting' as ApprovalState]))
-  );
+  // A map card other than "Ready to post" opens its own (read-only) inspector instead of the approval panel.
+  const [inspecting, setInspecting] = useState<string | null>(null);
+  const [tasksOpen, setTasksOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const waiting = ITEMS.filter((i) => states[i.id] === 'waiting').length;
+  // Items, states and counts all come from the store, so a choice survives Edit, Back or the Tasks chip.
+  const run = useMemo(() => runData(wf), [wf]);
+  const items = useMemo(() => approvalItems(wf), [wf]);
+  const names = useMemo(() => agentNames(wf), [wf]);
+  const stateOf = (id: string): ApprovalState => wf.approvals[id] ?? 'waiting';
+  const waiting = items.filter((i) => stateOf(i.id) === 'waiting').length;
+  const pill = approvalWaiting(wf);
+  const cost = money(runCost(wf));
+  const publisher = wf.helpers.publisher?.name ?? 'Publisher';
+  const done = run.tasks.filter((t) => t.state === 'done').length;
+  const inspected = inspecting
+    ? run.map.nodes.find((n) => n.id === inspecting)
+    : undefined;
   const launch = () => {
-    setStates((s) =>
-      Object.fromEntries(
-        Object.entries(s).map(([k, v]) => [k, v === 'waiting' ? 'approved' : v])
-      )
-    );
+    for (const i of items)
+      if (stateOf(i.id) === 'waiting')
+        dispatch({ type: 'approval/set', output: i.id, value: 'approved' });
     // Let the badges flip before moving on to the summary.
     timer.current = window.setTimeout(
-      () => navigate(screenPath('5.2')),
+      () => {
+        dispatch({ type: 'approval/launch' });
+        go('5.2', { replace: true });
+      },
       waiting ? 600 : 0
     );
   };
@@ -109,13 +77,26 @@ export default function ApprovalScreen() {
     <AppShell
       sidebar="none"
       aside={
-        panelOpen && (
+        inspected ? (
+          <InspectorPanel
+            key={inspected.id}
+            data={{
+              ...inspectorFromNode(inspected),
+              fork: null,
+              rerun: null,
+              footer: false,
+            }}
+            onClose={() => setInspecting(null)}
+          />
+        ) : (
+          panelOpen && (
           <SidePanel
+            sheet="half"
             onClose={() => setPanelOpen(false)}
             header={
               <div className="flex min-h-[113px] w-full shrink-0 flex-col">
                 <InspectorHeader
-                  eyebrow="Approval · Publisher"
+                  eyebrow={`Approval · ${publisher}`}
                   kindIcon={null}
                   title="Ready to post"
                   meta="Nothing goes out until you approve it."
@@ -135,7 +116,8 @@ export default function ApprovalScreen() {
                 </Button>
                 <Button
                   className="w-[101px]"
-                  onClick={() => navigate(screenPath('3.2'))}
+                  // Decide later: back Home, where the card says what's waiting.
+                  onClick={() => go('1.1')}
                 >
                   Decide later
                 </Button>
@@ -146,18 +128,20 @@ export default function ApprovalScreen() {
               14 handoff cards checked · 2 caught and fixed
             </Badge>
             <div className="flex w-full flex-col items-start gap-2.5">
-              {ITEMS.map((item) => (
+              {items.map((item) => (
                 <ApprovalItem
                   key={item.id}
                   title={item.title}
                   when={item.when}
                   body={item.body}
                   channelNote={item.channelNote}
-                  state={states[item.id]}
+                  state={stateOf(item.id)}
                   onChange={(s) =>
-                    setStates((all) => ({ ...all, [item.id]: s }))
+                    dispatch({ type: 'approval/set', output: item.id, value: s })
                   }
-                  onEdit={() => navigate(screenPath('3.5'))}
+                  // Edit changes the text in place (ApprovalItem's own Text area), so nothing is lost.
+                  // STATE: the store's approvals should keep the edited text (approvals{} "edited text"), so
+                  // 5.2 "What went out" and a reopened panel show it (pass `onBodyChange`).
                   className={`w-full shrink-0 ${item.minH}`}
                 />
               ))}
@@ -180,21 +164,26 @@ export default function ApprovalScreen() {
               </div>
             </div>
           </SidePanel>
+          )
         )
       }
     >
       <WorkflowTopBar
         view="flowchart"
-        onViewChange={(v) => v === 'planning' && navigate(screenPath('2.3'))}
+        title={wf.title}
+        onViewChange={(v) => v === 'planning' && go(planFrame(wf.planStage))}
         status="waiting"
         statusLabel={
-          waiting
-            ? `${waiting + 1} waiting for your OK · $0.31`
-            : 'Ready to launch · $0.31'
+          pill
+            ? `${pill} waiting for your OK · ${cost}`
+            : `Ready to launch · ${cost}`
         }
-        onSettings={() => navigate(screenPath('2.8'))}
-        panelOpen={panelOpen}
-        onTogglePanel={() => setPanelOpen((o) => !o)}
+        onSettings={() => go('2.8', { returnHere: true })}
+        panelOpen={panelOpen || !!inspected}
+        onTogglePanel={() => {
+          if (inspected) setInspecting(null);
+          else setPanelOpen((o) => !o);
+        }}
       />
       <MapCanvas
         stageWidth={954}
@@ -202,15 +191,25 @@ export default function ApprovalScreen() {
         overlay={
           <>
             <TaskProgressChip
-              done={9}
-              total={10}
-              onClick={() => navigate(screenPath('3.2-tasks'))}
+              done={wf.asDrawn ? 9 : done}
+              total={wf.asDrawn ? 10 : run.tasks.length}
+              open={tasksOpen}
+              onClick={() => setTasksOpen((o) => !o)}
               className="absolute top-4 left-4 w-[208px]"
             />
             <CompletedAgents
-              agents={APPROVAL_DONE}
+              agents={run.completed}
+              names={names}
               className="absolute bottom-[16.26px] left-4 max-md:right-4"
             />
+            {tasksOpen && (
+              <TasksOverlay
+                tasks={run.tasks}
+                summary={run.tasksSummary}
+                onClose={() => setTasksOpen(false)}
+                onSelect={() => setTasksOpen(false)}
+              />
+            )}
           </>
         }
       >
@@ -219,11 +218,16 @@ export default function ApprovalScreen() {
           style={{ transform: `scale(${APPROVAL_MAP_SCALE})` }}
         >
           <FlowMap
-            nodes={NODES}
-            edges={LAUNCH_EDGES}
+            nodes={run.map.nodes}
+            edges={run.map.edges}
             width={LAUNCH_MAP.width}
             height={LAUNCH_MAP.height}
-            onNodeClick={() => setPanelOpen(true)}
+            onNodeClick={(n) => {
+              if (n.id === 'ready') {
+                setInspecting(null);
+                setPanelOpen(true);
+              } else setInspecting(n.id);
+            }}
           />
         </div>
       </MapCanvas>

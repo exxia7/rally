@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 
 import type { OutputItem } from '@/components/panels/OutputsCard';
 import type { PanelTab } from '@/components/panels/PanelTabs';
@@ -11,132 +11,117 @@ import {
   HelperDrawer,
   type HelperDraft,
 } from '@/components/planning/HelperDrawer';
+import {
+  type AskLevel,
+  PermissionPicker,
+} from '@/components/planning/PermissionPicker';
 import { PlanCanvas } from '@/components/planning/PlanCanvas';
-import {
-  PlanChatPanel,
-  type PlanChatMessage,
-} from '@/components/planning/PlanChatPanel';
-import {
-  edgeKey,
-  insertStep,
-  planRight,
-} from '@/components/planning/planEdit';
+import { PlanChatPanel } from '@/components/planning/PlanChatPanel';
+import { edgeKey, planRight } from '@/components/planning/planEdit';
 import type { PlanEdge, PlanNode } from '@/components/planning/PlanMap';
 import { PlanTopBar } from '@/components/planning/PlanTopBar';
 import { ToolPicker } from '@/components/planning/ToolPicker';
+import { TOOLS } from '@/components/planning/tools';
+import { useConnectTool } from '@/components/planning/useConnectTool';
 import { AppShell } from '@/components/shell/AppShell';
 import { Button } from '@/components/ui/Button';
-import { screenPath } from '@/screens/registry';
+import { useOutsideClick } from '@/lib/useOutsideClick';
+import { useGo } from '@/state/nav';
+import {
+  CHECK_TEAM_DEFAULT,
+  checksLabel,
+  helperAsk,
+  isPoster,
+  pickerAsk,
+  toolConnected,
+  withPermissionRows,
+} from '@/state/permissions';
+import { planLayout, planSuggestions } from '@/state/planView';
+import { PLAYFUL_WRITER, TIKTOK_OUTPUT, WRITER_DONE } from '@/state/scenes';
+import { dispatch, useAppState } from '@/state/store';
+import type { ChatLine, Output, UndoRef } from '@/state/types';
 
 import {
-  AI_COACH_OUTPUTS,
-  AI_COACH_PLAN,
-  AI_COACH_PLAN_COMPACT,
   AI_COACH_PLAN_WIDE,
   AI_COACH_TEAM,
   type Helper,
   modelCost,
-  PLAN_CHAT_INTRO,
   PLAN_CHAT_SUGGESTIONS,
   planNodes,
 } from './aiCoachPlan';
+import { COMMUNITY, communityChat, DISCORD_OUTPUT } from './communityPlan';
 
 // eslint-disable-next-line react-refresh/only-export-components -- App.tsx reads screenId from every screen module
-export const screenId = ['2.3', '2.4', '2.4b', '2.4b-full', '2.4c', '2.4d'];
+export const screenId = [
+  '2.3',
+  '2.4',
+  '2.4b',
+  '2.4b-full',
+  '2.4c',
+  '2.4d',
+  '2.4e',
+  '2.5',
+];
 
-// Figma 2.3 "Proposed team" (2362:23641) and its editing states, one screen with real local state:
-// - 2.4 "Edit a helper · drawer" (2362:23725): click a helper card → the helper drawer replaces the chat panel,
-//   the map shrinks beside it and the other helpers fade.
-// - 2.4b "Edit on the card" (2362:23869): click a card's Tools row → the tool picker opens on the card.
-// - 2.4b-full "· full editor" (2362:27783): "Open full editor" → the drawer for that helper.
-// - The Discord suggestion ("I also want to post on our Discord forum.") goes to 2.5 "Add a helper".
-// - 2.4c "Add a step on a line" (2362:23969, hidden in Figma; an older layout with the chat as a 300px left column
-//   and the map at full size): hover a connector → its "+" → the add-step popover; picking a step really inserts
-//   it on that line (planEdit.insertStep), on every layout. 2.3 opens the same popover in place.
-// - 2.4d "Edit by chat" (2362:24093): ask the chat ("Make the Writer more playful…") → the Writer card updates,
-//   What goes out gets a TikTok script, and Undo puts both back.
-// Flowchart and Start launch go on to the run (3.1).
-
-type Msg = PlanChatMessage & { undo?: boolean };
-
-const INTRO: Msg[] = PLAN_CHAT_INTRO.map((text, i) => ({
-  id: `intro-${i}`,
-  from: 'assistant',
-  text,
-}));
-
-const WRITER_ASK = PLAN_CHAT_SUGGESTIONS[1];
-const DISCORD_ASK = PLAN_CHAT_SUGGESTIONS[0];
-
-const PLAYFUL_WRITER: Partial<Helper> = {
-  description: 'Writes your posts, email and a TikTok script',
-  tone: 'Playful',
-  state: 'updated',
-};
-const TIKTOK: OutputItem = {
-  id: 'tiktok',
-  label: 'TikTok script',
-  type: 'page',
-  isNew: true,
-};
-
-const DISCORD_POST: OutputItem = {
-  id: 'discord',
-  label: 'Discord post',
-  type: 'post',
-  isNew: true,
-};
+// The planning map with the Chat panel, one screen for every Figma frame that shows it, all views of the store's
+// workflow (helpers, removed, steps added on a line, outputs, the planning chat, permissions):
+// - 2.3 "Proposed team" (2362:23641): the team as the Planner proposed it.
+// - 2.4 "Edit a helper · drawer" (2362:23725) and 2.4b-full (2362:27783): click a card → that helper's drawer replaces
+//   the chat, the map shrinks beside it and the others fade. Every field writes to the store (name, model, tools…),
+//   so the card, the estimate, the chat's suggestions and the run follow. Remove, Duplicate ("<Name> copy" under the
+//   original, its drawer open) and Connect a tool (the connect step, then back here) work in place.
+// - 2.4b "Edit on the card" (2362:23869): a card's Tools row → the tool picker on the card.
+// - 2.4c "Add a step on a line" (2362:23969): hover a line → "+" → the add-step popover inserts a step.
+// - 2.4d "Edit by chat" (2362:24093): "Make the Writer more playful…" edits the Writer and What goes out, with Undo.
+// - 2.5 "Add a helper" (2362:24186): "I also want to post on our Discord forum." adds Community (with Undo).
+// - 2.4e "Ask before a step runs" (2362:27674): a poster's Posts/Ads row → its "Before … runs" picker. It's the same
+//   setting as the drawer's "Checks with you" (src/state/permissions.ts).
+// Sandbox swaps to the Sandbox screen (2.6/2.7) on the same workflow; a card clicked there opens its drawer here.
 
 const isDesktop = () =>
   typeof window === 'undefined' ||
   window.matchMedia('(min-width: 1280px)').matches;
 
-export default function TeamMapScreen() {
-  const navigate = useNavigate();
-  const { id = '2.3' } = useParams();
-  const byChat = id === '2.4d';
+const GENERIC_REPLY =
+  "Got it. I'll fold that into the plan. Nothing runs until you press Start launch.";
 
+const PICKER_REPLY: Record<AskLevel, (name: string) => string> = {
+  'ask-first': (n) => `${n} will wait for your OK before it posts or spends.`,
+  'spends-money': (n) =>
+    `${n} will post on schedule and ask before any ad spend.`,
+  'just-go': (n) =>
+    `${n} will run without asking. Workspace rules still apply.`,
+};
+
+const initialDrawer = (id: string, state: unknown): string | null => {
+  const asked = (state as { drawer?: string } | null)?.drawer;
+  if (asked) return asked;
+  return id === '2.4' ? 'strategist' : id === '2.4b-full' ? 'scout' : null;
+};
+
+export default function TeamMapScreen() {
+  const go = useGo();
+  const location = useLocation();
+  const { id = '2.3' } = useParams();
+  const s = useAppState();
+  const wf = s.workflows[s.activeId];
+  const team = wf.helpers;
   const wide = id === '2.4c';
-  const [team, setTeam] = useState<Record<string, Helper>>(() =>
-    byChat
-      ? {
-          ...AI_COACH_TEAM,
-          writer: { ...AI_COACH_TEAM.writer, ...PLAYFUL_WRITER },
-        }
-      : AI_COACH_TEAM
-  );
-  const [removed, setRemoved] = useState<string[]>([]);
-  const [drawer, setDrawer] = useState<string | null>(
-    id === '2.4' ? 'strategist' : id === '2.4b-full' ? 'scout' : null
+  const check = wf.permissions.checkLevel;
+
+  const [drawer, setDrawer] = useState<string | null>(() =>
+    initialDrawer(id, location.state)
   );
   const [picker, setPicker] = useState<string | null>(
     id === '2.4b' ? 'scout' : null
+  );
+  const [askPicker, setAskPicker] = useState<string | null>(
+    id === '2.4e' ? 'publisher' : null
   );
   const [panelOpen, setPanelOpen] = useState(
     () => isDesktop() || drawer !== null
   );
   const [tab, setTab] = useState<PanelTab>('chat');
-  const [outputs, setOutputs] = useState<OutputItem[]>(
-    byChat
-      ? [...AI_COACH_OUTPUTS, TIKTOK]
-      : wide
-        ? // 2.4c (an earlier pass) already lists the Discord post.
-          [...AI_COACH_OUTPUTS.slice(0, 3), DISCORD_POST, AI_COACH_OUTPUTS[3]]
-        : AI_COACH_OUTPUTS
-  );
-  const [messages, setMessages] = useState<Msg[]>(
-    byChat
-      ? [
-          ...INTRO,
-          { id: 'ask', from: 'user', text: WRITER_ASK },
-          { id: 'done', from: 'assistant', text: WRITER_DONE, undo: true },
-        ]
-      : INTRO
-  );
-  // Steps added on a line, replayed onto whichever layout is drawn; and the line whose add-step popover is open.
-  const [steps, setSteps] = useState<
-    { edge: Pick<PlanEdge, 'from' | 'to'>; step: NewStep; id: string }[]
-  >([]);
   const [adding, setAdding] = useState<{
     edge: Pick<PlanEdge, 'from' | 'to'>;
     at: { x: number; y: number };
@@ -145,118 +130,248 @@ export default function TeamMapScreen() {
     const e = AI_COACH_PLAN_WIDE.edges.find((x) => x.addAt);
     return e?.addAt ? { edge: e, at: e.addAt } : null;
   });
-  const [suggestions, setSuggestions] = useState(
-    byChat ? [] : PLAN_CHAT_SUGGESTIONS
-  );
+  const [connectDialog, connect] = useConnectTool();
 
+  const askRef = useRef<HTMLDivElement>(null);
+  const askRefs = useMemo(() => [askRef], []);
+  const closeAsk = useCallback(() => setAskPicker(null), []);
+  useOutsideClick(askRefs, askPicker !== null, closeAsk);
+
+  const live = (h: string) => !!team[h] && !wf.removed.includes(h);
   const patch = (helper: string, p: Partial<Helper>) =>
-    setTeam((t) => ({ ...t, [helper]: { ...t[helper], ...p } }));
+    dispatch({ type: 'helper/patch', id: helper, patch: p });
+  const say = (lines: ChatLine[]) =>
+    dispatch({ type: 'planChat/append', lines, clearUndo: true });
+  const n = wf.planChat.length;
 
   const openDrawer = (helper: string) => {
-    if (!team[helper]) return;
+    if (!live(helper)) return;
     setPicker(null);
+    setAskPicker(null);
     setAdding(null);
     setDrawer(helper);
     setPanelOpen(true);
   };
-
-  // The chat: the Writer request edits the plan (2.4d) with Undo; other asks get a short acknowledgement.
-  const undoWriter = () => {
-    patch('writer', {
-      description: AI_COACH_TEAM.writer.description,
-      tone: undefined,
-      state: undefined,
-    });
-    setOutputs((o) => o.filter((x) => x.id !== TIKTOK.id));
-    setMessages((m) => [
-      ...m.map((x) => ({ ...x, undo: false })),
-      {
-        id: `undone-${m.length}`,
-        from: 'assistant',
-        text: 'Undone. Writer is back to how it was, and the TikTok script is gone.',
-      },
-    ]);
+  const closeDrawer = () => {
+    setDrawer(null);
+    setPanelOpen(isDesktop());
   };
+
+  // ---- Chat --------------------------------------------------------------------------------------------------
+
+  const writerName = team.writer?.name ?? 'Writer';
+  const setOutputs = (outputs: Output[]) =>
+    dispatch({ type: 'outputs/set', outputs });
+
+  const undo = (u: UndoRef) => {
+    if (u.kind === 'remove') {
+      dispatch({ type: 'helper/restore', id: u.helper });
+    } else if (u.kind === 'playful') {
+      patch('writer', {
+        description: AI_COACH_TEAM.writer.description,
+        tone: undefined,
+        state: undefined,
+      });
+      setOutputs(wf.outputs.filter((o) => o.id !== TIKTOK_OUTPUT.id));
+      say([
+        {
+          id: `undone-${n}`,
+          from: 'assistant',
+          text: `Undone. ${writerName} is back to how it was, and the TikTok script is gone.`,
+        },
+      ]);
+    } else {
+      dispatch({ type: 'helper/delete', id: 'community' });
+      setAskPicker((p) => (p === 'community' ? null : p));
+      say([
+        {
+          id: `undone-${n}`,
+          from: 'assistant',
+          text: 'Undone. No Community helper, and Discord post is off What goes out.',
+        },
+      ]);
+    }
+  };
+
   const send = (text: string) => {
-    setSuggestions((s) => s.filter((x) => x !== text));
-    const n = messages.length;
-    if (text === WRITER_ASK || /playful|tiktok/i.test(text)) {
+    if (live('writer') && /playful|tiktok/i.test(text)) {
       patch('writer', PLAYFUL_WRITER);
-      setOutputs((o) =>
-        o.some((x) => x.id === TIKTOK.id) ? o : [...o, TIKTOK]
-      );
-      setMessages((m) => [
-        ...m,
+      if (!wf.outputs.some((o) => o.id === TIKTOK_OUTPUT.id))
+        setOutputs([...wf.outputs, TIKTOK_OUTPUT]);
+      say([
         { id: `u-${n}`, from: 'user', text },
-        { id: `a-${n}`, from: 'assistant', text: WRITER_DONE, undo: true },
+        {
+          id: `a-${n}`,
+          from: 'assistant',
+          text: WRITER_DONE.split('Writer').join(writerName),
+          undo: { kind: 'playful' },
+        },
       ]);
       return;
     }
-    // Asking for Discord adds a helper: that flow is 2.5 "Add a helper".
-    if (text === DISCORD_ASK || /discord/i.test(text)) {
-      navigate(screenPath('2.5'));
+    if (!team.community && /discord/i.test(text)) {
+      // Asking for Discord adds a Community helper above Publisher, and a Discord post to What goes out (2.5).
+      dispatch({
+        type: 'helper/add',
+        id: 'community',
+        helper: COMMUNITY,
+        before: live('publisher') ? 'publisher' : undefined,
+      });
+      const discord: Output = {
+        ...DISCORD_OUTPUT,
+        owner: 'community',
+        channel: 'Discord',
+      };
+      const at = wf.outputs.findIndex((o) => o.id === 'email');
+      setOutputs(
+        at < 0
+          ? [...wf.outputs, discord]
+          : [...wf.outputs.slice(0, at), discord, ...wf.outputs.slice(at)]
+      );
+      say(communityChat(n, text));
       return;
     }
-    const reply =
-      "Got it. I'll fold that into the plan. Nothing runs until you press Start launch.";
-    setMessages((m) => [
-      ...m,
+    say([
       { id: `u-${n}`, from: 'user', text },
-      { id: `a-${n}`, from: 'assistant', text: reply },
+      { id: `a-${n}`, from: 'assistant', text: GENERIC_REPLY },
     ]);
+  };
+
+  // ---- Helpers: duplicate, add a step, tools, permissions -----------------------------------------------------
+
+  const duplicate = (helper: string) => {
+    const h = team[helper];
+    if (!h) return;
+    let copyId = `${helper}-copy`;
+    for (let i = 2; team[copyId]; i++) copyId = `${helper}-copy-${i}`;
+    const at = wf.helperOrder.indexOf(helper);
+    dispatch({
+      type: 'helper/add',
+      id: copyId,
+      helper: {
+        ...h,
+        name: `${h.name} copy`,
+        state: 'new',
+        selected: undefined,
+        copyOf: h.copyOf ?? helper,
+      },
+      before: wf.helperOrder[at + 1],
+    });
+    say([
+      {
+        id: `copy-${n}`,
+        from: 'assistant',
+        text: `Added ${h.name} copy next to ${h.name}, with the same setup and lines. Rename it or change what it does.`,
+      },
+    ]);
+    setDrawer(copyId);
   };
 
   const addStep = (step: NewStep) => {
     if (!adding) return;
-    const stepId = `step-${steps.length + 1}`;
-    setSteps((all) => [...all, { edge: adding.edge, step, id: stepId }]);
-    if (step.type === 'helper')
-      setTeam((t) => ({
-        ...t,
-        [stepId]: {
-          name: step.name,
-          kind: 'action',
-          description: step.description,
-          state: 'new',
-          model: 'Haiku 5.5',
-          tokensK: 2,
-          skills: [],
-          files: [],
-          getsFrom: t[adding.edge.from]?.name ?? 'The step before',
-          passesTo: t[adding.edge.to]?.name ?? 'the next step',
-          passes: 'Its checked work',
-          checks: 'Team default · when unsure',
-        },
-      }));
+    const stepId = `step-${wf.planSteps.length + 1}`;
+    dispatch({
+      type: 'plan/insertStep',
+      edit: { edge: adding.edge, step, id: stepId },
+      helper:
+        step.type === 'helper'
+          ? {
+              name: step.name,
+              kind: 'action',
+              description: step.description,
+              state: 'new',
+              model: 'Haiku 5.5',
+              tokensK: 2,
+              skills: [],
+              files: [],
+              getsFrom: team[adding.edge.from]?.name ?? 'The step before',
+              passesTo: team[adding.edge.to]?.name ?? 'the next step',
+              passes: 'Its checked work',
+              checks: checksLabel('default', check),
+            }
+          : undefined,
+    });
     setAdding(null);
   };
 
-  // Map: the full layout, the compact one beside the drawer with everyone else faded, or 2.4c's full-size one;
-  // plus any steps added on a line.
-  const base = drawer
-    ? AI_COACH_PLAN_COMPACT
-    : wide
-      ? AI_COACH_PLAN_WIDE
-      : AI_COACH_PLAN;
-  const layout = steps.reduce(
-    (plan, st) => insertStep(plan, st.edge, st.step, st.id),
-    base
-  );
+  const toggleTool = (helper: string, tool: string) => {
+    const tools = team[helper].tools ?? [];
+    patch(helper, {
+      tools: tools.includes(tool)
+        ? tools.filter((t) => t !== tool)
+        : [...tools, tool],
+    });
+  };
+  // The connect step, then back here with the new tool given to this helper.
+  const connectFor = (helper: string) =>
+    connect(undefined, (name) => {
+      const tool = name === 'Email (Resend)' ? 'Email' : name;
+      const tools = team[helper]?.tools;
+      if (tools && !tools.includes(tool) && TOOLS.some((t) => t.name === tool))
+        patch(helper, { tools: [...tools, tool] });
+    });
+  // Figma draws every connected tool as "Connected"; once you've changed something, the workspace's flag shows.
+  const toolSource = wf.asDrawn
+    ? undefined
+    : (name: string) => {
+        const t = TOOLS.find((x) => x.name === name);
+        return t?.source === 'Connected' && !toolConnected(s, name)
+          ? 'Not connected'
+          : (t?.source ?? 'Built in');
+      };
+
+  const chooseAsk = (helper: string, level: AskLevel) => {
+    const h = team[helper];
+    if (!h) return;
+    patch(helper, { checks: checksLabel(level, check, h.checks) });
+    say([
+      {
+        id: `ask-level-${n}`,
+        from: 'assistant',
+        text: PICKER_REPLY[level](h.name),
+      },
+    ]);
+  };
+
+  // ---- The map ---------------------------------------------------------------------------------------------------
+
+  const layout = planLayout(wf, drawer ? 'compact' : wide ? 'wide' : 'full');
+  // Cards: poster rows follow each helper's permission; a tool the workspace hasn't connected says so.
+  const cardTeam = useMemo(() => {
+    const out: Record<string, Helper> = {};
+    for (const [hid, h] of Object.entries(team)) {
+      const withRows = withPermissionRows(wf, hid, h);
+      out[hid] =
+        wf.asDrawn || !withRows.tools
+          ? withRows
+          : {
+              ...withRows,
+              tools: withRows.tools.map((t) =>
+                toolConnected(s, t) ? t : `${t} (not connected)`
+              ),
+            };
+    }
+    return out;
+  }, [team, wf, s]);
   const stageWidth = wide && !drawer ? 1062 : 954;
-  const visible = (nodes: PlanNode[]) =>
-    nodes.filter((n) => !removed.includes(n.id));
-  const nodes = visible(
-    drawer
-      ? planNodes(
-          layout,
-          { [drawer]: { selected: true } },
-          { opacity: 0.5 },
-          team
-        )
-      : picker
-        ? planNodes(layout, { [picker]: {} }, { state: 'dimmed' }, team)
-        : planNodes(layout, {}, {}, team)
-  );
+  const nodes: PlanNode[] = drawer
+    ? planNodes(
+        layout,
+        { [drawer]: { selected: true } },
+        { opacity: 0.5 },
+        cardTeam
+      )
+    : picker
+      ? planNodes(layout, { [picker]: {} }, { state: 'dimmed' }, cardTeam)
+      : askPicker
+        ? planNodes(
+            layout,
+            { [askPicker]: { selected: 'accent' } },
+            // Faded, but a New card keeps its badge and dashed border.
+            { opacity: 0.4 },
+            cardTeam
+          )
+        : planNodes(layout, {}, {}, cardTeam);
   const gates = layout.gates?.map((g) => ({
     ...g,
     dimmed: g.dimmed || !!drawer,
@@ -264,36 +379,53 @@ export default function TeamMapScreen() {
   const nameOf = (nodeId: string) =>
     team[nodeId]?.name ??
     (layout.gates?.some((g) => g.id === nodeId) ? 'the approval' : nodeId);
-  const pickerNode = picker ? nodes.find((n) => n.id === picker) : undefined;
+  const pickerNode = picker ? nodes.find((x) => x.id === picker) : undefined;
+  const askNode = askPicker ? nodes.find((x) => x.id === askPicker) : undefined;
+  const asker = askPicker ? team[askPicker] : undefined;
 
-  const draft = drawer ? toDraft(team[drawer]) : null;
-
-  const chatMessages = messages.map((m) => ({
+  const chatMessages = wf.planChat.map((m) => ({
     ...m,
     extra: m.undo ? (
-      <Button size="sm" onClick={undoWriter}>
+      <Button
+        size="sm"
+        className={m.undo.kind === 'community' ? 'w-[57px]' : undefined}
+        onClick={() => undo(m.undo!)}
+      >
         Undo
       </Button>
     ) : undefined,
   }));
+  const suggestions = planSuggestions(wf).filter(
+    (x) => !(team.community && x === PLAN_CHAT_SUGGESTIONS[0])
+  );
 
+  const helper = drawer && live(drawer) ? team[drawer] : null;
   const aside =
-    drawer && draft ? (
+    drawer && helper ? (
       <HelperDrawer
         key={drawer}
-        helper={draft}
+        helper={{
+          ...toDraft(helper),
+          checks:
+            helperAsk(helper) === 'default'
+              ? checksLabel('default', check)
+              : helper.checks,
+        }}
+        checksOptions={[
+          checksLabel('default', check),
+          checksLabel('ask-first', check, helper.checks),
+          checksLabel('spends-money', check),
+          checksLabel('just-go', check),
+        ]}
+        toolSource={toolSource}
         onChange={(p) => patch(drawer, fromDraft(p))}
-        onClose={() => {
-          setDrawer(null);
-          setPanelOpen(isDesktop());
-        }}
+        onClose={closeDrawer}
         onRemove={() => {
-          setRemoved((r) => [...r, drawer]);
-          setDrawer(null);
-          setPanelOpen(isDesktop());
+          dispatch({ type: 'helper/remove', id: drawer });
+          closeDrawer();
         }}
-        onDuplicate={() => navigate(screenPath('2.5'))}
-        onConnectTool={() => navigate(screenPath('2.7'))}
+        onDuplicate={() => duplicate(drawer)}
+        onConnectTool={() => connectFor(drawer)}
       />
     ) : panelOpen ? (
       <PlanChatPanel
@@ -304,7 +436,7 @@ export default function TeamMapScreen() {
         onSend={send}
         tab={tab}
         onTabChange={(t) =>
-          t === 'sandbox' ? navigate(screenPath('2.6')) : setTab(t)
+          t === 'sandbox' ? go('2.6', { replace: true }) : setTab(t)
         }
         onClose={() => setPanelOpen(false)}
       />
@@ -337,20 +469,37 @@ export default function TeamMapScreen() {
           stageWidth={Math.max(stageWidth, planRight(layout) + 36)}
           onAddStep={(edge, at) => {
             setPicker(null);
+            setAskPicker(null);
             setAdding({ edge, at });
           }}
           addStepOn={adding ? edgeKey(adding.edge) : undefined}
           nodes={nodes}
-          outputs={outputs}
-          outputsKey={outputs.map((o) => o.id).join()}
+          outputs={wf.outputs as OutputItem[]}
+          outputsKey={wf.outputs.map((o) => o.id).join()}
+          onOutputsChange={(items) =>
+            setOutputs(
+              items.map((i) => wf.outputs.find((o) => o.id === i.id) ?? i)
+            )
+          }
           zoomLabelBase={drawer || wide ? 83 : 70}
-          onNodeClick={(n) => openDrawer(n.id)}
-          onSettingClick={(n, label) => {
+          onNodeClick={(node) => openDrawer(node.id)}
+          // "You approve" holds Publisher until you say yes: open Publisher, where "Checks with you" sets it.
+          onGateClick={() => openDrawer('publisher')}
+          onSettingClick={(node, label) => {
             if (label === 'Tools') {
               setDrawer(null);
               setAdding(null);
-              setPicker((p) => (p === n.id ? null : n.id));
-            } else openDrawer(n.id);
+              setAskPicker(null);
+              setPicker((p) => (p === node.id ? null : node.id));
+            } else if (
+              (label === 'Posts' || label === 'Ads') &&
+              isPoster(wf, node.id)
+            ) {
+              setPicker(null);
+              setAdding(null);
+              setDrawer(null);
+              setAskPicker((p) => (p === node.id ? null : node.id));
+            } else openDrawer(node.id);
           }}
           overlays={[
             ...(adding
@@ -372,7 +521,7 @@ export default function TeamMapScreen() {
                   },
                 ]
               : []),
-            ...(picker && pickerNode
+            ...(picker && pickerNode && team[picker]
               ? [
                   {
                     id: 'tool-picker',
@@ -383,18 +532,38 @@ export default function TeamMapScreen() {
                         helper={team[picker].name}
                         selected={team[picker].tools ?? []}
                         scale={0.85}
-                        onToggle={(tool) => {
-                          const tools = team[picker].tools ?? [];
-                          patch(picker, {
-                            tools: tools.includes(tool)
-                              ? tools.filter((t) => t !== tool)
-                              : [...tools, tool],
-                          });
-                        }}
-                        onConnect={() => navigate(screenPath('2.7'))}
+                        toolSource={toolSource}
+                        onToggle={(tool) => toggleTool(picker, tool)}
+                        onConnect={() => connectFor(picker)}
                         onOpenFullEditor={() => openDrawer(picker)}
                         onClose={() => setPicker(null)}
                       />
+                    ),
+                  },
+                ]
+              : []),
+            ...(askPicker && askNode && asker
+              ? [
+                  {
+                    id: 'permission-picker',
+                    x: askNode.x - 282.2,
+                    y: Math.max(8, askNode.y - 121.57),
+                    content: (
+                      <div ref={askRef}>
+                        <PermissionPicker
+                          helper={asker.name}
+                          summary={
+                            askPicker === 'publisher'
+                              ? `${asker.name} posts for you and can spend up to $${wf.permissions.adLimit} on ads.`
+                              : `${asker.name} posts your launch in Discord.`
+                          }
+                          value={pickerAsk(asker)}
+                          teamDefault={CHECK_TEAM_DEFAULT[check]}
+                          onChange={(level) => chooseAsk(askPicker, level)}
+                          onPermissions={() => go('2.7', { returnHere: true })}
+                          scale={0.85}
+                        />
+                      </div>
                     ),
                   },
                 ]
@@ -403,16 +572,16 @@ export default function TeamMapScreen() {
           focus={
             pickerNode
               ? { x: pickerNode.x + 200, y: pickerNode.y + 150 }
-              : undefined
+              : askNode
+                ? { x: askNode.x - 140, y: askNode.y + 160 }
+                : undefined
           }
         />
       </div>
+      {connectDialog}
     </AppShell>
   );
 }
-
-const WRITER_DONE =
-  'Done. Writer is now playful, and I added a TikTok script to What goes out. Writer is the only helper that redoes its work.';
 
 // Helper ⇄ drawer fields. Skills and files show as one Resources list.
 const UPLOADED = 'File · uploaded';

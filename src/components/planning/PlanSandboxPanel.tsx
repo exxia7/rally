@@ -44,6 +44,8 @@ export function PlanSandboxPanel({
 }) {
   return (
     <SidePanel
+      // Phones: a half-height sheet, so the map (and the card a row's "Add to…" gives to) stays in view.
+      sheet="half"
       onClose={onClose}
       header={
         <div className="flex h-[88px] w-full shrink-0 flex-col items-start gap-1 border-b border-line px-6 pt-5 pb-3 max-md:px-4">

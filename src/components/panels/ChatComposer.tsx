@@ -12,8 +12,8 @@ import { useOutsideClick } from '@/lib/useOutsideClick';
 import { AttachMenu } from './AttachMenu';
 
 // Shared composer state: a controlled text value, Enter (without Shift) or the send button sends trimmed text.
-function useComposer(onSend: (text: string) => void) {
-  const [text, setText] = useState('');
+function useComposer(onSend: (text: string) => void, initial = '') {
+  const [text, setText] = useState(initial);
   const send = () => {
     const t = text.trim();
     if (!t) return;
@@ -101,14 +101,17 @@ export function PlanComposer({
 // Figma "Chat composer" (2362:28991): pinned to the bottom of the side panel's Chat tab. 1px top line,
 // 24px sides, 12px top / 16px bottom, optional Suggestions (6px apart), then one outlined box (control border,
 // 8px radius, 12px left / 4px other padding) with a borderless 30px message field and a ghost send icon button.
-// Clicking a suggestion sends it.
+// Clicking a suggestion sends it. `defaultText` opens it prefilled and focused, caret at the end (a decision's
+// "Change" starts "Change: <decision> → ").
 export function ChatComposer({
   onSend,
   suggestions,
   placeholder = 'Ask for changes…',
   narrow,
   className,
+  defaultText,
 }: {
+  defaultText?: string;
   onSend: (text: string) => void;
   suggestions?: string[];
   placeholder?: string;
@@ -116,7 +119,7 @@ export function ChatComposer({
   narrow?: boolean;
   className?: string;
 }) {
-  const { text, setText, send } = useComposer(onSend);
+  const { text, setText, send } = useComposer(onSend, defaultText);
   return (
     <div
       className={clsx(
@@ -137,6 +140,15 @@ export function ChatComposer({
           appearance="borderless"
           className="h-[30px] flex-1"
           placeholder={placeholder}
+          autoFocus={!!defaultText}
+          onFocus={
+            defaultText
+              ? (e) => {
+                  const n = e.currentTarget.value.length;
+                  e.currentTarget.setSelectionRange(n, n);
+                }
+              : undefined
+          }
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {

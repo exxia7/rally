@@ -1,5 +1,6 @@
 import type { OutputItem } from '@/components/panels/OutputsCard';
 import type { PlanLayout, PlanNode } from '@/components/planning/PlanMap';
+import type { ChatLine } from '@/state/types';
 
 import {
   AI_COACH_OUTPUTS,
@@ -81,3 +82,26 @@ export const COMMUNITY_PLAN_COMPACT: PlanLayout = (() => {
     stageY: (AI_COACH_PLAN_COMPACT.stageY ?? 0) - 16,
   };
 })();
+
+/** The chat that adds Community (2.5): the ask, the plan, the yes, and "Done" with Undo. `n` keeps ids unique. */
+export const COMMUNITY_ASK = 'I also want to post on our Discord forum.';
+export const communityChat = (n: number, ask = COMMUNITY_ASK): ChatLine[] => [
+  { id: `ask-${n}`, from: 'user', text: ask },
+  {
+    id: `idea-${n}`,
+    from: 'assistant',
+    text: "Good idea. I'll add a Community helper that turns your launch copy into a Discord post.",
+  },
+  {
+    id: `check-${n}`,
+    from: 'assistant',
+    text: 'Should it check with you before posting?',
+  },
+  { id: `yes-${n}`, from: 'user', text: 'Yes, ask me first' },
+  {
+    id: `done-${n}`,
+    from: 'assistant',
+    text: 'Done. It\'ll post after you approve, along with Publisher. I also added "Discord post" to What goes out.',
+    undo: { kind: 'community' },
+  },
+];

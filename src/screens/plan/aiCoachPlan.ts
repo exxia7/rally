@@ -37,12 +37,14 @@ export type Helper = Omit<HelperCardData, 'settings'> & {
   /** A setting changed by chat ("Tone · Playful" in 2.4d). Shown highlighted after Model. */
   tone?: string;
   /** Extra card rows after the resources (Publisher: Ads, Posts). */
-  extra?: { label: string; value: string }[];
+  extra?: { label: string; value: string; highlighted?: boolean }[];
   getsFrom: string;
   passesTo: string;
   passes: string;
   /** "Checks with you" override. */
   checks: string;
+  /** A duplicate ("Strategist copy"): drawn under that helper, with its lines (src/state/planView.planLayout). */
+  copyOf?: string;
 };
 
 export const AI_COACH_TEAM: Record<HelperId, Helper> = {
@@ -340,3 +342,52 @@ export const PLAN_CHAT_SUGGESTIONS = [
   'I also want to post on our Discord forum.',
   'Make the Writer more playful, and add a TikTok script.',
 ];
+
+// ---- The brief and the 2.2 chat with the Planner --------------------------------------------------------------
+
+/** The AI Coach brief as the user typed it in 2.2, and the run's task card lead (3.2). */
+export const AI_COACH_BRIEF = {
+  what: 'launch campaign for our new AI Coach feature',
+  summary: 'Launch AI Coach to 2,800 waitlist signups',
+  when: 'Mar 12',
+  who: '2,800 waitlist signups',
+};
+
+/** The 2.2 chat (2362:23548): the Planner asks, you answer. `brief` is your first message. */
+export function briefChat(brief: string) {
+  return [
+    {
+      id: '1',
+      from: 'assistant' as const,
+      text: "Hi, I'm the Planner. What are you launching? Describe it like you'd tell a friend.",
+    },
+    { id: '2', from: 'user' as const, text: brief },
+    {
+      id: '3',
+      from: 'assistant' as const,
+      text: 'Nice. Two quick questions so I can plan the right team:\n1. When is the launch? 2. Who is it for?',
+    },
+    {
+      id: '4',
+      from: 'user' as const,
+      text: `${AI_COACH_BRIEF.when}, to our ${AI_COACH_BRIEF.who}`,
+    },
+    {
+      id: '5',
+      from: 'assistant' as const,
+      text: "Your team is ready: 7 helpers, from research to posting on launch day. Next you'll see them on a map, where you can change anything. Nothing runs until you press Start launch.",
+      action: 'team' as const,
+    },
+  ];
+}
+
+/** Launch facts (the run Sandbox's "Launch facts", the hand-raise problems, approvals and summary). */
+export const AI_COACH_FACTS = {
+  date: 'Mar 12',
+  time: '9am',
+  price: '$12/mo',
+  audience: 'People who already budget',
+  claim: 'AI Coach knows your actual budget',
+  budget: '$300',
+  signups: '2,800',
+};
