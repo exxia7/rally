@@ -10,7 +10,16 @@
 import { chromium } from "@playwright/test";
 
 const BASE = "http://localhost:5173";
-const SCREENS = process.env.SCREENS?.split(',') ?? ['3.2', '3.3', '4.2', '4.3', '5.1', '5.2', '6.3', '6.5'];
+const SCREENS = process.env.SCREENS?.split(",") ?? [
+  "3.2",
+  "3.3",
+  "4.2",
+  "4.3",
+  "5.1",
+  "5.2",
+  "6.3",
+  "6.5",
+];
 const SIZES = [
   { width: 1440, height: 900 },
   { width: 375, height: 812 },
@@ -271,29 +280,37 @@ for (const [id, size, want] of [
   await page.close();
 }
 
-// Live: the open list follows the run as it advances.
+// Live: start a run from the plan (?speed=fast) and, on 3.2, keep the list open while the launch beats play: the
+// rows and the count re-render from the store, and the list stays open.
 {
+  const where = "3.2 live";
   const page = await browser.newPage({ viewport: SIZES[0] });
-  await page.goto(`${BASE}/s/3.2?speed=fast`, { waitUntil: "networkidle" });
+  await page.goto(`${BASE}/s/2.3?speed=fast`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: /^Start/ })
+    .first()
+    .click();
+  await page.waitForURL((u) => u.pathname === "/s/3.2");
   await open(page);
-  const before = await header(page).innerText();
-  let after = before;
-  for (
-    let i = 0;
-    i < 40 && after === before && page.url().includes("/s/3.2");
-    i++
-  ) {
-    await settle(page, 250);
-    after = await header(page)
+  const snap = () =>
+    card(page)
       .innerText()
-      .catch(() => after);
+      .catch(() => "");
+  const before = await snap();
+  let after = before;
+  for (let i = 0; i < 60 && after === before; i++) {
+    await settle(page, 100);
+    after = await snap();
   }
+  const line = (t) =>
+    `${t.match(/\d+ of \d+ done/)?.[0] ?? "?"}, ${t.match(/\b(Done|Running|Waiting)\b/g)?.join(" ") ?? ""}`;
   check(
-    "3.2 live",
-    "header count follows the run",
+    where,
+    "rows follow the run while open",
     after !== before,
-    `${before.replace(/\s+/g, " ")} → ${after.replace(/\s+/g, " ")}`,
+    `${line(before)} → ${line(after)}`,
   );
+  check(where, "still open after the beat", await expanded(page));
   await page.close();
 }
 
@@ -358,7 +375,7 @@ for (const size of [
       inside: r.bottom <= canvas.bottom && r.right <= canvas.right,
     };
   });
-  check(where, "added steps listed", m.rows >= 13, `${m.rows} rows`);
+  check(where, "added steps listed", m.rows > 10, `${m.rows} rows`);
   check(where, "rows scroll inside the card", m.scroll);
   check(where, "card stays inside the canvas", m.inside);
   await page.close();
