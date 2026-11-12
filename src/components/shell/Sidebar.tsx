@@ -333,9 +333,8 @@ function SidebarPanel({
             onClick={() => setWsMenu((o) => !o)}
             className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-control px-1.5 hover:bg-hover"
           >
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-[6px] bg-accent-soft">
-              <Icon src={logo} size={16} />
-            </span>
+            <Icon src={logo} size={24} />
+
             <span
               title={d.workspace}
               className="min-w-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.08px] text-ink"
@@ -704,9 +703,9 @@ function SidebarRail({ onExpand }: { onExpand: () => void }) {
             aria-haspopup="menu"
             aria-expanded={open}
             onClick={toggle}
-            className="mb-1 flex size-9 items-center justify-center rounded-[9px] bg-accent-soft"
+            className="mb-1 flex size-9 items-center justify-center rounded-[9px]"
           >
-            <Icon src={logo} size={20} />
+            <Icon src={logo} size={36} />
           </button>
         )}
       >
