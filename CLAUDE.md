@@ -199,24 +199,41 @@ pixel-exact at 1440×900, so:
 
 ## Motion
 
-Figma has no motion spec; every animation is listed in `design/non-figma-ui.md` ("Motion" rows). Keep it calm:
-one-shot transitions 150–600ms with ease-out (`cubic-bezier(0.22, 1, 0.36, 1)` for moves), loops slow (1.4–2.8s)
-and subtle.
+All animation is **framer-motion** (pinned in package.json); there are no CSS keyframes. Figma has no motion spec, so
+every animation is listed in `design/non-figma-ui.md` ("Motion" rows). Keep it calm and product-grade.
 
-- Keyframes and the `pf-*` classes live at the end of `src/index.css`, all inside
-  `@media (prefers-reduced-motion: no-preference)`: under reduced motion nothing animates and the frame renders as
-  drawn (motion-only extras such as the status ellipsis are hidden). Animate only `transform`, `opacity` and
-  `stroke-dashoffset` (plus the SVG `d`/`cx`/`cy` re-route transition and the Tasks bar's tiny width grow); never
-  anything that moves layout. Use `will-change` only if a profile asks for it.
-- Loops (thinking): `pf-breathe` (working avatar), `pf-dots` (its ··· badge), `pf-live-dot` + `pf-ellipsis`
-  (working status line), `pf-glow` (working card halo), `pf-flow` (accent pulse along a line out of a working step,
-  fork colour on a fork lane). Loops must start from the drawn look.
-- One-shots: `pf-draw` (a handoff completes: the line draws source → target), `pf-pop` (handoff check, a helper
-  appearing), `pf-crossfade` (card state change), `pf-rise` / `pf-fade` (new card, line, chat message),
-  `pf-tick` + `pf-grow` (Tasks chip count and bar), `pf-tray-in` (helper into the done tray), `pf-bounce` +
-  `pf-ring` (hand raised), `pf-attn` (status pill turns "Needs you"), `pf-slide-in` (hand-raise panel).
-- One-shots play only for a change the viewer saw, never on a direct load's first paint. `src/lib/motion.ts` holds
-  the memory (outside React, so it survives the route swaps between beats): `useChangedFrom(key, value)` for a state
-  change, `useAdded(scope, ids)` for what appeared in a map or tray, `useGlide(ref, x, y)` for FLIP moves of
-  free-placed cards (WAAPI transform, skipped under reduced motion). Key memory by workflow (`map:<activeId>`).
-- Checks: the pixel scripts render with `reducedMotion: 'reduce'`, so they see the still frame.
+- **Where:** `src/lib/motion.ts` has the timings, variants and hooks; `src/components/motion/Motion.tsx` has the
+  ready-made pieces. `<MotionRoot>` wraps the app in `main.tsx` (`<MotionConfig reducedMotion="user">`). Import from
+  these; don't hand-roll durations or easings.
+- **Timings** (`transitions`): `fast` 150ms (menus, popovers), `base` 240ms (panels, modals, fades, ticks), `slow`
+  450ms (cross-fades, rises), `draw` 600ms (a line drawing in), all ease-out `EASE_OUT` = cubic-bezier(0.22, 1, 0.36,
+  1); `glide` (critically damped spring, ~400ms) for moves; `pop` (spring, small overshoot) for pop-ins. Loops are
+  slow (1.4–2.8s) and subtle and start from the drawn look.
+- **Variants** (`variants.<name>`, each `hidden` → `shown`): `fadeIn`, `rise`, `pop`, `scaleIn`, `slideInRight`,
+  `slideInLeft`, `sheetUp`, `drawIn`. Use `initial="hidden" animate="shown" exit="hidden"`.
+- **Pieces** (Motion.tsx), each still on a first paint and instant under reduced motion:
+  - `<FadePresence show variant?>`: AnimatePresence + fade (or any variant) in and out.
+  - `<Pop show? origin?>`: popovers, menus, dialog boxes; scales from 97% and fades (150ms). Without `show`, only
+    its entrance plays (for a parent that mounts it conditionally).
+  - `<SlidePanel open side="right"|"left">`: drawers and panels, 24px slide + fade, and back out.
+  - `<Sheet open>`: a bottom sheet that rises from below the screen.
+  - `<Expand open>`: expand/collapse to `height: auto` with a fade (220ms): dropdown bodies, accordions, the Tasks
+    list.
+  - `<Rise play?>`: rise 6px + fade on mount (new chat message, new card).
+  - `<TickText text play?>`: text that ticks up when it changes ("3 of 9 done" → "4 of 9 done").
+  - `<ThinkingDots char? dotClassName? still?>`: three dots pulsing in turn (working badge, chat typing row).
+  - Already wired: SidePanel (slides in when the panel slot opens while you watch, via AppShell's `PanelEnter`;
+    sheets rise on phones; scrim fades), Modal (scrim fade + `scaleIn` box, both ways), Menu (`scaleIn` entrance),
+    the Tasks dropdown (`Expand`), chat `Message enter` and `TypingRow`.
+- **Reduced motion:** nothing moves. `MotionConfig reducedMotion="user"` stops transforms and layout animations;
+  our pieces also make opacity instant and drop loops (`useMotionOn()`, `useTransition(t)`). Anything you write
+  directly with `motion.*` must do the same: `initial={on && play ? 'hidden' : false}` and loops only when `on`.
+- **First paint:** a direct load paints its frame still. Overlays animate only when they mount after the app's first
+  paint (`useEnter()`; AnimatePresence `initial={appear}`). The run and plan maps remember what the viewer saw,
+  outside React, so a change animates even across the route swaps between beats: `useChangedFrom(key, value)` (state
+  changes), `useAdded(scope, ids)` (what appeared), keyed by workflow (`map:<activeId>`).
+- **Performance:** animate `transform`, `opacity` and SVG `pathLength` / `pathOffset` (plus `d`, `cx`, `cy` on
+  re-routed connectors, the 40px Tasks bar's width and `height: auto` in `Expand`). Map cards keep their left/top
+  and glide with `useGlide(x, y)` (FLIP on `x`/`y` motion values); don't use the `layout` prop on the zoomed,
+  pannable maps. No `will-change` unless a profile asks for it.
+- **Checks:** the pixel scripts render with `reducedMotion: 'reduce'`, so they see the still frame.
