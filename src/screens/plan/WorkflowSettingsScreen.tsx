@@ -24,7 +24,6 @@ import { PlanMainAction } from '@/components/planning/PlanTopBar';
 import { useConnectTool } from '@/components/planning/useConnectTool';
 import { useGo } from '@/state/nav';
 import { CHECK_SHORT, toolConnected } from '@/state/permissions';
-import { estimate as planEstimate } from '@/state/planView';
 import { money, runCost } from '@/state/runView';
 import { dispatch, store, useAppState } from '@/state/store';
 import type { LaunchFacts, Workflow } from '@/state/types';
@@ -196,7 +195,6 @@ export default function WorkflowSettingsScreen() {
           v === 'flowchart' && (fromRun ? back() : go('3.1'))
         }
         title={wf.title}
-        estimate={planEstimate(wf)}
         onSettings={back}
         settingsActive
         action={<PlanMainAction className="w-[100px]" />}

@@ -4,25 +4,21 @@ import { WorkflowTopBar } from '@/components/nav/WorkflowTopBar';
 import { Button } from '@/components/ui/Button';
 import { useStartLaunch } from '@/state/actions';
 import { useGo } from '@/state/nav';
-import { estimate as planEstimate } from '@/state/planView';
 import { runFrame } from '@/state/runView';
 import { useWorkflow } from '@/state/store';
 import type { Workflow } from '@/state/types';
 
-// The top bar of the planning-map frames (2.3–2.7, e.g. 2362:23645): Planning view, "About 9 min",
-// workflow settings, the side-panel toggle and the Primary "Start launch". Flowchart and Start launch move on to
+// The top bar of the planning-map frames (2.3–2.7, e.g. 2362:23645): Planning view, workflow settings, the side-panel toggle and the Primary "Start launch". Flowchart and Start launch move on to
 // the run: Start launch starts it (3.2), Flowchart opens it where it is (3.1 until it has started); settings opens
-// 2.8 and comes back here. The title and estimate come from the workflow in the store.
+// 2.8 and comes back here. The title comes from the workflow in the store.
 // Mid-run (audit 3h) the main action is "Back to run" and a strip under the bar says edits only reach steps that
 // haven't started (PlanMidRunNote).
 export function PlanTopBar({
   panelOpen,
   onTogglePanel,
-  estimate,
 }: {
   panelOpen: boolean;
   onTogglePanel: () => void;
-  estimate?: string;
 }) {
   const go = useGo();
   const wf = useWorkflow();
@@ -34,7 +30,6 @@ export function PlanTopBar({
         onViewChange={(v) =>
           v === 'flowchart' && go(runFrame(wf), { returnHere: true })
         }
-        estimate={estimate ?? planEstimate(wf)}
         onSettings={() => go('2.8', { returnHere: true })}
         panelOpen={panelOpen}
         onTogglePanel={onTogglePanel}

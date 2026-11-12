@@ -23,7 +23,7 @@ import { Breadcrumb } from './Breadcrumb';
 // panel toggle (Outlined icon buttons), then the main action (Pause, Start launch…). Figma's run status pill is
 // not drawn (removed at the user's request). Under 768px the breadcrumb collapses to the truncated title, and the settings
 // and panel toggle move into a "more" menu.
-// Planning frames show a 12/18 muted `estimate` ("About 9 min", 4px extra right padding) instead of a status.
+// The plan's time estimate ("About 9 min") isn't shown here (removed at the user's request); Sandbox has it.
 // An open panel draws its toggle Selected (blue); `settingsActive` does the same for the settings button (2.8).
 export type WorkflowView = 'planning' | 'flowchart';
 
@@ -35,7 +35,6 @@ export function WorkflowTopBar({
   panelOpen,
   onTogglePanel,
   action,
-  estimate,
   settingsActive,
   hideTitleMenu,
 }: {
@@ -51,8 +50,6 @@ export function WorkflowTopBar({
   onTogglePanel?: () => void;
   /** The main action, e.g. a Pause or Start launch Button. */
   action?: ReactNode;
-  /** Plan estimate text on the right, e.g. "About 9 min". */
-  estimate?: string;
   /** Draws the settings button Selected (you're on the workflow settings page). */
   settingsActive?: boolean;
   /** Drops the title menu chevron (a new, unsaved workflow: 3.1). */
@@ -177,11 +174,6 @@ export function WorkflowTopBar({
           {/* The run status pill ("Running · $0.18", "Needs you · $0.21") is removed everywhere at the user's request;
               Pause/Resume, the Tasks dropdown and the sidebar's Needs you badge carry the run's state. `status` and
               `statusLabel` are still accepted so callers don't change. */}
-          {estimate && (
-            <p className="pr-1 text-[12px] leading-[18px] tracking-[-0.08px] whitespace-nowrap text-muted max-md:hidden">
-              {estimate}
-            </p>
-          )}
           {onSettings && (
             <IconButton
               variant="outlined"
